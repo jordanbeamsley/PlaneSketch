@@ -14,15 +14,15 @@ export class ToolController {
     constructor(layers: SceneLayers) {
         this.layers = layers;
         this.current = new LineTool(layers); // default
-        useToolStore.subscribe(({tool}) => this.setTool(tool));
+        useToolStore.subscribe(({ tool }) => this.setTool(tool));
         this.setTool(useToolStore.getState().tool);
     }
 
     private setTool(name: Tool) {
         switch (name) {
-            case "line":    this.current = new LineTool(this.layers); break;
-            case "rect":    this.current = new RectTool(this.layers); break;
-            case "circle":  this.current = new CircleTool(this.layers); break;
+            case "line": this.current = new LineTool(this.layers); break;
+            case "rect": this.current = new RectTool(this.layers); break;
+            case "circle": this.current = new CircleTool(this.layers); break;
             default: break;
         }
 
@@ -32,4 +32,5 @@ export class ToolController {
     onDown(e: FederatedPointerEvent) { this.current.onDown(e); }
     onMove(e: FederatedPointerEvent) { this.current.onMove(e); }
     onUp(e: FederatedPointerEvent) { this.current.onUp(e); }
+    onKeyDown(e: KeyboardEvent) { this.current.onKeyDown(e); }
 }

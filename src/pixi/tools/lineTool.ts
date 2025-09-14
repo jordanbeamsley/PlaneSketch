@@ -10,7 +10,6 @@ export class LineTool extends BaseShapeTool {
 
         const { x1, y1 } = this.previewShape.geometryData;
 
-
         this.previewShape.gfx.clear()
             .moveTo(x1, y1)
             .lineTo(x2, y2)
@@ -54,6 +53,10 @@ export class LineTool extends BaseShapeTool {
     }
 
     postCreate(x: number, y: number): void {
+        if (this.isSnapped) {
+            this.previewShape = undefined;
+            return;
+        }
         this.createPreviewShape(x, y);
     }
 

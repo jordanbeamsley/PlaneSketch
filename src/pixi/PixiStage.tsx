@@ -8,7 +8,9 @@ export function PixiStage() {
 
     useEffect(() => {
         if (!hostRef.current) return;
+
         const app = new Application();
+        let tools: ToolController | null = null;
 
         (async () => {
             // Bootstrap pixiCanvas
@@ -32,18 +34,29 @@ export function PixiStage() {
             app.renderer.on("resize", (w, h) => gridLayer.draw(w, h));
 
             // Create node container on top of sketch
-            const tools = new ToolController({ sketch: sketchLayer, nodes: nodeLayer, preview: previewLayer, grid: gridLayer });
+            tools = new ToolController({ sketch: sketchLayer, nodes: nodeLayer, preview: previewLayer, grid: gridLayer });
 
+            // Set up pointer listeners
             app.stage.eventMode = "static";
             app.stage.hitArea = app.screen;
             app.stage.cursor = "crosshair";
             app.stage
-                .on("pointerdown", (e) => tools.onDown(e))
-                .on("pointermove", (e) => tools.onMove(e))
-                .on("pointerup", (e) => tools.onUp(e))
-                .on("pointerupoutside", () => tools.onUp);
+                .on("pointerdown", (e) => tools!.onDown(e))
+                .on("pointermove", (e) => tools!.onMove(e))
+                .on("pointerup", (e) => tools!.onUp(e))
+                .on("pointerupoutside", () => tools!.onUp);
         })();
-        //return () => app.destroy(true, {children: true, texture: true});
+
+        // Keyboard routing
+        const onKeyDown = (e: KeyboardEvent) => tools?.onKeyDown(e);
+        window.addEventListener("keydown", (e) => onKeyDown(e));
+
+        return () => {
+            window.removeEventListener("keydown", onKeyDown);
+            if (app.renderer) {
+                app.destroy(true, { children: true, texture: true });
+            }
+        }
     }, []);
 
     return <div ref={hostRef} className="w-full h-full select-none" />

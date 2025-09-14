@@ -9,8 +9,11 @@ import { HIT_SLOP } from "@/constants/drawing";
 
 export abstract class BaseShapeTool extends BaseTool {
     protected previewShape?: Shape;
-
     protected previewNodes: Node[] = [];
+
+    // Keep track of snapped node, useful in postCreate
+    protected isSnapped: boolean = false;
+
 
     abstract onMoveWithSnap(x: number, y: number): void;
     abstract onUp(e: FederatedPointerEvent): void;
@@ -19,6 +22,8 @@ export abstract class BaseShapeTool extends BaseTool {
     abstract applyHitArea(): void;
     abstract postCreate(x: number, y: number): void;
 
+    // First check if cursor is in snapping range of node
+    // Then deligate to tools own move handler
     public onMove(e: FederatedPointerEvent): void {
         // Position that will be passed to the tool handler
         let { x, y } = e.global;
@@ -47,6 +52,9 @@ export abstract class BaseShapeTool extends BaseTool {
             if (closestNode && (closestDist < HIT_SLOP)) {
                 x = closestNode.x;
                 y = closestNode.y;
+                this.isSnapped = true;
+            } else {
+                this.isSnapped = false;
             }
         }
 
