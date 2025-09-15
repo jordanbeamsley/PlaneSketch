@@ -1,8 +1,9 @@
 import type { Container } from "pixi.js";
 
 export interface SceneLayers {
-	preview: Container;
-	nodes: Container;
-	sketch: Container;
-	grid: Container;
+    grid: Container;
+    sketch: Container;
+    nodes: Container;
+    preview: Container;
+    guides: Container;
 }

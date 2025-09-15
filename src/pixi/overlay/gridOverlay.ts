@@ -1,4 +1,4 @@
-import { Container, Graphics, Text, TextStyle } from "pixi.js";
+import { Container, Graphics } from "pixi.js";
 
 export interface GridOptions {
     step: number;
@@ -16,7 +16,7 @@ export class GridOverlay extends Container {
         super();
 
         this.opts = Object.assign(
-            {step: 50, axisColor: 0xff6666, gridColor: 0x44444, thickness: 1},
+            { step: 50, axisColor: 0xff6666, gridColor: 0x44444, thickness: 1 },
             opts
         );
 
@@ -32,21 +32,21 @@ export class GridOverlay extends Container {
    * @param oy – Y-axis origin in screen px (defaults to centre)
    */
     public draw(w: number, h: number, ox: number = w * 0.5, oy: number = h * 0.5) {
-        const {step, axisColor, gridColor, thickness} = this.opts;
+        const { step, axisColor, gridColor, thickness } = this.opts;
         this.gfxGrid.clear();
         this.gfxAxis.clear();
 
-        for (let x = ox % step; x <= w; x += step) 
+        for (let x = ox % step; x <= w; x += step)
             this.gfxGrid.moveTo(x, 0).lineTo(x, h)
-        for (let y = oy % step; y <= h; y += step) 
+        for (let y = oy % step; y <= h; y += step)
             this.gfxGrid.moveTo(0, y).lineTo(w, y)
 
-        this.gfxGrid.stroke({width: thickness, color: gridColor, alpha: 0.5});
+        this.gfxGrid.stroke({ width: thickness, color: gridColor, alpha: 0.5 });
 
         this.gfxAxis
             .moveTo(0, oy).lineTo(w, oy)
             .moveTo(ox, 0).lineTo(ox, h)
-            .stroke({width: Math.max(2, thickness + 1), color: axisColor});
+            .stroke({ width: Math.max(2, thickness + 1), color: axisColor });
     }
 
     public setStep(step: number) {

@@ -1,16 +1,15 @@
-import { Circle, Graphics, type FederatedPointerEvent } from "pixi.js";
+import { Circle, Graphics } from "pixi.js";
 import { BaseShapeTool } from "./baseShapeTool";
-import {  type Shape } from "../../models/shapes";
+import { type Shape } from "../../models/shapes";
 import { HIT_SLOP, STROKE_STYLE } from "../../constants/drawing";
 
 export class CircleTool extends BaseShapeTool {
 
-    onMove(e: FederatedPointerEvent): void {
+    onMoveWithSnap(x: number, y: number): void {
         if (!this.previewShape || this.previewShape.kind !== "circle") return;
 
-        const { x: mx, y: my } = e.global;
         const { cx, cy } = this.previewShape.geometryData;
-        const radius = Math.hypot(mx - cx, my - cy);
+        const radius = Math.hypot(x - cx, y - cy);
 
         this.previewShape.gfx.clear()
             .circle(cx, cy, radius)

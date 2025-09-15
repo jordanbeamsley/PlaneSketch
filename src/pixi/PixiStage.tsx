@@ -2,6 +2,7 @@ import { Application, Container } from "pixi.js";
 import { useEffect, useRef } from "react";
 import { GridOverlay } from "./overlay/gridOverlay";
 import { ToolController } from "./tools/ToolController";
+import type { SceneLayers } from "@/models/layers";
 
 export function PixiStage() {
     const hostRef = useRef<HTMLDivElement>(null);
@@ -18,23 +19,37 @@ export function PixiStage() {
             hostRef.current!.appendChild(app.canvas);
 
             // Build layer stack
+            const gridLayer = new GridOverlay();
             const sketchLayer = new Container();
             const nodeLayer = new Container();
-            const previewLayer = new Container();
-            const gridLayer = new GridOverlay();
+            const previewLayer = new Container(); // Ghost shapes while drawing
+            const guidesLayer = new Container(); // Snaps points, alignment lines, etc.
 
-            previewLayer.zIndex = 20;
-            nodeLayer.zIndex = 10;
             gridLayer.zIndex = -1;
+            sketchLayer.zIndex = 10;
+            nodeLayer.zIndex = 20;
+            previewLayer.zIndex = 30;
+            guidesLayer.zIndex = 40;
 
-            app.stage.addChild(sketchLayer, nodeLayer, gridLayer, previewLayer);
+            const layerStack: SceneLayers = {
+                grid: gridLayer,
+                sketch: sketchLayer,
+                nodes: nodeLayer,
+                preview: previewLayer,
+                guides: guidesLayer
+            };
+
+            // Add layer stack to pixi stage
+            Object.values(layerStack).forEach(layer => {
+                app.stage.addChild(layer);
+            });
 
             // Create canvas grid overlay
             gridLayer.draw(app.screen.width, app.screen.height);
             app.renderer.on("resize", (w, h) => gridLayer.draw(w, h));
 
             // Create node container on top of sketch
-            tools = new ToolController({ sketch: sketchLayer, nodes: nodeLayer, preview: previewLayer, grid: gridLayer });
+            tools = new ToolController(layerStack);
 
             // Set up pointer listeners
             app.stage.eventMode = "static";

@@ -1,4 +1,4 @@
-import type { FederatedPointerEvent } from "pixi.js";
+import { type FederatedPointerEvent } from "pixi.js";
 import type { Shape } from "../../models/shapes";
 import { BaseTool } from "./baseTool";
 import { useShapeStore } from "../../store/shapeStore";
@@ -8,6 +8,7 @@ import type { Node } from "../../models/node";
 import { HIT_SLOP } from "@/constants/drawing";
 
 export abstract class BaseShapeTool extends BaseTool {
+
     protected previewShape?: Shape;
     protected previewNodes: Node[] = [];
 
@@ -22,6 +23,7 @@ export abstract class BaseShapeTool extends BaseTool {
     abstract applyHitArea(): void;
     abstract postCreate(x: number, y: number): void;
 
+
     // First check if cursor is in snapping range of node
     // Then deligate to tools own move handler
     public onMove(e: FederatedPointerEvent): void {
@@ -30,6 +32,7 @@ export abstract class BaseShapeTool extends BaseTool {
 
         // Find node closest to mouse position
         // For now, if two nodes have identical co-ords, return the most recent (last in array)
+        // Might need to handle this with more finesse in the future
         const nodes = useNodeStore.getState().nodes;
         let closestNode: Node | null = null;
         let closestDist = Infinity;
@@ -58,13 +61,27 @@ export abstract class BaseShapeTool extends BaseTool {
             }
         }
 
+        // Finally, delegate to the shape tools onMove handler
         this.onMoveWithSnap(x, y);
-        console.log("in on move!");
+    }
+
+    public onKeyDown(e: KeyboardEvent): void {
+        switch (e.key) {
+            // Abort current preview shapes
+            case "q": {
+                this.discardPreviewNodes();
+                this.discardPreviewShape();
+                this.isSnapped = false;
+                break;
+            }
+            default: break;
+        }
     }
 
     protected createPreviewShape(x: number, y: number) {
         this.previewShape = this.makeSkeleton(x, y);
         this.previewNodes = generateNodesForShape(this.previewShape);
+
         this.previewNodes.forEach((n) => this.layers.preview.addChild(n.gfx));
         this.layers.sketch.addChild(this.previewShape.gfx);
     }
@@ -83,12 +100,23 @@ export abstract class BaseShapeTool extends BaseTool {
         })
 
         useNodeStore.getState().addMany(this.previewNodes);
+
         this.previewNodes = [];
     }
 
     protected discardPreviewNodes() {
         this.layers.preview.removeChildren().forEach((g) => g.destroy());
         this.previewNodes = [];
+    }
+
+    protected discardPreviewShape() {
+        if (this.previewShape) {
+            // Remove the shape’s gfx from the sketch layer
+            this.layers.sketch.removeChild(this.previewShape.gfx);
+            this.previewShape.gfx.destroy(); // free GPU buffers
+
+            this.previewShape = undefined;
+        }
     }
 
     onDown(e: FederatedPointerEvent) {
@@ -106,8 +134,8 @@ export abstract class BaseShapeTool extends BaseTool {
             this.previewShape.id = Date.now();
             useShapeStore.getState().add(this.previewShape);
 
-            this.makeDraggable();
-            this.applyHitArea();
+            // this.makeDraggable();
+            // this.applyHitArea();
 
             this.commitPreviewNodes();
         }

@@ -1,15 +1,14 @@
-import { Graphics, Rectangle, type FederatedPointerEvent } from "pixi.js";
+import { Graphics, Rectangle } from "pixi.js";
 import { BaseShapeTool } from "./baseShapeTool";
 import { type Shape } from "../../models/shapes";
 import { HIT_SLOP, STROKE_STYLE } from "../../constants/drawing";
 
 export class RectTool extends BaseShapeTool {
 
-    onMove(e: FederatedPointerEvent): void {
+    onMoveWithSnap(x2: number, y2: number): void {
         if (!this.previewShape || this.previewShape.kind !== "rect") return;
 
         const { x1: x1, y1: y1 } = this.previewShape.geometryData;
-        const { x: x2, y: y2 } = e.global;
 
         this.previewShape.gfx.clear()
             .moveTo(x1, y1)
