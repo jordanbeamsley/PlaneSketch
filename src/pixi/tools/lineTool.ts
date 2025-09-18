@@ -1,42 +1,44 @@
-import { Graphics, Point, Polygon } from "pixi.js";
+import { Graphics } from "pixi.js";
 import { BaseShapeTool } from "./baseShapeTool";
 import { type Shape } from "../../models/shapes";
-import { HIT_SLOP, STROKE_STYLE } from "../../constants/drawing";
+import { STROKE_STYLE } from "../../constants/drawing";
+import { copyVec, type Vec2 } from "@/models/vectors";
 
 export class LineTool extends BaseShapeTool {
 
-    onMoveWithSnap(x2: number, y2: number): void {
+    onMoveWithSnap(p: Vec2): void {
         if (!this.previewShape || this.previewShape.kind !== "line") return;
 
-        const { x1, y1 } = this.previewShape.geometryData;
+        const p1 = copyVec(this.previewShape.geometryData.p1);
+        const p2 = copyVec(p);
 
+        console.log(`p1: ${p1.x},${p1.y} | p2: ${p2.x},${p2.y}`);
         this.previewShape.gfx.clear()
-            .moveTo(x1, y1)
-            .lineTo(x2, y2)
+            .moveTo(p1.x, p1.y)
+            .lineTo(p2.x, p2.y)
             .stroke(STROKE_STYLE);
 
-        this.previewShape.geometryData.x2 = x2;
-        this.previewShape.geometryData.y2 = y2;
-
-        this.previewNodes[1].x = x2; this.previewNodes[1].y = y2;
-
-        this.previewNodes[1].gfx.position.set(x2 - x1, y2 - y1);
+        this.previewShape.geometryData.p2 = p2;
+        this.previewNodes[1].p = p2;
+        this.previewNodes[1].gfx.position.set(p2.x - p1.x, p2.y - p1.y);
     }
 
     onUp(): void {
         // No-op
     }
 
-    makeSkeleton(x: number, y: number): Shape {
+    makeSkeleton(p: Vec2): Shape {
+
+        const p1 = copyVec(p);
+        const p2 = copyVec(p);
+
         return ({
             id: 1,
             kind: "line",
             gfx: new Graphics(),
             geometryData: {
-                x1: x,
-                y1: y,
-                x2: x,
-                y2: y
+                p1: p1,
+                p2: p2
             }
         });
     }
@@ -44,37 +46,22 @@ export class LineTool extends BaseShapeTool {
     isNotZeroSize(): boolean {
         if (!this.previewShape || this.previewShape.kind !== "line") return false;
 
-        const { x1, y1, x2, y2 } = this.previewShape.geometryData;
-        if (Math.hypot((x2 - x1), (y2 - y1)) === 0) {
+        const { p1, p2 } = this.previewShape.geometryData;
+        if (p1 == p2) {
             return false;
         }
 
         return true;
     }
 
-    postCreate(x: number, y: number): void {
-        if (this.isSnapped) {
+    postCreate(p: Vec2): void {
+        // If we're snapped to a guide then end line drawing
+        if (this.snappedPoint) {
             this.previewShape = undefined;
             return;
         }
-        this.createPreviewShape(x, y);
+        // Otherwise create a new line from the end point of the previous
+        this.createPreviewShape(p);
     }
 
-    applyHitArea() {
-        if (!this.previewShape || this.previewShape.kind !== "line") return;
-        const { x1, y1, x2, y2 } = this.previewShape.geometryData;
-
-        const dx = x2 - x1;
-        const dy = y2 - y1;
-        const len = Math.hypot(dx, dy) || 1;
-        const nx = (dy / len) * HIT_SLOP;
-        const ny = -(dx / len) * HIT_SLOP;
-
-        this.previewShape.gfx.hitArea = new Polygon([
-            new Point(x1 + nx, y1 + ny),
-            new Point(x1 - nx, y1 - ny),
-            new Point(x2 - nx, y2 - ny),
-            new Point(x2 + nx, y2 + ny),
-        ])
-    }
 }

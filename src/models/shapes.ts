@@ -1,4 +1,5 @@
 import type { Graphics } from "pixi.js";
+import type { Vec2 } from "./vectors";
 
 export type ShapeKind = "line" | "rect" | "circle";
 
@@ -10,18 +11,15 @@ interface BaseShape {
 export interface LineShape extends BaseShape {
     kind: "line";
     geometryData: {
-        x1: number;
-        y1: number;
-        x2: number;
-        y2: number;
+        p1: Vec2;
+        p2: Vec2;
     };
 }
 
 export interface CircleShape extends BaseShape {
     kind: "circle";
     geometryData: {
-        cx: number;
-        cy: number;
+        c: Vec2;
         r: number;
     };
 }
@@ -29,10 +27,8 @@ export interface CircleShape extends BaseShape {
 export interface RectShape extends BaseShape {
     kind: "rect";
     geometryData: {
-        x1: number;
-        y1: number;
-        x2: number;
-        y2: number;
+        p1: Vec2;
+        p2: Vec2;
     }
 }
 

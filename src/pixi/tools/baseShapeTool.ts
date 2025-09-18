@@ -6,29 +6,28 @@ import { generateNodesForShape } from "../nodes/nodeFactory";
 import { useNodeStore } from "../../store/nodeStore";
 import type { Node } from "../../models/node";
 import { HIT_SLOP } from "@/constants/drawing";
+import { copyVec, type Vec2 } from "@/models/vectors";
 
 export abstract class BaseShapeTool extends BaseTool {
 
     protected previewShape?: Shape;
     protected previewNodes: Node[] = [];
 
-    // Keep track of snapped node, useful in postCreate
-    protected isSnapped: boolean = false;
+    // Keep track of snapped node
+    protected snappedPoint: Vec2 | undefined = undefined;
 
-
-    abstract onMoveWithSnap(x: number, y: number): void;
+    abstract onMoveWithSnap(p: Vec2): void;
     abstract onUp(e: FederatedPointerEvent): void;
-    abstract makeSkeleton(x: number, y: number): Shape;
+    abstract makeSkeleton(p: Vec2): Shape;
     abstract isNotZeroSize(): boolean;
-    abstract applyHitArea(): void;
-    abstract postCreate(x: number, y: number): void;
+    abstract postCreate(p: Vec2): void;
 
 
     // First check if cursor is in snapping range of node
     // Then deligate to tools own move handler
     public onMove(e: FederatedPointerEvent): void {
         // Position that will be passed to the tool handler
-        let { x, y } = e.global;
+        let p: Vec2 = e.global;
 
         // Find node closest to mouse position
         // For now, if two nodes have identical co-ords, return the most recent (last in array)
@@ -39,7 +38,7 @@ export abstract class BaseShapeTool extends BaseTool {
 
         for (let i = 0; i < nodes.length; i++) {
             const node = nodes[i];
-            const dist = Math.hypot((e.globalX - node.x), (e.globalY - node.y));
+            const dist = Math.hypot((e.globalX - node.p.x), (e.globalY - node.p.y));
 
             if (dist <= closestDist) {
                 closestNode = node;
@@ -53,16 +52,15 @@ export abstract class BaseShapeTool extends BaseTool {
             // Check if closest node is within hit_slop and snap to that node
             // Otherwise, just pass the cursor position to tool
             if (closestNode && (closestDist < HIT_SLOP)) {
-                x = closestNode.x;
-                y = closestNode.y;
-                this.isSnapped = true;
+                p = copyVec(closestNode.p);
+                this.snappedPoint = p;
             } else {
-                this.isSnapped = false;
+                this.snappedPoint = undefined;
             }
         }
 
         // Finally, delegate to the shape tools onMove handler
-        this.onMoveWithSnap(x, y);
+        this.onMoveWithSnap(p);
     }
 
     public onKeyDown(e: KeyboardEvent): void {
@@ -71,15 +69,15 @@ export abstract class BaseShapeTool extends BaseTool {
             case "q": {
                 this.discardPreviewNodes();
                 this.discardPreviewShape();
-                this.isSnapped = false;
+                this.snappedPoint = undefined;
                 break;
             }
             default: break;
         }
     }
 
-    protected createPreviewShape(x: number, y: number) {
-        this.previewShape = this.makeSkeleton(x, y);
+    protected createPreviewShape(p: Vec2) {
+        this.previewShape = this.makeSkeleton(p);
         this.previewNodes = generateNodesForShape(this.previewShape);
 
         this.previewNodes.forEach((n) => this.layers.preview.addChild(n.gfx));
@@ -120,27 +118,30 @@ export abstract class BaseShapeTool extends BaseTool {
     }
 
     onDown(e: FederatedPointerEvent) {
-        const { x, y } = e.global;
+        const p: Vec2 = (this.snappedPoint !== undefined) ? this.snappedPoint : e.global;
+
+        // Start of shape drawing, create preview shape
         if (!this.previewShape) {
-            this.createPreviewShape(x, y);
+            this.createPreviewShape(p);
             return;
         }
 
+        // If the shape is of zero size, discard it
         if (!this.isNotZeroSize()) {
             this.discardPreviewNodes();
-            this.previewShape = undefined;
+            this.discardPreviewShape();
             return;
-        } else {
-            this.previewShape.id = Date.now();
-            useShapeStore.getState().add(this.previewShape);
-
-            // this.makeDraggable();
-            // this.applyHitArea();
-
-            this.commitPreviewNodes();
         }
 
-        this.postCreate(x, y);
+        this.previewShape.id = Date.now();
+        useShapeStore.getState().add(this.previewShape);
+
+        // this.makeDraggable();
+        // this.applyHitArea();
+
+        this.commitPreviewNodes();
+
+        this.postCreate(p);
     }
 
     makeDraggable() {

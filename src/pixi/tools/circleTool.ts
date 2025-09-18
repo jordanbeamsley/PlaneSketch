@@ -1,18 +1,20 @@
-import { Circle, Graphics } from "pixi.js";
+import { Graphics } from "pixi.js";
 import { BaseShapeTool } from "./baseShapeTool";
 import { type Shape } from "../../models/shapes";
-import { HIT_SLOP, STROKE_STYLE } from "../../constants/drawing";
+import { STROKE_STYLE } from "../../constants/drawing";
+import { copyVec, type Vec2 } from "@/models/vectors";
 
 export class CircleTool extends BaseShapeTool {
 
-    onMoveWithSnap(x: number, y: number): void {
+    onMoveWithSnap(p: Vec2): void {
         if (!this.previewShape || this.previewShape.kind !== "circle") return;
 
-        const { cx, cy } = this.previewShape.geometryData;
-        const radius = Math.hypot(x - cx, y - cy);
+        const c = copyVec(this.previewShape.geometryData.c);
+        const p1 = copyVec(p);
+        const radius = Math.hypot(p1.x - c.x, p1.y - c.y);
 
         this.previewShape.gfx.clear()
-            .circle(cx, cy, radius)
+            .circle(c.x, c.y, radius)
             .stroke(STROKE_STYLE);
 
         this.previewShape.geometryData.r = radius;
@@ -22,14 +24,16 @@ export class CircleTool extends BaseShapeTool {
         // No-op
     }
 
-    makeSkeleton(x: number, y: number): Shape {
+    makeSkeleton(p: Vec2): Shape {
+
+        const c = copyVec(p);
+
         const shape: Shape = ({
             id: 1,
             kind: "circle",
             gfx: new Graphics(),
             geometryData: {
-                cx: x,
-                cy: y,
+                c: c,
                 r: 0
             }
         });
@@ -42,14 +46,6 @@ export class CircleTool extends BaseShapeTool {
         if (this.previewShape.geometryData.r === 0) return false;
 
         return true;
-    }
-
-    applyHitArea() {
-        if (!this.previewShape || this.previewShape.kind !== "circle") return;
-
-        const { cx, cy, r } = this.previewShape.geometryData;
-
-        this.previewShape.gfx.hitArea = new Circle(cx, cy, r + HIT_SLOP);
     }
 
     postCreate(): void {

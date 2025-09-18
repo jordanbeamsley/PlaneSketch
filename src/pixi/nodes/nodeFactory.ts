@@ -1,38 +1,39 @@
 import { Graphics } from "pixi.js";
 import type { Shape } from "../../models/shapes";
 import type { Node } from "../../models/node";
+import type { Vec2 } from "@/models/vectors";
 
 const NODE_SIZE = 3;
 
 export function generateNodesForShape(s: Shape): Node[] {
-    const makeGfx = (x: number, y: number) => {
-        const nodeGfx = new Graphics().circle(x, y, NODE_SIZE).fill(0x0fffff);
+    const makeGfx = (p: Vec2) => {
+        const nodeGfx = new Graphics().circle(p.x, p.y, NODE_SIZE).fill(0x0fffff);
         nodeGfx.eventMode = "none";
         return nodeGfx;
     }
 
     if (s.kind === "rect") {
-        const { x1, y1, x2, y2 } = s.geometryData;
+        const { p1, p2 } = s.geometryData;
         return [
-            { id: `${s.id}@0`, shapeId: s.id, role: "vertex", x: x1, y: y1, gfx: makeGfx(x1, y1) },
-            { id: `${s.id}@1`, shapeId: s.id, role: "vertex", x: x2, y: y1, gfx: makeGfx(x2, y1) },
-            { id: `${s.id}@2`, shapeId: s.id, role: "vertex", x: x2, y: y2, gfx: makeGfx(x2, y2) },
-            { id: `${s.id}@3`, shapeId: s.id, role: "vertex", x: x1, y: y2, gfx: makeGfx(x1, y2) }
+            { id: `${s.id}@0`, shapeId: s.id, role: "vertex", p: { x: p1.x, y: p1.y }, gfx: makeGfx({ x: p1.x, y: p1.y }) },
+            { id: `${s.id}@1`, shapeId: s.id, role: "vertex", p: { x: p2.x, y: p1.y }, gfx: makeGfx({ x: p2.x, y: p1.y }) },
+            { id: `${s.id}@2`, shapeId: s.id, role: "vertex", p: { x: p2.x, y: p2.y }, gfx: makeGfx({ x: p2.x, y: p2.y }) },
+            { id: `${s.id}@3`, shapeId: s.id, role: "vertex", p: { x: p1.x, y: p2.y }, gfx: makeGfx({ x: p1.x, y: p2.y }) }
         ];
     }
 
     if (s.kind === "line") {
-        const { x1, y1, x2, y2 } = s.geometryData;
+        const { p1, p2 } = s.geometryData;
         return [
-            { id: `${s.id}@0`, shapeId: s.id, role: "vertex", x: x1, y: y1, gfx: makeGfx(x1, y1) },
-            { id: `${s.id}@1`, shapeId: s.id, role: "vertex", x: x2, y: y2, gfx: makeGfx(x2, y2) }
+            { id: `${s.id}@0`, shapeId: s.id, role: "vertex", p: { x: p1.x, y: p1.y }, gfx: makeGfx({ x: p1.x, y: p1.y }) },
+            { id: `${s.id}@1`, shapeId: s.id, role: "vertex", p: { x: p2.x, y: p2.y }, gfx: makeGfx({ x: p1.x, y: p2.y }) }
         ];
     }
 
     if (s.kind === "circle") {
-        const { cx, cy } = s.geometryData;
+        const { c } = s.geometryData;
         return [
-            { id: `${s.id}@0`, shapeId: s.id, role: "centre", x: cx, y: cy, gfx: makeGfx(cx, cy) },
+            { id: `${s.id}@0`, shapeId: s.id, role: "centre", p: c, gfx: makeGfx(c) },
         ];
     }
 
