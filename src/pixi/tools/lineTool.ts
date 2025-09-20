@@ -17,6 +17,7 @@ export class LineTool extends BaseShapeTool {
             .moveTo(p1.x, p1.y)
             .lineTo(p2.x, p2.y)
             .stroke(STROKE_STYLE);
+        this.previewShape.gfx.eventMode = "none";
 
         this.previewShape.geometryData.p2 = p2;
         this.previewNodes[1].p = p2;

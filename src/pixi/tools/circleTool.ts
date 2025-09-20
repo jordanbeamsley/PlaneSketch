@@ -16,6 +16,7 @@ export class CircleTool extends BaseShapeTool {
         this.previewShape.gfx.clear()
             .circle(c.x, c.y, radius)
             .stroke(STROKE_STYLE);
+        this.previewShape.gfx.eventMode = "none";
 
         this.previewShape.geometryData.r = radius;
     }

@@ -42,11 +42,13 @@ export class GridOverlay extends Container {
             this.gfxGrid.moveTo(0, y).lineTo(w, y)
 
         this.gfxGrid.stroke({ width: thickness, color: gridColor, alpha: 0.5 });
+        this.gfxGrid.eventMode = "none";
 
         this.gfxAxis
             .moveTo(0, oy).lineTo(w, oy)
             .moveTo(ox, 0).lineTo(ox, h)
             .stroke({ width: Math.max(2, thickness + 1), color: axisColor });
+        this.gfxAxis.eventMode = "none";
     }
 
     public setStep(step: number) {

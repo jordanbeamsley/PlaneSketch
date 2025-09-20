@@ -19,6 +19,7 @@ export class RectTool extends BaseShapeTool {
             .lineTo(p1.x, p2.y)
             .closePath()
             .stroke(STROKE_STYLE);
+        this.previewShape.gfx.eventMode = "none";
 
         this.previewShape.geometryData.p2 = p2;
 
