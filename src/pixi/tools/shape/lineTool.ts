@@ -55,9 +55,9 @@ export class LineTool extends BaseShapeTool {
         return true;
     }
 
-    postCreate(p: Vec2): void {
+    postCreate(p: Vec2, isSnapped: boolean): void {
         // If we're snapped to a guide then end line drawing
-        if (this.snappedPoint) {
+        if (isSnapped) {
             this.previewShape = undefined;
             return;
         }
