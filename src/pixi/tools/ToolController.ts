@@ -1,28 +1,35 @@
 import type { FederatedPointerEvent } from "pixi.js";
 import type { BaseTool } from "./baseTool";
-import { LineTool } from "./lineTool";
-import { useToolStore } from "../../store/toolStore";
-import type { Tool } from "../../models/tools";
-import { RectTool } from "./rectTool";
-import { CircleTool } from "./circleTool";
-import type { SceneLayers } from "../../models/layers";
+import { LineTool } from "./shape/lineTool";
+import { RectTool } from "./shape/rectTool";
+import { CircleTool } from "./shape/circleTool";
+import type { ShapeLayers } from "@/models/layers";
+import type { SnapOverlay } from "../snap/overlay";
+import type { SnapEngine } from "../snap/engine";
+import { useToolStore } from "@/store/toolStore";
+import type { Tool } from "@/models/tools";
 
 export class ToolController {
     private current: BaseTool;
-    private layers: SceneLayers;
+    private layers: ShapeLayers;
+    private snapOverley: SnapOverlay;
+    private snapEngine: SnapEngine;
 
-    constructor(layers: SceneLayers) {
+    constructor(layers: ShapeLayers, snapOverlay: SnapOverlay, snapEngine: SnapEngine) {
         this.layers = layers;
-        this.current = new LineTool(layers); // default
+        this.snapOverley = snapOverlay;
+        this.snapEngine = snapEngine;
+
+        this.current = new LineTool(layers, snapOverlay, snapEngine); // default
         useToolStore.subscribe(({ tool }) => this.setTool(tool));
         this.setTool(useToolStore.getState().tool);
     }
 
     private setTool(name: Tool) {
         switch (name) {
-            case "line": this.current = new LineTool(this.layers); break;
-            case "rect": this.current = new RectTool(this.layers); break;
-            case "circle": this.current = new CircleTool(this.layers); break;
+            case "line": this.current = new LineTool(this.layers, this.snapOverley, this.snapEngine); break;
+            case "rect": this.current = new RectTool(this.layers, this.snapOverley, this.snapEngine); break;
+            case "circle": this.current = new CircleTool(this.layers, this.snapOverley, this.snapEngine); break;
             default: break;
         }
 

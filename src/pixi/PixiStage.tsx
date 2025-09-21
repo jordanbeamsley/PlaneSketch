@@ -2,7 +2,9 @@ import { Application, Container } from "pixi.js";
 import { useEffect, useRef } from "react";
 import { GridOverlay } from "./overlay/gridOverlay";
 import { ToolController } from "./tools/ToolController";
-import type { SceneLayers } from "@/models/layers";
+import type { ShapeLayers } from "@/models/layers";
+import { SnapOverlay } from "./snap/overlay";
+import { SnapEngine } from "./snap/engine";
 
 export function PixiStage() {
     const hostRef = useRef<HTMLDivElement>(null);
@@ -31,25 +33,25 @@ export function PixiStage() {
             previewLayer.zIndex = 30;
             guidesLayer.zIndex = 40;
 
-            const layerStack: SceneLayers = {
-                grid: gridLayer,
+            const shapeLayers: ShapeLayers = {
                 sketch: sketchLayer,
                 nodes: nodeLayer,
                 preview: previewLayer,
-                guides: guidesLayer
             };
 
             // Add layer stack to pixi stage
-            Object.values(layerStack).forEach(layer => {
-                app.stage.addChild(layer);
-            });
+            app.stage.addChild(gridLayer, sketchLayer, nodeLayer, previewLayer, guidesLayer);
 
             // Create canvas grid overlay
             gridLayer.draw(app.screen.width, app.screen.height);
             app.renderer.on("resize", (w, h) => gridLayer.draw(w, h));
 
-            // Create node container on top of sketch
-            tools = new ToolController(layerStack);
+            // Setup snapping engine
+            const snapOverley = new SnapOverlay(guidesLayer);
+            const snapEngine = new SnapEngine();
+
+            // Setup tool controller
+            tools = new ToolController(shapeLayers, snapOverley, snapEngine);
 
             // Set up pointer listeners
             app.stage.eventMode = "static";

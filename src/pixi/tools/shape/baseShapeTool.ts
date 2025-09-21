@@ -1,12 +1,12 @@
 import { type FederatedPointerEvent } from "pixi.js";
-import type { Shape } from "../../models/shapes";
-import { BaseTool } from "./baseTool";
-import { useShapeStore } from "../../store/shapeStore";
-import { generateNodesForShape } from "../nodes/nodeFactory";
-import { useNodeStore } from "../../store/nodeStore";
-import type { Node } from "../../models/node";
 import { HIT_SLOP } from "@/constants/drawing";
-import { copyVec, type Vec2 } from "@/models/vectors";
+import { type Vec2 } from "@/models/vectors";
+import { BaseTool } from "../baseTool";
+import type { Shape } from "@/models/shapes";
+import type { Node } from "@/models/node"
+import { useNodeStore } from "@/store/nodeStore";
+import { generateNodesForShape } from "@/pixi/nodes/nodeFactory";
+import { useShapeStore } from "@/store/shapeStore";
 
 export abstract class BaseShapeTool extends BaseTool {
 
@@ -29,38 +29,43 @@ export abstract class BaseShapeTool extends BaseTool {
         // Position that will be passed to the tool handler
         let p: Vec2 = e.global;
 
+        const snapResult = this.snapEngine.snap(p, { radius: HIT_SLOP });
+        this.snapOverlay.render(snapResult);
         // Find node closest to mouse position
         // For now, if two nodes have identical co-ords, return the most recent (last in array)
         // Might need to handle this with more finesse in the future
-        const nodes = useNodeStore.getState().nodes;
-        let closestNode: Node | null = null;
-        let closestDist = Infinity;
-
-        for (let i = 0; i < nodes.length; i++) {
-            const node = nodes[i];
-            const dist = Math.hypot((e.globalX - node.p.x), (e.globalY - node.p.y));
-
-            if (dist <= closestDist) {
-                closestNode = node;
-                closestDist = dist;
-            }
-
-            // Short-circuit an exact match
-            // i.e Mouse is directly above an existing node
-            if (dist === 0) break;
-
-            // Check if closest node is within hit_slop and snap to that node
-            // Otherwise, just pass the cursor position to tool
-            if (closestNode && (closestDist < HIT_SLOP)) {
-                p = copyVec(closestNode.p);
-                this.snappedPoint = p;
-            } else {
-                this.snappedPoint = undefined;
-            }
-        }
+        // const nodes = useNodeStore.getState().nodes;
+        // let closestNode: Node | null = null;
+        // let closestDist = Infinity;
+        //
+        // for (let i = 0; i < nodes.length; i++) {
+        //     const node = nodes[i];
+        //     const dist = Math.hypot((e.globalX - node.p.x), (e.globalY - node.p.y));
+        //
+        //     if (dist <= closestDist) {
+        //         closestNode = node;
+        //         closestDist = dist;
+        //     }
+        //
+        //     // Short-circuit an exact match
+        //     // i.e Mouse is directly above an existing node
+        //     if (dist === 0) break;
+        //
+        //     // Check if closest node is within hit_slop and snap to that node
+        //     // Otherwise, just pass the cursor position to tool
+        //     if (closestNode && (closestDist < HIT_SLOP)) {
+        //         p = copyVec(closestNode.p);
+        //         this.snappedPoint = p;
+        //     } else {
+        //         this.snappedPoint = undefined;
+        //     }
+        // }
 
         // Finally, delegate to the shape tools onMove handler
-        this.onMoveWithSnap(p);
+        if (snapResult.kind !== "none")
+            this.onMoveWithSnap(snapResult.p);
+        else
+            this.onMoveWithSnap(p);
     }
 
     public onKeyDown(e: KeyboardEvent): void {

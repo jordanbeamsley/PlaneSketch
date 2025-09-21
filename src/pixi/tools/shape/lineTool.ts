@@ -1,8 +1,8 @@
 import { Graphics } from "pixi.js";
-import { BaseShapeTool } from "./baseShapeTool";
-import { type Shape } from "../../models/shapes";
-import { STROKE_STYLE } from "../../constants/drawing";
 import { copyVec, type Vec2 } from "@/models/vectors";
+import { STROKE_STYLE } from "@/constants/drawing";
+import { BaseShapeTool } from "./baseShapeTool";
+import type { Shape } from "@/models/shapes";
 
 export class LineTool extends BaseShapeTool {
 
