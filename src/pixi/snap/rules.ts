@@ -1,0 +1,47 @@
+import { copyVec } from "@/models/vectors";
+import type { SnapCandidate, SnapRule } from "./types";
+import { dist2 } from "./math";
+
+export const nodeRule: SnapRule = {
+    name: "node",
+    evaluate: ({ p, ds, opts }) => {
+        // Return no candidates (empty array) if node snapping is disabled
+        if (opts.enable.node === false) return [];
+        // Radius2 for evaluation
+        const r2 = opts.radius * opts.radius;
+
+        let best: SnapCandidate | undefined;
+
+        for (const n of ds.getNodes()) {
+            const d2 = dist2(p, n.p);
+            if (d2 <= r2 && (!best || d2 < best.dist2)) {
+                best = { kind: "node", p: copyVec(n.p), dist2: d2, id: n.id, priority: 100 }
+            }
+        }
+        return best ? [best] : [];
+    }
+};
+
+export const axisRule: SnapRule = {
+    name: "axis",
+    evaluate: ({ p, opts, axis }) => {
+        // Return no candidates (empty array) if axis snapping is disabled
+        // Or if no axis anchor provided
+        if (opts.enable.axisH === false && opts.enable.axisV === false) return [];
+        if (!axis?.anchor) return [];
+
+        // tolerance, and x and y deltas for evaluation
+        const a = axis.anchor;
+        const dx = p.x - a.x, dy = p.y - a.y;
+        const tol = opts.radius;
+
+        const candidates: SnapCandidate[] = [];
+        if (opts.enable.axisH !== false && Math.abs(dy) <= tol) {
+            candidates.push({ kind: "axisH", p: { x: p.x, y: a.y }, dist2: dy * dy, priority: 40 })
+        }
+        if (opts.enable.axisV !== false && Math.abs(dx) <= tol) {
+            candidates.push({ kind: "axisV", p: { x: a.x, y: p.y }, dist2: dx * dx, priority: 40 })
+        }
+        return candidates;
+    }
+}

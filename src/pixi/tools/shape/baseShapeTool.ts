@@ -1,17 +1,19 @@
 import { type FederatedPointerEvent } from "pixi.js";
 import { HIT_SLOP } from "@/constants/drawing";
-import { type Vec2 } from "@/models/vectors";
+import { copyVec, type Vec2 } from "@/models/vectors";
 import { BaseTool } from "../baseTool";
 import type { Shape } from "@/models/shapes";
-import type { Node } from "@/models/node"
 import { useNodeStore } from "@/store/nodeStore";
 import { generateNodesForShape } from "@/pixi/nodes/nodeFactory";
 import { useShapeStore } from "@/store/shapeStore";
+import type { SnapResult } from "@/pixi/snap/types";
+import type { Node } from "@/models/geometry";
 
 export abstract class BaseShapeTool extends BaseTool {
 
     protected previewShape?: Shape;
     protected previewNodes: Node[] = [];
+    protected currentSnap: SnapResult = { kind: "none", p: { x: 0, y: 0 } };
 
     abstract onMoveWithSnap(p: Vec2): void;
     abstract onUp(e: FederatedPointerEvent): void;
@@ -20,9 +22,8 @@ export abstract class BaseShapeTool extends BaseTool {
     abstract postCreate(p: Vec2, isSnapped: boolean): void;
 
 
-    onDown(e: FederatedPointerEvent) {
-        const currentSnap = this.snapEngine.getCurrentSnap();
-        const p: Vec2 = (currentSnap.kind !== "none") ? currentSnap.p : e.global;
+    onDown(_e: FederatedPointerEvent) {
+        const p: Vec2 = copyVec(this.currentSnap.p);
 
         // Start of shape drawing, create preview shape
         if (!this.previewShape) {
@@ -40,30 +41,32 @@ export abstract class BaseShapeTool extends BaseTool {
         this.previewShape.id = Date.now();
         useShapeStore.getState().add(this.previewShape);
 
-        // this.makeDraggable();
-        // this.applyHitArea();
-
         this.commitPreviewNodes();
 
-        this.postCreate(p, currentSnap.kind !== "none");
+        this.postCreate(p, this.currentSnap.kind !== "none");
     }
 
 
     // First check if cursor is in snapping range of node
     // Then deligate to tools own move handler
     public onMove(e: FederatedPointerEvent): void {
-        // Position that will be passed to the tool handler
         let p: Vec2 = e.global;
 
         // Call snap engine
-        const snapResult = this.snapEngine.snap(p, { radius: HIT_SLOP });
-        this.snapOverlay.render(snapResult);
+        this.currentSnap = this.snapEngine.snap({
+            p: p,
+            ds: this.dataSource,
+            opts: {
+                radius: HIT_SLOP,
+                enable: {
+                    node: true
+                }
+            }
+        })
+        this.snapOverlay.render(this.currentSnap);
 
         // Delegate to the shape tools onMove handler
-        if (snapResult.kind !== "none")
-            this.onMoveWithSnap(snapResult.p);
-        else
-            this.onMoveWithSnap(p);
+        this.onMoveWithSnap(this.currentSnap.p);
     }
 
     public onKeyDown(e: KeyboardEvent): void {

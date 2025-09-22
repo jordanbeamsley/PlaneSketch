@@ -4,7 +4,8 @@ import { GridOverlay } from "./overlay/gridOverlay";
 import { ToolController } from "./tools/ToolController";
 import type { ShapeLayers } from "@/models/layers";
 import { SnapOverlay } from "./snap/overlay";
-import { SnapEngine } from "./snap/engine";
+import { CachedDataSource } from "./snap/cachedDataSource";
+import { createDefaultSnapEngine } from "./snap";
 
 export function PixiStage() {
     const hostRef = useRef<HTMLDivElement>(null);
@@ -47,11 +48,13 @@ export function PixiStage() {
             app.renderer.on("resize", (w, h) => gridLayer.draw(w, h));
 
             // Setup snapping engine
+            const ds = new CachedDataSource();
+            ds.mount();
             const snapOverley = new SnapOverlay(guidesLayer);
-            const snapEngine = new SnapEngine();
+            const snapEngine = createDefaultSnapEngine();
 
             // Setup tool controller
-            tools = new ToolController(shapeLayers, snapOverley, snapEngine);
+            tools = new ToolController(shapeLayers, snapOverley, snapEngine, ds);
 
             // Set up pointer listeners
             app.stage.eventMode = "static";
