@@ -85,4 +85,8 @@ export abstract class BaseShapeTool extends BaseTool {
             default: break;
         }
     }
+
+    public destruct(): void {
+        this.discardGeometry();
+    }
 }

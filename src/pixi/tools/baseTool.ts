@@ -39,4 +39,5 @@ export abstract class BaseTool {
     abstract onDown(e: FederatedPointerEvent): void;
     abstract onMove(e: FederatedPointerEvent): void;
     abstract onKeyDown(e: KeyboardEvent): void;
+    abstract destruct(): void;
 }

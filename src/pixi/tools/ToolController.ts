@@ -21,6 +21,8 @@ export class ToolController {
     }
 
     private setTool(name: Tool) {
+        this.current.destruct();
+
         switch (name) {
             case "line": this.current = new LineTool(this.context, this.layers); break;
             case "rect": this.current = new RectTool(this.context, this.layers); break;
