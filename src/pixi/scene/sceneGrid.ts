@@ -7,7 +7,7 @@ export interface GridOptions {
     thickness: number;
 }
 
-export class GridOverlay extends Container {
+export class SceneGrid extends Container {
     private opts: GridOptions;
     private gfxGrid = new Graphics();
     private gfxAxis = new Graphics();

@@ -1,70 +1,117 @@
 import { Graphics } from "pixi.js";
-import { copyVec, type Vec2 } from "@/models/vectors";
+import { compareVec, type Vec2 } from "@/models/vectors";
+import { NODE_COLOR, NODE_RADIUS, PREVIEW_SEGMENT_STROKE } from "@/constants/drawing";
 import { BaseShapeTool } from "./baseShapeTool";
-import { STROKE_STYLE } from "@/constants/drawing";
-import type { Shape } from "@/models/shapes";
+import { useNodeStore } from "@/store/nodeStore";
+import { useSegmentStore } from "@/store/segmentStore";
+import type { Node, Segment } from "@/models/geometry";
+import type { GeometryLayers } from "@/models/stage";
+import type { ToolContext } from "../baseTool";
 
 export class RectTool extends BaseShapeTool {
 
-    onMoveWithSnap(p: Vec2): void {
-        if (!this.previewShape || this.previewShape.kind !== "rect") return;
+    private totalNodes = 4;
 
-        const p1 = copyVec(this.previewShape.geometryData.p1);
-        const p2 = copyVec(p);
+    protected layers: GeometryLayers;
 
-        this.previewShape.gfx.clear()
-            .moveTo(p1.x, p1.y)
-            .lineTo(p2.x, p1.y)
-            .lineTo(p2.x, p2.y)
-            .lineTo(p1.x, p2.y)
-            .closePath()
-            .stroke(STROKE_STYLE);
-        this.previewShape.gfx.eventMode = "none";
+    protected vertexNodesGfx: Graphics[] = [];
+    protected rectGfx: Graphics;
 
-        this.previewShape.geometryData.p2 = p2;
+    // Helper to convert anchors positions to 4 node positions
+    getPositionsFromAnchors = (startP: Vec2, endP: Vec2): Vec2[] => {
+        return ([
+            { x: startP.x, y: startP.y },
+            { x: endP.x, y: startP.y },
+            { x: endP.x, y: endP.y },
+            { x: startP.x, y: endP.y }
+        ])
+    }
 
-        this.previewNodes[1].p.x = p2.x; this.previewNodes[1].p.y = p1.y;
-        this.previewNodes[2].p.x = p2.x; this.previewNodes[2].p.y = p2.y;
-        this.previewNodes[3].p.x = p1.x; this.previewNodes[3].p.y = p2.y;
+    constructor(context: ToolContext, layers: GeometryLayers) {
+        super(context);
+        this.layers = layers;
+        this.totalRequiredAnchors = 2;
 
-        for (const n of this.previewNodes.slice(1)) {
-            n.gfx.position.set(n.p.x - p1.x, n.p.y - p1.y);
+        // Create graphics to draw a preview rect once
+        // Set to invisible, update when actually drawing
+        for (let i = 0; i < this.totalNodes; i++) {
+            const g = new Graphics().circle(0, 0, NODE_RADIUS).fill(NODE_COLOR);
+            g.eventMode = "none";
+            g.visible = false;
+            this.layers.preview.addChild(g);
+            this.vertexNodesGfx.push(g);
         }
+
+        this.rectGfx = new Graphics();
+        this.rectGfx.eventMode = "none";
+        this.rectGfx.visible = false;
+        this.layers.preview.addChild(this.rectGfx);
     }
 
-    onUp(): void {
-        // No-op
-    }
+    onMoveDraw(p: Vec2): void {
 
-    makeSkeleton(p: Vec2): Shape {
+        const startP = this.anchors[0];
+        const endP = p;
 
-        const p1 = copyVec(p);
-        const p2 = copyVec(p);
+        const nodePositions = this.getPositionsFromAnchors(startP, endP);
 
-        const shape: Shape = ({
-            id: 1,
-            kind: "rect",
-            gfx: new Graphics(),
-            geometryData: {
-                p1: p1,
-                p2: p2
-            }
+        this.vertexNodesGfx.forEach((g, i) => {
+            g.position.set(nodePositions[i].x, nodePositions[i].y);
+            g.visible = true;
         });
 
-        return shape;
+        // We can use a single graphic here
+        // the scene renderer will change to segments after commit
+        this.rectGfx.clear()
+            .moveTo(nodePositions[0].x, nodePositions[0].y)
+            .lineTo(nodePositions[1].x, nodePositions[1].y)
+            .lineTo(nodePositions[2].x, nodePositions[2].y)
+            .lineTo(nodePositions[3].x, nodePositions[3].y)
+            .closePath().stroke(PREVIEW_SEGMENT_STROKE);
+        this.rectGfx.visible = true;
     }
 
-    isNotZeroSize(): boolean {
-        if (!this.previewShape || this.previewShape.kind !== "rect") return false;
+    isZeroSize(): boolean {
+        // Should never happen
+        if (this.anchors.length < this.totalRequiredAnchors) return true;
 
-        const { p1, p2 } = this.previewShape.geometryData;
-        if (p1 == p2) return false;
+        // If anchors of rect are the same point, then is zero size
+        if (compareVec(this.anchors[0], this.anchors[1])) return true;
 
-        return true;
+        return false;
 
     }
 
-    postCreate(): void {
-        this.previewShape = undefined;
+    commitGeometry(): void {
+        // Commit nodes and segments to stores
+        const nodes: Node[] = [];
+        this.getPositionsFromAnchors(this.anchors[0], this.anchors[1]).forEach((n) => {
+            nodes.push({ id: this.nid(), p: { x: n.x, y: n.y } })
+        })
+
+        const segments: Segment[] = [
+            { id: this.sid(), p1: nodes[0].id, p2: nodes[1].id },
+            { id: this.sid(), p1: nodes[1].id, p2: nodes[2].id },
+            { id: this.sid(), p1: nodes[2].id, p2: nodes[3].id },
+            { id: this.sid(), p1: nodes[3].id, p2: nodes[0].id }
+        ]
+
+        useNodeStore.getState().addMany(nodes);
+        useSegmentStore.getState().addMany(segments);
+        this.discardGeometry();
     }
+
+    discardGeometry(): void {
+        this.anchors = [];
+        this.vertexNodesGfx.forEach((g) => {
+            g.visible = false;
+        });
+
+        this.rectGfx.visible = false;
+    }
+
+    postCreate(_p: Vec2, _isSnapped: boolean): void {
+        // No action
+    }
+
 }

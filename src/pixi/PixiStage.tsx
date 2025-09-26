@@ -1,11 +1,13 @@
 import { Application, Container } from "pixi.js";
 import { useEffect, useRef } from "react";
-import { GridOverlay } from "./overlay/gridOverlay";
 import { ToolController } from "./tools/ToolController";
-import type { ShapeLayers } from "@/models/layers";
 import { SnapOverlay } from "./snap/overlay";
 import { CachedDataSource } from "./snap/cachedDataSource";
 import { createDefaultSnapEngine } from "./snap";
+import type { GeometryLayers } from "@/models/stage";
+import { SceneGrid } from "./scene/sceneGrid";
+import { SceneGraphics } from "./scene/sceneGraphics";
+import type { ToolContext } from "./tools/baseTool";
 
 export function PixiStage() {
     const hostRef = useRef<HTMLDivElement>(null);
@@ -15,6 +17,8 @@ export function PixiStage() {
 
         const app = new Application();
         let tools: ToolController | null = null;
+        let snapDataCache: CachedDataSource | null = null;
+        let sceneGraphics: SceneGraphics | null = null;
 
         (async () => {
             // Bootstrap pixiCanvas
@@ -22,39 +26,44 @@ export function PixiStage() {
             hostRef.current!.appendChild(app.canvas);
 
             // Build layer stack
-            const gridLayer = new GridOverlay();
-            const sketchLayer = new Container();
+            const gridLayer = new SceneGrid();
+            const edgeLayer = new Container();
             const nodeLayer = new Container();
             const previewLayer = new Container(); // Ghost shapes while drawing
             const guidesLayer = new Container(); // Snaps points, alignment lines, etc.
 
             gridLayer.zIndex = -1;
-            sketchLayer.zIndex = 10;
+            edgeLayer.zIndex = 10;
             nodeLayer.zIndex = 20;
             previewLayer.zIndex = 30;
             guidesLayer.zIndex = 40;
 
-            const shapeLayers: ShapeLayers = {
-                sketch: sketchLayer,
+            const geometryLayers: GeometryLayers = {
+                edges: edgeLayer,
                 nodes: nodeLayer,
                 preview: previewLayer,
             };
 
             // Add layer stack to pixi stage
-            app.stage.addChild(gridLayer, sketchLayer, nodeLayer, previewLayer, guidesLayer);
+            app.stage.addChild(gridLayer, edgeLayer, nodeLayer, previewLayer, guidesLayer);
 
-            // Create canvas grid overlay
+            // Create grid overlay
             gridLayer.draw(app.screen.width, app.screen.height);
             app.renderer.on("resize", (w, h) => gridLayer.draw(w, h));
 
+            // Setup scene renderer
+            sceneGraphics = new SceneGraphics(geometryLayers);
+            sceneGraphics.mount();
+
             // Setup snapping engine
-            const ds = new CachedDataSource();
-            ds.mount();
+            snapDataCache = new CachedDataSource();
+            snapDataCache.mount();
             const snapOverley = new SnapOverlay(guidesLayer);
             const snapEngine = createDefaultSnapEngine();
 
             // Setup tool controller
-            tools = new ToolController(shapeLayers, snapOverley, snapEngine, ds);
+            const toolContext: ToolContext = { snapEngine: snapEngine, snapOverlay: snapOverley, dataSource: snapDataCache }
+            tools = new ToolController(toolContext, geometryLayers);
 
             // Set up pointer listeners
             app.stage.eventMode = "static";
@@ -63,8 +72,6 @@ export function PixiStage() {
             app.stage
                 .on("pointerdown", (e) => tools!.onDown(e))
                 .on("pointermove", (e) => tools!.onMove(e))
-                .on("pointerup", (e) => tools!.onUp(e))
-                .on("pointerupoutside", () => tools!.onUp);
         })();
 
         // Keyboard routing
@@ -76,6 +83,8 @@ export function PixiStage() {
             if (app.renderer) {
                 app.destroy(true, { children: true, texture: true });
             }
+            sceneGraphics?.umount();
+            snapDataCache?.umount();
         }
     }, []);
 

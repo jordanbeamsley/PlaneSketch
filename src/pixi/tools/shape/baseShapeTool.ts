@@ -1,154 +1,88 @@
 import { type FederatedPointerEvent } from "pixi.js";
-import { HIT_SLOP } from "@/constants/drawing";
 import { copyVec, type Vec2 } from "@/models/vectors";
-import { BaseTool } from "../baseTool";
-import type { Shape } from "@/models/shapes";
-import { useNodeStore } from "@/store/nodeStore";
-import { generateNodesForShape } from "@/pixi/nodes/nodeFactory";
-import { useShapeStore } from "@/store/shapeStore";
+import { BaseTool, type ToolContext } from "../baseTool";
 import type { SnapResult } from "@/pixi/snap/types";
-import type { Node } from "@/models/geometry";
 
 export abstract class BaseShapeTool extends BaseTool {
 
-    protected previewShape?: Shape;
-    protected previewNodes: Node[] = [];
-    protected currentSnap: SnapResult = { kind: "none", p: { x: 0, y: 0 } };
+    // Different tools require a different number of anchors to define geometry
+    // e.g lines = start + end, arc = center + start + end
+    // Once required nodes has been reached, geometry is committed to store
+    // Each tool must override this property
+    protected totalRequiredAnchors: number;
 
-    abstract onMoveWithSnap(p: Vec2): void;
-    abstract onUp(e: FederatedPointerEvent): void;
-    abstract makeSkeleton(p: Vec2): Shape;
-    abstract isNotZeroSize(): boolean;
+    // Store preview nodes in an array
+    protected anchors: Vec2[];
+
+    // Store the current snap position from the OnMove handler
+    // Pass this into the onDown handler so that final geometry uses the snapped position
+    protected currentSnap: SnapResult;
+
+    // May want to append an identifier to the start of the UUID in the future
+    nid = () => crypto.randomUUID();
+    sid = () => crypto.randomUUID();
+
+    abstract onMoveDraw(p: Vec2): void;
+    abstract isZeroSize(): boolean;
+    abstract commitGeometry(): void;
+    abstract discardGeometry(): void;
     abstract postCreate(p: Vec2, isSnapped: boolean): void;
 
+    constructor(context: ToolContext) {
+        super(context);
+        this.totalRequiredAnchors = 0;
+        this.anchors = [];
+        this.currentSnap = { kind: "none", p: { x: 0, y: 0 } };
+    }
 
     onDown(_e: FederatedPointerEvent) {
         const p: Vec2 = copyVec(this.currentSnap.p);
 
-        // Start of shape drawing, create preview shape
-        if (!this.previewShape) {
-            this.createPreviewShape(p);
+        // Push preview nodes to array, then check if we're at total required nodes to completely define geometry
+        // If not, then return
+        // Each tools on move handler will use nodes to construct preview geometry
+        this.anchors.push(p);
+        if (this.anchors.length < this.totalRequiredAnchors) {
             return;
         }
 
-        // If the shape is of zero size, discard it
-        if (!this.isNotZeroSize()) {
-            this.discardPreviewNodes();
-            this.discardPreviewShape();
+        // If we get here, then geometry has been fully defined
+        // First check if geometry is zero size (e.g line.p1 = line.p2)
+        // If it is, discard it and return
+        if (this.isZeroSize()) {
+            this.discardGeometry();
             return;
         }
 
-        this.previewShape.id = Date.now();
-        useShapeStore.getState().add(this.previewShape);
-
-        this.commitPreviewNodes();
-
+        // Finally, call tools handler for committing geometry to store
+        // Then call any post create steps (e.g in line tool, immediately start drawing new line)
+        this.commitGeometry();
         this.postCreate(p, this.currentSnap.kind !== "none");
     }
 
-
-    // First check if cursor is in snapping range of node
-    // Then deligate to tools own move handler
     public onMove(e: FederatedPointerEvent): void {
         let p: Vec2 = e.global;
 
-        // Call snap engine
-        this.currentSnap = this.snapEngine.snap({
-            p: p,
-            ds: this.dataSource,
-            opts: {
-                radius: HIT_SLOP,
-                enable: {
-                    node: true
-                }
-            }
-        })
+        // Call snap engine against current cursor position
+        this.currentSnap = this.snapEngine.snap({ ...this.resolvedSnapContext, p: p })
         this.snapOverlay.render(this.currentSnap);
 
-        // Delegate to the shape tools onMove handler
-        this.onMoveWithSnap(this.currentSnap.p);
+
+        // First check if we are actually drawing
+        // If we are, then delegate to tools onMove to render preview
+        if (this.anchors.length > 0) {
+            this.onMoveDraw(this.currentSnap.p);
+        }
     }
 
     public onKeyDown(e: KeyboardEvent): void {
         switch (e.key) {
             // Abort current preview shapes
             case "q": {
-                this.discardPreviewNodes();
-                this.discardPreviewShape();
+                this.discardGeometry();
                 break;
             }
             default: break;
         }
-    }
-
-    protected createPreviewShape(p: Vec2) {
-        this.previewShape = this.makeSkeleton(p);
-        this.previewNodes = generateNodesForShape(this.previewShape);
-
-        this.previewNodes.forEach((n) => this.layers.preview.addChild(n.gfx));
-        this.layers.sketch.addChild(this.previewShape.gfx);
-    }
-
-    protected addPreviewNode(n: Node) {
-        this.previewNodes.push(n);
-        this.layers.preview.addChild(n.gfx);
-    }
-
-    protected commitPreviewNodes() {
-        if (this.previewNodes.length === 0) return;
-
-        this.previewNodes.forEach((n) => {
-            this.layers.preview.removeChild(n.gfx);
-            this.layers.nodes.addChild(n.gfx);
-        })
-
-        useNodeStore.getState().addMany(this.previewNodes);
-
-        this.previewNodes = [];
-    }
-
-    protected discardPreviewNodes() {
-        this.layers.preview.removeChildren().forEach((g) => g.destroy());
-        this.previewNodes = [];
-    }
-
-    protected discardPreviewShape() {
-        if (this.previewShape) {
-            // Remove the shape’s gfx from the sketch layer
-            this.layers.sketch.removeChild(this.previewShape.gfx);
-            this.previewShape.gfx.destroy(); // free GPU buffers
-
-            this.previewShape = undefined;
-        }
-    }
-
-    makeDraggable() {
-        if (!this.previewShape) return;
-        const g = this.previewShape.gfx;
-        let offsetX = 0, offsetY = 0;
-
-        function onDragStart(e: FederatedPointerEvent) {
-            offsetX = e.globalX - g.x;
-            offsetY = e.globalY - g.y;
-            g.cursor = "grabbing";
-            g.alpha = 0.8;
-            g.on('pointermove', onDragMove);
-        }
-
-        function onDragMove(e: FederatedPointerEvent) {
-            g.position.set(e.globalX - offsetX, e.globalY - offsetY);
-        }
-
-        function onDragEnd() {
-            g.off("pointermove", onDragMove);
-            g.cursor = "move";
-            g.alpha = 1;
-        }
-
-        g.eventMode = "static";
-        g.cursor = "move";
-        g.on("pointerdown", onDragStart)
-            .on("pointerup", onDragEnd)
-            .on("pointerupoutside", onDragEnd);
     }
 }

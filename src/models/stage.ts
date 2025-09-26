@@ -1,7 +1,7 @@
 import type { Container } from "pixi.js";
 
-export interface ShapeLayers {
-    sketch: Container;
+export interface GeometryLayers {
+    edges: Container;
     nodes: Container;
     preview: Container;
 }

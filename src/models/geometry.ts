@@ -1,16 +1,32 @@
-import type { Graphics } from "pixi.js";
 import type { Vec2 } from "./vectors";
 
-export interface Node {
-    id: string;
-    role: "vertex" | "centre" | "radius";
+export type NodeId = string;
+export type SegmentId = string;
+export type ArcId = string;
+export type CircleId = string;
+
+export type Node = {
+    id: NodeId;
     p: Vec2;
-    gfx: Graphics;
 }
 
-export interface Segment {
-    id: string;
-    n1: string;
-    n2: string;
-    gfx: Graphics;
+export type Segment = {
+    id: SegmentId;
+    p1: NodeId;
+    p2: NodeId;
 }
+
+export type Arc = {
+    id: ArcId;
+    center: NodeId;
+    start: NodeId;
+    end: NodeId;
+    cw: boolean;
+}
+
+export type Circle = {
+    id: CircleId;
+    center: NodeId;
+    radiusNode: NodeId;
+}
+

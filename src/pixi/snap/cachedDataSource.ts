@@ -1,5 +1,6 @@
 import { useNodeStore } from "@/store/nodeStore";
 import type { NodeLite, SegmentLite, SnapDataSource } from "./types";
+import { useSegmentStore } from "@/store/segmentStore";
 import { copyVec } from "@/models/vectors";
 
 export class CachedDataSource implements SnapDataSource {
@@ -16,9 +17,22 @@ export class CachedDataSource implements SnapDataSource {
         // Store subscriptions
         this.subs.push(
             useNodeStore.subscribe(
-                (_state) => { this.rebuildNodes(); }
-            ),
-        )
+                (state) => state.byId,
+                () => {
+                    this.rebuildNodes();
+                    this.rebuildSegments();
+                }
+            )
+        );
+
+        this.subs.push(
+            useSegmentStore.subscribe(
+                (state) => state.byId,
+                () => {
+                    this.rebuildSegments();
+                }
+            )
+        );
     }
 
     umount() {
@@ -37,11 +51,28 @@ export class CachedDataSource implements SnapDataSource {
     }
 
     private rebuildNodes() {
-        const nodes = useNodeStore.getState().nodes;
-        this.nodesLite = nodes.map(n => ({ id: n.id, p: copyVec(n.p) }))
+        const nodes = useNodeStore.getState().byId;
+        this.nodesLite = Array.from(nodes.values()).map(n => ({ id: n.id, p: copyVec(n.p) }));
     }
 
     private rebuildSegments() {
-        // Implement when segment store available
+        const segs = useSegmentStore.getState().byId;
+        const nodes = useNodeStore.getState().byId;
+
+        const out: SegmentLite[] = [];
+        for (const seg of segs.values()) {
+            const a = nodes.get(seg.p1);
+            const b = nodes.get(seg.p2);
+
+            // Should never happen, but handle edge case of dangling segment
+            if (!a || !b) continue;
+            out.push({
+                id: seg.id,
+                a: copyVec(a.p),
+                b: copyVec(b.p)
+            });
+        }
+
+        this.segmentLite = out;
     }
 }

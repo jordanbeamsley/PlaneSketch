@@ -1,46 +1,35 @@
 import type { FederatedPointerEvent } from "pixi.js";
-import type { BaseTool } from "./baseTool";
+import type { BaseTool, ToolContext } from "./baseTool";
 import { LineTool } from "./shape/lineTool";
-import { RectTool } from "./shape/rectTool";
-import { CircleTool } from "./shape/circleTool";
-import type { SnapOverlay } from "../snap/overlay";
-import type { SnapEngine } from "../snap/engine";
 import { useToolStore } from "@/store/toolStore";
 import type { Tool } from "@/models/tools";
-import type { CachedDataSource } from "../snap/cachedDataSource";
-import type { ShapeLayers } from "@/models/stage";
+import type { GeometryLayers } from "@/models/stage";
+import { RectTool } from "./shape/rectTool";
 
 export class ToolController {
     private current: BaseTool;
-    private layers: ShapeLayers;
-    private snapOverley: SnapOverlay;
-    private snapEngine: SnapEngine;
-    private dataSource: CachedDataSource;
+    private layers: GeometryLayers;
+    private context: ToolContext;
 
-    constructor(layers: ShapeLayers, snapOverlay: SnapOverlay, snapEngine: SnapEngine, dataSource: CachedDataSource) {
+    constructor(context: ToolContext, layers: GeometryLayers) {
         this.layers = layers;
-        this.snapOverley = snapOverlay;
-        this.snapEngine = snapEngine;
-        this.dataSource = dataSource;
+        this.context = context;
 
-        this.current = new LineTool(layers, snapOverlay, snapEngine, dataSource); // default
+        this.current = new LineTool(this.context, this.layers); // default
         useToolStore.subscribe(({ tool }) => this.setTool(tool));
         this.setTool(useToolStore.getState().tool);
     }
 
     private setTool(name: Tool) {
         switch (name) {
-            case "line": this.current = new LineTool(this.layers, this.snapOverley, this.snapEngine, this.dataSource); break;
-            case "rect": this.current = new RectTool(this.layers, this.snapOverley, this.snapEngine, this.dataSource); break;
-            case "circle": this.current = new CircleTool(this.layers, this.snapOverley, this.snapEngine, this.dataSource); break;
+            case "line": this.current = new LineTool(this.context, this.layers); break;
+            case "rect": this.current = new RectTool(this.context, this.layers); break;
+            // case "circle": this.current = new CircleTool(this.context, this.layers); break;
             default: break;
         }
-
-        this.layers.preview.removeChildren().forEach((g) => g.destroy());
     }
 
     onDown(e: FederatedPointerEvent) { this.current.onDown(e); }
     onMove(e: FederatedPointerEvent) { this.current.onMove(e); }
-    onUp(e: FederatedPointerEvent) { this.current.onUp(e); }
     onKeyDown(e: KeyboardEvent) { this.current.onKeyDown(e); }
 }
