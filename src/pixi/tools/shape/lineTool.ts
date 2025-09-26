@@ -77,9 +77,6 @@ export class LineTool extends BaseShapeTool {
         useNodeStore.getState().addMany(nodes);
         useSegmentStore.getState().add({ id: this.sid(), p1: nodes[0].id, p2: nodes[1].id })
 
-        const segCount = useSegmentStore.getState().byId.size;
-        console.log('segments in store:', segCount);
-
         this.discardGeometry();
     }
 

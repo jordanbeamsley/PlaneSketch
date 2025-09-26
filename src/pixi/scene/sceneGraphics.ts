@@ -84,9 +84,6 @@ export class SceneGraphics {
         const segs = useSegmentStore.getState().byId;
         const nodes = useNodeStore.getState().byId;
 
-
-        console.log('syncSegments sees', segs.size, 'segments');
-
         for (const [id, s] of segs) {
             const a = nodes.get(s.p1);
             const b = nodes.get(s.p2);
