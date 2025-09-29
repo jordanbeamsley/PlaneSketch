@@ -24,7 +24,7 @@ export interface SnapDataSource {
 // What snap engine returns to tools
 export type SnapResult =
     | { kind: "none", p: Vec2 }
-    | { kind: Exclude<SnapKind, "none">, p: Vec2, meta?: Record<string, string | number> };
+    | { kind: Exclude<SnapKind, "none">, p: Vec2, id?: string };
 
 // For snaps that require an achor (ie. start point) such as vertical and horizontal snapping
 export interface AxisAnchor {

@@ -26,7 +26,7 @@ export class SnapEngine {
             if (s > bestScore) { best = c, bestScore = s }
         })
 
-        return { kind: best.kind, p: best.p, meta: { id: best.id ?? '' } }
+        return { kind: best.kind, p: best.p, id: best.id ?? '' }
 
     }
 

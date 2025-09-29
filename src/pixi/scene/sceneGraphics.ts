@@ -22,9 +22,9 @@ export class SceneGraphics {
             useNodeStore.subscribe(
                 (state) => state.byId,
                 (state, prevState) => {
-                    const fullUpdate = state.size < prevState.size;
-                    this.syncNodes(fullUpdate);
-                    this.syncSegments(fullUpdate);
+                    const withDelete = state.size < prevState.size;
+                    this.syncNodes(withDelete);
+                    this.syncSegments(withDelete);
                 }
             )
         )
@@ -59,6 +59,8 @@ export class SceneGraphics {
 
     syncNodes(withDelete = false) {
         const nodes = useNodeStore.getState().byId;
+
+        console.log(`${nodes.size} nodes in store`);
 
         for (const [id, n] of nodes) {
             let g = this.nodeGfx.get(id);

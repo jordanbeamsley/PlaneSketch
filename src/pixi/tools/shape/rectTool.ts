@@ -53,7 +53,7 @@ export class RectTool extends BaseShapeTool {
         const startP = this.anchors[0];
         const endP = p;
 
-        const nodePositions = this.getPositionsFromAnchors(startP, endP);
+        const nodePositions = this.getPositionsFromAnchors(startP.p, endP);
 
         this.vertexNodesGfx.forEach((g, i) => {
             g.position.set(nodePositions[i].x, nodePositions[i].y);
@@ -76,7 +76,7 @@ export class RectTool extends BaseShapeTool {
         if (this.anchors.length < this.totalRequiredAnchors) return true;
 
         // If anchors of rect are the same point, then is zero size
-        if (compareVec(this.anchors[0], this.anchors[1])) return true;
+        if (compareVec(this.anchors[0].p, this.anchors[1].p)) return true;
 
         return false;
 
@@ -84,11 +84,13 @@ export class RectTool extends BaseShapeTool {
 
     commitGeometry(): void {
         // Commit nodes and segments to stores
-        const nodes: Node[] = [];
-        this.getPositionsFromAnchors(this.anchors[0], this.anchors[1]).forEach((n) => {
-            nodes.push({ id: this.nid(), p: { x: n.x, y: n.y } })
-        })
-
+        const positions = this.getPositionsFromAnchors(this.anchors[0].p, this.anchors[1].p);
+        const nodes: Node[] = [
+            this.anchors[0],
+            { id: this.nid(), p: { x: positions[1].x, y: positions[1].y } },
+            this.anchors[1],
+            { id: this.nid(), p: { x: positions[3].x, y: positions[3].y } }
+        ];
         const segments: Segment[] = [
             { id: this.sid(), p1: nodes[0].id, p2: nodes[1].id },
             { id: this.sid(), p1: nodes[1].id, p2: nodes[2].id },

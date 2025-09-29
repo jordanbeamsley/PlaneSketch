@@ -4,7 +4,6 @@ import { NODE_COLOR, NODE_RADIUS, PREVIEW_SEGMENT_STROKE } from "@/constants/dra
 import { BaseShapeTool } from "./baseShapeTool";
 import { useNodeStore } from "@/store/nodeStore";
 import { useSegmentStore } from "@/store/segmentStore";
-import type { Node } from "@/models/geometry";
 import type { GeometryLayers } from "@/models/stage";
 import type { ToolContext } from "../baseTool";
 
@@ -44,14 +43,14 @@ export class LineTool extends BaseShapeTool {
         const startP = this.anchors[0];
         const endP = p;
 
-        this.startNodeGfx.position.set(startP.x, startP.y);
+        this.startNodeGfx.position.set(startP.p.x, startP.p.y);
         this.startNodeGfx.visible = true;
 
         this.endNodeGfx.position.set(endP.x, endP.y);
         this.endNodeGfx.visible = true;
 
         this.lineGfx.clear()
-            .moveTo(startP.x, startP.y)
+            .moveTo(startP.p.x, startP.p.y)
             .lineTo(endP.x, endP.y)
             .stroke(PREVIEW_SEGMENT_STROKE);
         this.lineGfx.visible = true;
@@ -62,7 +61,7 @@ export class LineTool extends BaseShapeTool {
         if (this.anchors.length < this.totalRequiredAnchors) return true;
 
         // If start and end of line are the same point, then is zero size
-        if (compareVec(this.anchors[0], this.anchors[1])) return true;
+        if (compareVec(this.anchors[0].p, this.anchors[1].p)) return true;
 
         return false;
 
@@ -70,14 +69,8 @@ export class LineTool extends BaseShapeTool {
 
     commitGeometry(): void {
         // Commit nodes and segments to stores
-        const nodes: Node[] = [];
-        for (const p of this.anchors) {
-            nodes.push({ id: this.nid(), p: { x: p.x, y: p.y } })
-        }
-        useNodeStore.getState().addMany(nodes);
-        useSegmentStore.getState().add({ id: this.sid(), p1: nodes[0].id, p2: nodes[1].id })
-
-        this.discardGeometry();
+        useNodeStore.getState().addMany(this.anchors);
+        useSegmentStore.getState().add({ id: this.sid(), p1: this.anchors[0].id, p2: this.anchors[1].id })
     }
 
     discardGeometry(): void {
@@ -87,14 +80,16 @@ export class LineTool extends BaseShapeTool {
         this.lineGfx.visible = false;
     }
 
-    postCreate(p: Vec2, isSnapped: boolean): void {
+    postCreate(_p: Vec2, isSnapped: boolean): void {
+        const lastAnchor = this.anchors[1];
+        this.discardGeometry();
+
         // If we're snapped to a guide then end line drawing
-        this.anchors = [];
         if (isSnapped) {
             return;
         }
         // Otherwise create a new line from the end point of the previous
-        this.anchors.push(p);
+        this.anchors.push(lastAnchor);
     }
 
 }

@@ -2,6 +2,7 @@ import { type FederatedPointerEvent } from "pixi.js";
 import { copyVec, type Vec2 } from "@/models/vectors";
 import { BaseTool, type ToolContext } from "../baseTool";
 import type { SnapResult } from "@/pixi/snap/types";
+import type { Node } from "@/models/geometry";
 
 export abstract class BaseShapeTool extends BaseTool {
 
@@ -11,8 +12,8 @@ export abstract class BaseShapeTool extends BaseTool {
     // Each tool must override this property
     protected totalRequiredAnchors: number;
 
-    // Store preview nodes in an array
-    protected anchors: Vec2[];
+    // Store preview anchors in an array
+    protected anchors: Node[];
 
     // Store the current snap position from the OnMove handler
     // Pass this into the onDown handler so that final geometry uses the snapped position
@@ -36,18 +37,21 @@ export abstract class BaseShapeTool extends BaseTool {
     }
 
     onDown(_e: FederatedPointerEvent) {
-        const p: Vec2 = copyVec(this.currentSnap.p);
+        // If we're snapped to a node, then use the existing nodes ID
+        // When committing geometry to store, the existing node ID will be used for segments
+        const snap = this.currentSnap;
+        const id = (snap.kind === "node" && snap.id) ? snap.id : this.nid();
 
-        // Push preview nodes to array, then check if we're at total required nodes to completely define geometry
+        // Push preview anchors to array, then check if we're at total required anchors to completely define geometry
         // If not, then return
-        // Each tools on move handler will use nodes to construct preview geometry
-        this.anchors.push(p);
+        // Each tools on move handler will use anchors to construct preview geometry
+        this.anchors.push({ id: id, p: copyVec(snap.p) });
         if (this.anchors.length < this.totalRequiredAnchors) {
             return;
         }
 
         // If we get here, then geometry has been fully defined
-        // First check if geometry is zero size (e.g line.p1 = line.p2)
+        // First check if geometry is zero size (e.g line.start = line.end)
         // If it is, discard it and return
         if (this.isZeroSize()) {
             this.discardGeometry();
@@ -57,7 +61,7 @@ export abstract class BaseShapeTool extends BaseTool {
         // Finally, call tools handler for committing geometry to store
         // Then call any post create steps (e.g in line tool, immediately start drawing new line)
         this.commitGeometry();
-        this.postCreate(p, this.currentSnap.kind !== "none");
+        this.postCreate(snap.p, this.currentSnap.kind !== "none");
     }
 
     public onMove(e: FederatedPointerEvent): void {
