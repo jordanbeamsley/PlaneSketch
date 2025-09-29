@@ -1,4 +1,4 @@
-import type { FederatedPointerEvent } from "pixi.js";
+import type { Point } from "pixi.js";
 import type { SnapOverlay } from "../snap/overlay";
 import type { SnapEngine } from "../snap/engine";
 import type { CachedDataSource } from "../snap/cachedDataSource";
@@ -9,6 +9,10 @@ export interface ToolContext {
     snapOverlay: SnapOverlay;
     snapEngine: SnapEngine;
     dataSource: CachedDataSource
+}
+
+export interface PointerPayload {
+    world: Point;
 }
 
 export abstract class BaseTool {
@@ -36,8 +40,8 @@ export abstract class BaseTool {
         }
     }
 
-    abstract onDown(e: FederatedPointerEvent): void;
-    abstract onMove(e: FederatedPointerEvent): void;
+    abstract onDown(p: PointerPayload): void;
+    abstract onMove(p: PointerPayload): void;
     abstract onKeyDown(e: KeyboardEvent): void;
     abstract destruct(): void;
 }

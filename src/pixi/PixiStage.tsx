@@ -1,4 +1,4 @@
-import { Application, Container } from "pixi.js";
+import { Application, Container, Point } from "pixi.js";
 import { useEffect, useRef } from "react";
 import { ToolController } from "./tools/ToolController";
 import { SnapOverlay } from "./snap/overlay";
@@ -25,6 +25,12 @@ export function PixiStage() {
             await app.init({ resizeTo: window, background: "#202124", antialias: true });
             hostRef.current!.appendChild(app.canvas);
 
+            // Camera container (handles zoom, pan, etc.)
+            // All other containers use world co-ords
+            const world = new Container();
+            world.eventMode = "passive";
+            world.sortableChildren = true;
+
             // Build layer stack
             const gridLayer = new SceneGrid();
             const edgeLayer = new Container();
@@ -44,8 +50,13 @@ export function PixiStage() {
                 preview: previewLayer,
             };
 
-            // Add layer stack to pixi stage
-            app.stage.addChild(gridLayer, edgeLayer, nodeLayer, previewLayer, guidesLayer);
+            // All containers are scaled by the world container
+            // Stage holds the world/ camera
+            world.addChild(gridLayer, edgeLayer, nodeLayer, previewLayer, guidesLayer);
+            app.stage.addChild(world);
+
+            // Utility to convert global point to world space
+            const toWorld = (e: Point) => world.toLocal(e);
 
             // Create grid overlay
             gridLayer.draw(app.screen.width, app.screen.height);
@@ -70,8 +81,8 @@ export function PixiStage() {
             app.stage.hitArea = app.screen;
             app.stage.cursor = "crosshair";
             app.stage
-                .on("pointerdown", (e) => tools!.onDown(e))
-                .on("pointermove", (e) => tools!.onMove(e))
+                .on("pointerdown", (e) => tools!.onDown({ world: toWorld(e.global) }))
+                .on("pointermove", (e) => tools!.onMove({ world: toWorld(e.global) }))
         })();
 
         // Keyboard routing

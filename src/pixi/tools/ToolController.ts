@@ -1,5 +1,4 @@
-import type { FederatedPointerEvent } from "pixi.js";
-import type { BaseTool, ToolContext } from "./baseTool";
+import type { BaseTool, PointerPayload, ToolContext } from "./baseTool";
 import { LineTool } from "./shape/lineTool";
 import { useToolStore } from "@/store/toolStore";
 import type { Tool } from "@/models/tools";
@@ -32,7 +31,7 @@ export class ToolController {
         }
     }
 
-    onDown(e: FederatedPointerEvent) { this.current.onDown(e); }
-    onMove(e: FederatedPointerEvent) { this.current.onMove(e); }
+    onDown(e: PointerPayload) { this.current.onDown(e); }
+    onMove(e: PointerPayload) { this.current.onMove(e); }
     onKeyDown(e: KeyboardEvent) { this.current.onKeyDown(e); }
 }

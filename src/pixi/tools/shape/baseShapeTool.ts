@@ -1,6 +1,5 @@
-import { type FederatedPointerEvent } from "pixi.js";
 import { copyVec, type Vec2 } from "@/models/vectors";
-import { BaseTool, type ToolContext } from "../baseTool";
+import { BaseTool, type PointerPayload, type ToolContext } from "../baseTool";
 import type { SnapResult } from "@/pixi/snap/types";
 import type { Node } from "@/models/geometry";
 
@@ -37,7 +36,7 @@ export abstract class BaseShapeTool extends BaseTool {
         this.currentSnap = { kind: "none", p: { x: 0, y: 0 } };
     }
 
-    onDown(_e: FederatedPointerEvent) {
+    onDown(_e: PointerPayload) {
         // If we're snapped to a node, then use the existing nodes ID
         // When committing geometry to store, the existing node ID will be used for segments
         const snap = this.currentSnap;
@@ -65,8 +64,8 @@ export abstract class BaseShapeTool extends BaseTool {
         this.postCreate(snap.p, this.currentSnap.kind !== "none");
     }
 
-    public onMove(e: FederatedPointerEvent): void {
-        let p: Vec2 = e.global;
+    public onMove(e: PointerPayload): void {
+        let p: Vec2 = e.world;
 
         // If we already have a first point, use it as the axis anchor (for H and V snapping)
         const hasAnchor = this.anchors.length > 0;
