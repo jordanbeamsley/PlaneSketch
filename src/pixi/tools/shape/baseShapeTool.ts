@@ -67,14 +67,23 @@ export abstract class BaseShapeTool extends BaseTool {
     public onMove(e: FederatedPointerEvent): void {
         let p: Vec2 = e.global;
 
-        // Call snap engine against current cursor position
-        this.currentSnap = this.snapEngine.snap({ ...this.resolvedSnapContext, p: p })
+        // If we already have a first point, use it as the axis anchor (for H and V snapping)
+        const hasAnchor = this.anchors.length > 0;
+        const anchor = hasAnchor ? this.anchors[this.anchors.length - 1].p : undefined;
+
+        // Build the snap context for this move
+        const snapCtx = anchor
+            ? { ...this.resolvedSnapContext, p, axis: { anchor } }
+            : { ...this.resolvedSnapContext, p }
+
+        // Run snapping and render hover 
+        this.currentSnap = this.snapEngine.snap(snapCtx)
         this.snapOverlay.render(this.currentSnap);
 
 
         // First check if we are actually drawing
         // If we are, then delegate to tools onMove to render preview
-        if (this.anchors.length > 0) {
+        if (hasAnchor) {
             this.onMoveDraw(this.currentSnap.p);
         }
     }
