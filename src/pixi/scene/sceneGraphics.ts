@@ -135,10 +135,9 @@ export class SceneGraphics {
 
         for (const [id, c] of circles) {
             const a = nodes.get(c.center);
-            const b = nodes.get(c.radius);
 
             // Should never happen, but handle edge case of dangling segment
-            if (!a || !b) continue;
+            if (!a) continue;
 
             let g = this.circleGfx.get(id);
             if (!g) {
@@ -149,9 +148,8 @@ export class SceneGraphics {
 
             // Redraw circle
             // Eventually implement partial updates
-            const radius = Math.hypot(b.p.x - a.p.x, b.p.y - a.p.y);
             g?.clear()
-                .circle(a.p.x, a.p.y, radius)
+                .circle(a.p.x, a.p.y, c.radius)
                 .stroke(SEGMENT_STROKE);
         }
 

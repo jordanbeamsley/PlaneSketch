@@ -12,7 +12,6 @@ export class CircleTool extends BaseShapeTool {
     protected layers: GeometryLayers;
 
     protected centreNodeGfx: Graphics;
-    protected radiusNodeGfx: Graphics;
     protected arcGfx: Graphics;
 
     constructor(context: ToolContext, layers: GeometryLayers) {
@@ -27,11 +26,6 @@ export class CircleTool extends BaseShapeTool {
         this.centreNodeGfx.visible = false;
         this.layers.preview.addChild(this.centreNodeGfx);
 
-        this.radiusNodeGfx = new Graphics().circle(0, 0, NODE_RADIUS).fill(NODE_COLOR);
-        this.radiusNodeGfx.eventMode = "none";
-        this.radiusNodeGfx.visible = false;
-        this.layers.preview.addChild(this.radiusNodeGfx);
-
         this.arcGfx = new Graphics();
         this.arcGfx.eventMode = "none";
         this.arcGfx.visible = false;
@@ -40,18 +34,15 @@ export class CircleTool extends BaseShapeTool {
 
     onMoveDraw(p: Vec2): void {
 
-        const startP = this.anchors[0];
+        const startP = this.anchors[0].p;
         const endP = p;
-        const radius = Math.hypot(endP.x - startP.p.x, endP.y - startP.p.y);
+        const radius = Math.hypot(endP.x - startP.x, endP.y - startP.y);
 
-        this.centreNodeGfx.position.set(startP.p.x, startP.p.y);
+        this.centreNodeGfx.position.set(startP.x, startP.y);
         this.centreNodeGfx.visible = true;
 
-        this.radiusNodeGfx.position.set(endP.x, endP.y);
-        this.radiusNodeGfx.visible = true;
-
         this.arcGfx.clear()
-            .circle(startP.p.x, startP.p.y, radius)
+            .circle(startP.x, startP.y, radius)
             .stroke(PREVIEW_SEGMENT_STROKE);
         this.arcGfx.visible = true;
     }
@@ -69,14 +60,17 @@ export class CircleTool extends BaseShapeTool {
 
     commitGeometry(): void {
         // Commit nodes and segments to stores
-        useNodeStore.getState().addMany(this.anchors);
-        useCircleStore.getState().add({ id: this.cid(), center: this.anchors[0].id, radius: this.anchors[1].id })
+        const centreP = this.anchors[0].p;
+        const radiusP = this.anchors[1].p;
+        const radius = Math.hypot(radiusP.x - centreP.x, radiusP.y - centreP.y);
+
+        useNodeStore.getState().add(this.anchors[0]);
+        useCircleStore.getState().add({ id: this.cid(), center: this.anchors[0].id, radius: radius })
     }
 
     discardGeometry(): void {
         this.anchors = [];
         this.centreNodeGfx.visible = false;
-        this.radiusNodeGfx.visible = false;
         this.arcGfx.visible = false;
     }
 
