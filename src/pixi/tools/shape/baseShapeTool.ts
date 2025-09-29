@@ -22,6 +22,7 @@ export abstract class BaseShapeTool extends BaseTool {
     // May want to append an identifier to the start of the UUID in the future
     nid = () => crypto.randomUUID();
     sid = () => crypto.randomUUID();
+    cid = () => crypto.randomUUID();
 
     abstract onMoveDraw(p: Vec2): void;
     abstract isZeroSize(): boolean;

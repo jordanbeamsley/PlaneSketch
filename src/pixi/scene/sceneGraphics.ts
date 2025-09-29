@@ -1,5 +1,6 @@
 import { NODE_COLOR, NODE_RADIUS, SEGMENT_STROKE } from "@/constants/drawing";
 import type { GeometryLayers } from "@/models/stage";
+import { useCircleStore } from "@/store/circleStore";
 import { useNodeStore } from "@/store/nodeStore";
 import { useSegmentStore } from "@/store/segmentStore";
 import { Graphics } from "pixi.js";
@@ -10,6 +11,7 @@ export class SceneGraphics {
 
     private nodeGfx = new Map<string, Graphics>();
     private segGfx = new Map<string, Graphics>();
+    private circleGfx = new Map<string, Graphics>();
 
     constructor(layers: GeometryLayers) {
         this.layers = layers;
@@ -25,6 +27,7 @@ export class SceneGraphics {
                     const withDelete = state.size < prevState.size;
                     this.syncNodes(withDelete);
                     this.syncSegments(withDelete);
+                    this.syncCircles(withDelete);
                 }
             )
         )
@@ -33,6 +36,14 @@ export class SceneGraphics {
                 (state) => state.byId,
                 (state, prevState) => {
                     this.syncSegments(state.size < prevState.size);
+                }
+            )
+        )
+        this.subs.push(
+            useCircleStore.subscribe(
+                (state) => state.byId,
+                (state, prevState) => {
+                    this.syncCircles(state.size < prevState.size);
                 }
             )
         )
@@ -45,8 +56,10 @@ export class SceneGraphics {
         // Destroy all graphics
         for (const g of this.nodeGfx.values()) g.destroy();
         for (const g of this.segGfx.values()) g.destroy();
+        for (const g of this.circleGfx.values()) g.destroy();
         this.nodeGfx.clear();
         this.segGfx.clear();
+        this.circleGfx.clear();
         this.layers.nodes.removeChildren();
         this.layers.edges.removeChildren();
         this.layers.preview.removeChildren();
@@ -55,6 +68,7 @@ export class SceneGraphics {
     rebuildAll() {
         this.syncNodes(true);
         this.syncSegments(true);
+        this.syncCircles(true);
     }
 
     syncNodes(withDelete = false) {
@@ -115,6 +129,40 @@ export class SceneGraphics {
         }
     }
 
+    syncCircles(withDelete = false) {
+        const circles = useCircleStore.getState().byId;
+        const nodes = useNodeStore.getState().byId;
+
+        for (const [id, c] of circles) {
+            const a = nodes.get(c.center);
+            const b = nodes.get(c.radius);
+
+            // Should never happen, but handle edge case of dangling segment
+            if (!a || !b) continue;
+
+            let g = this.circleGfx.get(id);
+            if (!g) {
+                g = this.makeCircleGfx();
+                this.circleGfx.set(id, g);
+                this.layers.edges.addChild(g);
+            }
+
+            // Redraw circle
+            // Eventually implement partial updates
+            const radius = Math.hypot(b.p.x - a.p.x, b.p.y - a.p.y);
+            g?.clear()
+                .circle(a.p.x, a.p.y, radius)
+                .stroke(SEGMENT_STROKE);
+        }
+
+        if (withDelete) {
+            for (const [id, g] of this.circleGfx) {
+                if (!circles.has(id)) { g.destroy(); this.circleGfx.delete(id); }
+            }
+        }
+
+    }
+
     makeNodeGfx() {
         const g = new Graphics().circle(0, 0, NODE_RADIUS).fill(NODE_COLOR);
         g.eventMode = "none";
@@ -123,6 +171,12 @@ export class SceneGraphics {
     }
 
     makeSegGfx() {
+        const g = new Graphics();
+        g.eventMode = "none";
+        return g;
+    }
+
+    makeCircleGfx() {
         const g = new Graphics();
         g.eventMode = "none";
         return g;

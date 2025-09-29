@@ -100,7 +100,6 @@ export class RectTool extends BaseShapeTool {
 
         useNodeStore.getState().addMany(nodes);
         useSegmentStore.getState().addMany(segments);
-        this.discardGeometry();
     }
 
     discardGeometry(): void {
@@ -113,7 +112,7 @@ export class RectTool extends BaseShapeTool {
     }
 
     postCreate(_p: Vec2, _isSnapped: boolean): void {
-        // No action
+        this.discardGeometry();
     }
 
 }

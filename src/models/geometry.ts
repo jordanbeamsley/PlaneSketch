@@ -27,6 +27,6 @@ export type Arc = {
 export type Circle = {
     id: CircleId;
     center: NodeId;
-    radiusNode: NodeId;
+    radius: NodeId;
 }
 
