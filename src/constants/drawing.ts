@@ -4,7 +4,8 @@ export const SNAP_RADIUS = 10;
 
 export const SEGMENT_STROKE: StrokeStyle = {
     width: 2,
-    color: 0xffffff
+    color: 0xffffff,
+    pixelLine: true
 }
 
 export const PREVIEW_SEGMENT_STROKE: StrokeStyle = {
