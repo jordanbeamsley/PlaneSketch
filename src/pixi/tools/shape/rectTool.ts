@@ -7,6 +7,7 @@ import { useSegmentStore } from "@/store/segmentStore";
 import type { Node, Segment } from "@/models/geometry";
 import type { GeometryLayers } from "@/models/stage";
 import type { ToolContext } from "../baseTool";
+import type { SnapResult } from "@/pixi/snap/types";
 
 export class RectTool extends BaseShapeTool {
 
@@ -111,7 +112,7 @@ export class RectTool extends BaseShapeTool {
         this.rectGfx.visible = false;
     }
 
-    postCreate(_p: Vec2, _isSnapped: boolean): void {
+    postCreate(_p: Vec2, _snap: SnapResult): void {
         this.discardGeometry();
     }
 

@@ -6,6 +6,7 @@ import { useNodeStore } from "@/store/nodeStore";
 import type { GeometryLayers } from "@/models/stage";
 import type { ToolContext } from "../baseTool";
 import { useCircleStore } from "@/store/circleStore";
+import type { SnapResult } from "@/pixi/snap/types";
 
 export class CircleTool extends BaseShapeTool {
 
@@ -74,7 +75,7 @@ export class CircleTool extends BaseShapeTool {
         this.arcGfx.visible = false;
     }
 
-    postCreate(_p: Vec2, _isSnapped: boolean): void {
+    postCreate(_p: Vec2, _snap: SnapResult): void {
         this.discardGeometry();
     }
 

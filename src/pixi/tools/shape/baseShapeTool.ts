@@ -27,7 +27,7 @@ export abstract class BaseShapeTool extends BaseTool {
     abstract isZeroSize(): boolean;
     abstract commitGeometry(): void;
     abstract discardGeometry(): void;
-    abstract postCreate(p: Vec2, isSnapped: boolean): void;
+    abstract postCreate(p: Vec2, snap: SnapResult): void;
 
     constructor(context: ToolContext) {
         super(context);
@@ -61,7 +61,7 @@ export abstract class BaseShapeTool extends BaseTool {
         // Finally, call tools handler for committing geometry to store
         // Then call any post create steps (e.g in line tool, immediately start drawing new line)
         this.commitGeometry();
-        this.postCreate(snap.p, this.currentSnap.kind !== "none");
+        this.postCreate(snap.p, this.currentSnap);
     }
 
     public onMove(e: PointerPayload): void {

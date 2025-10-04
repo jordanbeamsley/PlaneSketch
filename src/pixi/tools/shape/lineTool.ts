@@ -6,6 +6,7 @@ import { useNodeStore } from "@/store/nodeStore";
 import { useSegmentStore } from "@/store/segmentStore";
 import type { GeometryLayers } from "@/models/stage";
 import type { ToolContext } from "../baseTool";
+import type { SnapResult } from "@/pixi/snap/types";
 
 export class LineTool extends BaseShapeTool {
 
@@ -80,12 +81,12 @@ export class LineTool extends BaseShapeTool {
         this.lineGfx.visible = false;
     }
 
-    postCreate(_p: Vec2, isSnapped: boolean): void {
+    postCreate(_p: Vec2, snap: SnapResult): void {
         const lastAnchor = this.anchors[1];
         this.discardGeometry();
 
         // If we're snapped to a guide then end line drawing
-        if (isSnapped) {
+        if (snap.kind === "node") {
             return;
         }
         // Otherwise create a new line from the end point of the previous
