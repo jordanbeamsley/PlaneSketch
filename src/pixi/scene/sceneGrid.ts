@@ -22,7 +22,7 @@ export interface GridConfig {
 }
 
 const DEFAULTS: GridConfig = {
-    axisColor: { x: 0xffffff, y: 0xffffff },
+    axisColor: { x: 0xFC5C65, y: 0x48BB78 },
     axisWidth: 2,
     medianCellSize: 40,
 
