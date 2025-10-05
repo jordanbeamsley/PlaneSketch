@@ -1,4 +1,4 @@
-import { Application, Container, Graphics } from "pixi.js";
+import { Application, Container, Graphics, Point } from "pixi.js";
 import { useEffect, useRef } from "react";
 import { ToolController } from "./tools/ToolController";
 import { SnapOverlay } from "./snap/overlay";
@@ -90,7 +90,10 @@ export function PixiStage() {
             const snapEngine = createDefaultSnapEngine();
 
             // Setup tool controller
-            const toolContext: ToolContext = { snapEngine: snapEngine, snapOverlay: snapOverley, dataSource: snapDataCache }
+            const toolContext: ToolContext = {
+                snapEngine: snapEngine, snapOverlay: snapOverley, dataSource: snapDataCache,
+                transformToScreen: (p) => world.toGlobal(new Point(p.x, p.y))
+            }
             tools = new ToolController(toolContext, geometryLayers);
 
             // Stage interaction defaults

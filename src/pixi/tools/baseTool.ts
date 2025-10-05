@@ -4,11 +4,13 @@ import type { SnapEngine } from "../snap/engine";
 import type { CachedDataSource } from "../snap/cachedDataSource";
 import type { SnapRuleContext } from "../snap/types";
 import { SNAP_RADIUS } from "@/constants/drawing";
+import type { Vec2 } from "@/models/vectors";
 
 export interface ToolContext {
     snapOverlay: SnapOverlay;
     snapEngine: SnapEngine;
-    dataSource: CachedDataSource
+    dataSource: CachedDataSource;
+    transformToScreen: (p: Vec2) => Vec2;
 }
 
 export interface PointerPayload {
@@ -19,6 +21,7 @@ export abstract class BaseTool {
     protected snapOverlay: SnapOverlay;
     protected snapEngine: SnapEngine;
     protected dataSource: CachedDataSource;
+    protected transformToScreen: (p: Vec2) => Vec2;
 
     // Resolve active snap rules based on tool
     // i.e axis snapping may be enabled, but only applies to line based tools
@@ -29,13 +32,15 @@ export abstract class BaseTool {
         this.snapOverlay = context.snapOverlay;
         this.snapEngine = context.snapEngine;
         this.dataSource = context.dataSource;
+        this.transformToScreen = context.transformToScreen;
 
         this.resolvedSnapContext = {
             p: { x: 0, y: 0 },
             ds: this.dataSource,
             opts: {
                 radius: SNAP_RADIUS,
-                enable: { node: true, axisH: true, axisV: true }
+                enable: { node: true, axisH: true, axisV: true },
+                transform: (p) => this.transformToScreen(p)
             }
         }
     }

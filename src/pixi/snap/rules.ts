@@ -12,8 +12,11 @@ export const nodeRule: SnapRule = {
 
         let best: SnapCandidate | undefined;
 
+        const pt = (opts.transform) ? opts.transform(p) : p;
+
         for (const n of ds.getNodes()) {
-            const d2 = dist2(p, n.p);
+            const nt = (opts.transform) ? opts.transform(n.p) : n.p;
+            const d2 = dist2(pt, nt);
             if (d2 <= r2 && (!best || d2 < best.dist2)) {
                 best = { kind: "node", p: copyVec(n.p), dist2: d2, id: n.id, priority: 100 }
             }
@@ -31,17 +34,18 @@ export const axisRule: SnapRule = {
         if (!axis?.anchor) return [];
 
         // tolerance, and x and y deltas for evaluation
-        const a = axis.anchor;
-        const dx = p.x - a.x, dy = p.y - a.y;
+        const at = (opts.transform) ? opts.transform(axis.anchor) : axis.anchor;
+        const pt = (opts.transform) ? opts.transform(p) : p;
+        const dx = pt.x - at.x, dy = pt.y - at.y;
         const tol = opts.radius;
 
         const candidates: SnapCandidate[] = [];
         if (opts.enable.axisH !== false && Math.abs(dy) <= tol) {
-            candidates.push({ kind: "axisH", p: { x: p.x, y: a.y }, dist2: dy * dy, priority: 40 })
+            candidates.push({ kind: "axisH", p: { x: p.x, y: axis.anchor.y }, dist2: dy * dy, priority: 40 })
         }
         if (opts.enable.axisV !== false && Math.abs(dx) <= tol) {
-            candidates.push({ kind: "axisV", p: { x: a.x, y: p.y }, dist2: dx * dx, priority: 40 })
+            candidates.push({ kind: "axisV", p: { x: axis.anchor.x, y: p.y }, dist2: dx * dx, priority: 40 })
         }
         return candidates;
     }
-}
+};

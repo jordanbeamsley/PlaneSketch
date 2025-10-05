@@ -36,6 +36,9 @@ export interface SnapOptions {
     radius: number;
     // Enable/ disable rules
     enable: Partial<Record<SnapKind, boolean>>;
+    // Optionally provide a callback for transforming points
+    // Used for converting scaled world points to screen space
+    transform?: (p: Vec2) => Vec2;
 
     // Optional per-rule tuning, use bias to nudge score
     grid?: { stepX: number, stepY: number, bias?: number }

@@ -30,8 +30,10 @@ export class SnapEngine {
 
     }
 
-    // Assign a score to each candidate based on dist2, rule priority and last snap hysterisis
-    // Larger score = more preferred
+    /** Assign a score to each candidate based on dist2, rule priority and last snap hysterisis
+     *
+     * Larger score = more preferred
+    */
     score(candidate: { dist2: number, priority?: number, id?: string }, ctx: SnapRuleContext, stickyMul: number) {
         // Use dist2 as the base score, add a tiny epsilon to avoid divide by 0
         const base = 1 / (candidate.dist2 + 1e-6);
