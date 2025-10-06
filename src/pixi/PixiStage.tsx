@@ -1,4 +1,4 @@
-import { Application, Container, Graphics, Point } from "pixi.js";
+import { Application, Container, Point } from "pixi.js";
 import { useEffect, useRef } from "react";
 import { ToolController } from "./tools/ToolController";
 import { SnapOverlay } from "./snap/overlay";
@@ -11,7 +11,6 @@ import type { ToolContext } from "./tools/baseTool";
 import { CameraController } from "./scene/cameraController";
 import { MAX_SCALE, MIN_SCALE } from "@/constants/canvas";
 import { InputRouter } from "./input/inputRouter";
-import { NODE_COLOR } from "@/constants/drawing";
 
 export function PixiStage() {
     const hostRef = useRef<HTMLDivElement>(null);
@@ -31,7 +30,7 @@ export function PixiStage() {
             hostRef.current!.appendChild(app.canvas);
 
             // Camera container (handles zoom, pan, etc.)
-            // All other containers use world co-ords
+            // All other geometry containers use world co-ords
             const world = new Container();
             world.eventMode = "passive";
             world.sortableChildren = true;
@@ -57,10 +56,10 @@ export function PixiStage() {
                 preview: previewLayer,
             };
 
-            // All containers are scaled by the world container
+            // All geometry containers are scaled by the world container
             // Stage holds the world/ camera
-            world.addChild(edgeLayer, nodeLayer, previewLayer, guidesLayer);
-            app.stage.addChild(world);
+            world.addChild(edgeLayer, nodeLayer, previewLayer);
+            app.stage.addChild(world, guidesLayer);
 
             // Setup world camera
             // Controls all zoom/ pan operations
@@ -86,7 +85,7 @@ export function PixiStage() {
             // Setup snapping engine
             snapDataCache = new CachedDataSource();
             snapDataCache.mount();
-            const snapOverley = new SnapOverlay(guidesLayer);
+            const snapOverley = new SnapOverlay(guidesLayer, (p) => world.toGlobal(new Point(p.x, p.y)));
             const snapEngine = createDefaultSnapEngine();
 
             // Setup tool controller
@@ -125,11 +124,6 @@ export function PixiStage() {
 
             // Attach input listeners
             input.mount();
-
-            // TEMP origin point, while debugging grid
-            const origin = new Graphics();
-            world.addChild(origin);
-            origin.circle(0, 0, 3).fill(NODE_COLOR);
         })();
 
         // Keyboard routing
