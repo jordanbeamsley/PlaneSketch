@@ -40,10 +40,11 @@ export const axisRule: SnapRule = {
         const tol = opts.radius;
 
         const candidates: SnapCandidate[] = [];
-        if (opts.enable.axisH !== false && Math.abs(dy) <= tol) {
+        // Don't enable axis snapping until a certain length line is drawn
+        if (opts.enable.axisH !== false && Math.abs(dy) <= tol && Math.abs(dx) > 40) {
             candidates.push({ kind: "axisH", p: { x: p.x, y: axis.anchor.y }, dist2: dy * dy, priority: 40 })
         }
-        if (opts.enable.axisV !== false && Math.abs(dx) <= tol) {
+        if (opts.enable.axisV !== false && Math.abs(dx) <= tol && Math.abs(dy) > 40) {
             candidates.push({ kind: "axisV", p: { x: axis.anchor.x, y: p.y }, dist2: dx * dx, priority: 40 })
         }
         return candidates;
