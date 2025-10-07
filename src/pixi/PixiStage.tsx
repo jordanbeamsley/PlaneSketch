@@ -86,6 +86,7 @@ export function PixiStage() {
             snapDataCache = new CachedDataSource();
             snapDataCache.mount();
             const snapOverley = new SnapOverlay(guidesLayer, (p) => world.toGlobal(new Point(p.x, p.y)));
+            snapOverley.initSprites(app.renderer);
             const snapEngine = createDefaultSnapEngine();
 
             // Setup tool controller
