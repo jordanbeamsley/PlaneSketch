@@ -1,9 +1,10 @@
 import { SnapEngine } from "./engine";
-import { axisRule, nodeRule } from "./rules";
+import { axisRule, nodeRule, originRule } from "./rules";
 
 export function createDefaultSnapEngine() {
     return new SnapEngine([
         nodeRule,
-        axisRule
+        axisRule,
+        originRule
     ]);
 }

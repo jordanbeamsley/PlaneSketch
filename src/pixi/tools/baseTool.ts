@@ -39,7 +39,7 @@ export abstract class BaseTool {
             ds: this.dataSource,
             opts: {
                 radius: SNAP_RADIUS,
-                enable: { node: true, axisH: true, axisV: true },
+                enable: { node: true, axisH: true, axisV: true, origin: true },
                 transform: (p) => this.transformToScreen(p)
             }
         }

@@ -1,4 +1,4 @@
-import { copyVec } from "@/models/vectors";
+import { copyVec, type Vec2 } from "@/models/vectors";
 import type { SnapCandidate, SnapRule } from "./types";
 import { dist2 } from "./math";
 
@@ -47,5 +47,26 @@ export const axisRule: SnapRule = {
             candidates.push({ kind: "axisV", p: { x: axis.anchor.x, y: p.y }, dist2: dx * dx, priority: 40 })
         }
         return candidates;
+    }
+};
+
+export const originRule: SnapRule = {
+    name: "origin",
+    evaluate: ({ p, opts }) => {
+        // Return no candidates (empty array) if origin snapping is disabled
+        if (opts.enable.origin === false) return [];
+        // Radius2 for evaluation
+        const r2 = opts.radius * opts.radius;
+
+        // Origin point in world space
+        const o: Vec2 = { x: 0, y: 0 };
+
+        const pt = (opts.transform) ? opts.transform(p) : p;
+        const ot = (opts.transform) ? opts.transform(o) : o;
+
+        const d2 = dist2(pt, ot);
+
+        if (d2 <= r2) return [{ kind: "origin", p: copyVec(o), dist2: d2, priority: 100 }]
+        else return []
     }
 };
