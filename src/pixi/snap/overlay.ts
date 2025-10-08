@@ -34,7 +34,7 @@ export class SnapOverlay {
             return texture;
         }
 
-        const makeSprite = (kind: IconKind, draw: (g: Graphics, s: number) => void) => {
+        const makeSprite = (kind: IconKind, anchor: { x: number, y: number }, draw: (g: Graphics, s: number) => void) => {
             const g = new Graphics();
             draw(g, SNAP_ICON_SIZE);
             const texture = makeTexture(g, SNAP_ICON_SIZE);
@@ -44,22 +44,31 @@ export class SnapOverlay {
             sprite.visible = false;
             sprite.eventMode = "none";
             // Centre the sprite anchor
-            sprite.anchor.set(0.5);
+            sprite.anchor.set(anchor.x, anchor.y);
 
 
             this.layer.addChild(sprite);
             this.sprites.set(kind, sprite);
         }
 
-        makeSprite("node", (g, s) => {
-            g.rect(1, 1, s - 1, s - 1).stroke(SNAP_STROKE);
+        makeSprite("node", { x: 0.5, y: 0.5 }, (g, s) => {
+            g.rect(0.5, 0.5, s - 1, s - 1).stroke(SNAP_STROKE);
         })
 
-        makeSprite("origin", (g, s) => {
-            g.rect(1, 1, s - 1, s - 1).stroke(SNAP_STROKE);
+        makeSprite("origin", { x: 0.5, y: 0.5 }, (g, s) => {
+            g.rect(0.5, 0.5, s - 1, s - 1).stroke(SNAP_STROKE);
+        })
+
+        makeSprite("axisH", { x: 0.5, y: 0 }, (g, s) => {
+            g.moveTo(1, s - 1).lineTo(s - 2, s - 1).stroke(SNAP_STROKE);
+        })
+
+        makeSprite("axisV", { x: 0, y: 0.5 }, (g, s) => {
+            g.moveTo(s - 1, 1).lineTo(s - 1, s - 2).stroke(SNAP_STROKE);
         })
     }
 
+    // TODO: Needs to be recalled on world pan/ zoom
     render(result: SnapResult) {
         // Hide previous snap sprite
         if (this.active) {
@@ -73,8 +82,10 @@ export class SnapOverlay {
         const sprite = this.sprites.get(result.kind);
         if (!sprite) return;
 
+        // Transform snap point to screen space
+        // Round down to avoid weird anti-aliasing 
         const pt = this.transform(result.p);
-        sprite.position.set(pt.x, pt.y);
+        sprite.position.set(Math.floor(pt.x), Math.floor(pt.y));
         sprite.visible = true;
         this.active = result.kind;
     }

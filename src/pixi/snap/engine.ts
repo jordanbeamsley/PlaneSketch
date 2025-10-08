@@ -37,7 +37,7 @@ export class SnapEngine {
     score(candidate: { dist2: number, priority?: number, id?: string }, ctx: SnapRuleContext, stickyMul: number) {
         // Use dist2 as the base score, add a tiny epsilon to avoid divide by 0
         const base = 1 / (candidate.dist2 + 1e-6);
-        const priority = (candidate.priority ?? 0) * 1e-3 // Tunable weighting of priority
+        const priority = (candidate.priority ?? 0) * 1e-2 // Tunable weighting of priority
 
         // If current candidate is = last snap, add weighting based on stickyMul
         const sticky = (ctx.opts.lastTarget && candidate.id && (ctx.opts.lastTarget.id === candidate.id))
