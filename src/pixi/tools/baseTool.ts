@@ -25,8 +25,8 @@ export abstract class BaseTool {
 
     // Resolve active snap rules based on tool
     // i.e axis snapping may be enabled, but only applies to line based tools
-    // Each tool should call a resolve function and store in resolvedSnapContext
-    protected resolvedSnapContext: SnapRuleContext;
+    // TODO: Subscribe to snap rule changes from here
+    protected baseSnapContext: SnapRuleContext;
 
     constructor(context: ToolContext) {
         this.snapOverlay = context.snapOverlay;
@@ -34,12 +34,13 @@ export abstract class BaseTool {
         this.dataSource = context.dataSource;
         this.transformToScreen = context.transformToScreen;
 
-        this.resolvedSnapContext = {
+        this.baseSnapContext = {
             p: { x: 0, y: 0 },
             ds: this.dataSource,
             opts: {
                 radius: SNAP_RADIUS,
                 enable: { node: true, axisH: true, axisV: true, origin: true },
+                hysterisisMult: 1.5,
                 transform: (p) => this.transformToScreen(p)
             }
         }

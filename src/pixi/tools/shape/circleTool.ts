@@ -6,7 +6,7 @@ import { useNodeStore } from "@/store/nodeStore";
 import type { GeometryLayers } from "@/models/stage";
 import type { ToolContext } from "../baseTool";
 import { useCircleStore } from "@/store/circleStore";
-import type { SnapResult } from "@/pixi/snap/types";
+import type { SnapResult, SnapRuleContext } from "@/pixi/snap/types";
 
 export class CircleTool extends BaseShapeTool {
 
@@ -79,4 +79,11 @@ export class CircleTool extends BaseShapeTool {
         this.discardGeometry();
     }
 
+    resolveSnapContext(context: SnapRuleContext, p: Vec2): SnapRuleContext {
+        // Disable axis snapping for circles
+        const resolvedContext = { ...context, p: p };
+        resolvedContext.opts.enable = { ...resolvedContext.opts.enable, axisH: false, axisV: false }
+
+        return resolvedContext;
+    }
 }

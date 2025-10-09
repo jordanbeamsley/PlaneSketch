@@ -6,7 +6,7 @@ import { useNodeStore } from "@/store/nodeStore";
 import { useSegmentStore } from "@/store/segmentStore";
 import type { GeometryLayers } from "@/models/stage";
 import type { ToolContext } from "../baseTool";
-import type { SnapResult } from "@/pixi/snap/types";
+import type { SnapResult, SnapRuleContext } from "@/pixi/snap/types";
 
 export class LineTool extends BaseShapeTool {
 
@@ -93,4 +93,16 @@ export class LineTool extends BaseShapeTool {
         this.anchors.push(lastAnchor);
     }
 
+    resolveSnapContext(context: SnapRuleContext, p: Vec2): SnapRuleContext {
+        // If we're already drawing a line (i.e anchors > 0),
+        // then we have an anchor for axis snaps
+        const hasAnchor = this.anchors.length > 0;
+        const anchor = hasAnchor ? this.anchors[this.anchors.length - 1].p : undefined;
+
+        const resolvedContext = anchor
+            ? { ...context, p, axis: { anchor } }
+            : { ...context, p }
+
+        return resolvedContext;
+    }
 }

@@ -1,6 +1,6 @@
 import { copyVec, type Vec2 } from "@/models/vectors";
 import { BaseTool, type PointerPayload, type ToolContext } from "../baseTool";
-import type { SnapResult } from "@/pixi/snap/types";
+import type { SnapResult, SnapRuleContext } from "@/pixi/snap/types";
 import type { Node } from "@/models/geometry";
 
 export abstract class BaseShapeTool extends BaseTool {
@@ -28,6 +28,7 @@ export abstract class BaseShapeTool extends BaseTool {
     abstract commitGeometry(): void;
     abstract discardGeometry(): void;
     abstract postCreate(p: Vec2, snap: SnapResult): void;
+    abstract resolveSnapContext(context: SnapRuleContext, p: Vec2): SnapRuleContext;
 
     constructor(context: ToolContext) {
         super(context);
@@ -69,15 +70,10 @@ export abstract class BaseShapeTool extends BaseTool {
 
         // If we already have a first point, use it as the axis anchor (for H and V snapping)
         const hasAnchor = this.anchors.length > 0;
-        const anchor = hasAnchor ? this.anchors[this.anchors.length - 1].p : undefined;
-
-        // Build the snap context for this move
-        const snapCtx = anchor
-            ? { ...this.resolvedSnapContext, p, axis: { anchor } }
-            : { ...this.resolvedSnapContext, p }
 
         // Run snapping and render hover 
-        this.currentSnap = this.snapEngine.snap(snapCtx)
+        // Resolve snap context for the current tool
+        this.currentSnap = this.snapEngine.snap(this.resolveSnapContext(this.baseSnapContext, p));
         this.snapOverlay.render(this.currentSnap);
 
 

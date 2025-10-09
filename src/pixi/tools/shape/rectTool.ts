@@ -7,7 +7,7 @@ import { useSegmentStore } from "@/store/segmentStore";
 import type { Node, Segment } from "@/models/geometry";
 import type { GeometryLayers } from "@/models/stage";
 import type { ToolContext } from "../baseTool";
-import type { SnapResult } from "@/pixi/snap/types";
+import type { SnapResult, SnapRuleContext } from "@/pixi/snap/types";
 
 export class RectTool extends BaseShapeTool {
 
@@ -116,4 +116,11 @@ export class RectTool extends BaseShapeTool {
         this.discardGeometry();
     }
 
+    resolveSnapContext(context: SnapRuleContext, p: Vec2): SnapRuleContext {
+        // Disable axis snapping for rects
+        const resolvedContext = { ...context, p: p };
+        resolvedContext.opts.enable = { ...resolvedContext.opts.enable, axisH: false, axisV: false }
+
+        return resolvedContext;
+    }
 }
