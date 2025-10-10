@@ -1,4 +1,5 @@
 import type { Vec2 } from "@/models/vectors"
+import type { Viewport } from "../scene/viewportService";
 
 export type SnapKind =
     | "none"
@@ -36,20 +37,16 @@ export interface SnapOptions {
     radius: number;
     // Enable/ disable rules
     enable: Partial<Record<SnapKind, boolean>>;
-    // Optionally provide a callback for transforming points
-    // Used for converting scaled world points to screen space
-    transform?: (p: Vec2) => Vec2;
 
-    // Optional per-rule tuning, use bias to nudge score
-    grid?: { stepX: number, stepY: number, bias?: number }
-    origin?: { x?: number, y?: number, bias?: number } // Defaults to (0,0)
-    hysterisisMult?: number // Sticky factor, use > 1.0 to prefer last snap over new
+    // Sticky factor, use > 1.0 to prefer last snap over new
+    hysterisisMult?: number
     lastTarget?: { kind: Exclude<SnapKind, "none">, id?: string }
 }
 
 export interface SnapRuleContext {
     p: Vec2;            // pointer in world
     ds: SnapDataSource; // data source for snap rules
+    viewport: Viewport;
     opts: SnapOptions;  // rule switches / tuning
     axis?: AxisAnchor;
 }

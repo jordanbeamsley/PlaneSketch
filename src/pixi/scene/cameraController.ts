@@ -45,7 +45,6 @@ export class CameraController {
         // Translate world to keep screen point under cursor
         this.world.position.x += (screenP.x - worldAfter.x);
         this.world.position.y += (screenP.y - worldAfter.y);
-
     }
 
     // Absolute scale to a number, centered at viewport center

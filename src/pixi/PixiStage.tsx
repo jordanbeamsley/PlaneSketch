@@ -1,4 +1,4 @@
-import { Application, Container, Point } from "pixi.js";
+import { Application, Container } from "pixi.js";
 import { useEffect, useRef } from "react";
 import { ToolController } from "./tools/ToolController";
 import { SnapOverlay } from "./snap/overlay";
@@ -11,6 +11,7 @@ import type { ToolContext } from "./tools/baseTool";
 import { CameraController } from "./scene/cameraController";
 import { MAX_SCALE, MIN_SCALE } from "@/constants/canvas";
 import { InputRouter } from "./input/inputRouter";
+import { ViewportService } from "./scene/viewportService";
 
 export function PixiStage() {
     const hostRef = useRef<HTMLDivElement>(null);
@@ -23,6 +24,9 @@ export function PixiStage() {
         let snapDataCache: CachedDataSource | null = null;
         let sceneGraphics: SceneGraphics | null = null;
         let input: InputRouter | null = null;
+
+        // For keybinding to enable panning
+        let spacePressed: boolean = false;
 
         (async () => {
             // Bootstrap pixiCanvas
@@ -73,10 +77,23 @@ export function PixiStage() {
             // Set origin to centre of screen by default
             camera.panByScreen(app.screen.width / 2, app.screen.height / 2);
 
+            // Create Viewport service
+            const viewport = new ViewportService();
+            viewport.setTransform((p) => world.toGlobal(p), (p) => world.toLocal(p));
+
             // Create grid overlay
-            const redrawGrid = () => sceneGrid.draw(world, app.screen.width, app.screen.height);
-            redrawGrid();
-            app.renderer.on("resize", () => redrawGrid());
+            const redrawGridAndViewport = () => {
+                sceneGrid.draw(world, app.screen.width, app.screen.height);
+                const offset = sceneGrid.getOffsetPx();
+                viewport.setGrid({
+                    step: sceneGrid.getStepPx(),
+                    offsetX: offset.x,
+                    offsetY: offset.y
+                })
+            };
+
+            redrawGridAndViewport();
+            app.renderer.on("resize", () => redrawGridAndViewport());
 
             // Setup scene renderer
             sceneGraphics = new SceneGraphics(geometryLayers);
@@ -85,15 +102,14 @@ export function PixiStage() {
             // Setup snapping engine
             snapDataCache = new CachedDataSource();
             snapDataCache.mount();
-            const snapOverley = new SnapOverlay(guidesLayer, (p) => world.toGlobal(new Point(p.x, p.y)));
+            const snapOverley = new SnapOverlay(guidesLayer, viewport);
             snapOverley.initSprites(app.renderer);
             const snapEngine = createDefaultSnapEngine();
 
             // Setup tool controller
             const toolContext: ToolContext = {
-                snapEngine: snapEngine, snapOverlay: snapOverley, dataSource: snapDataCache,
-                transformToScreen: (p) => world.toGlobal(new Point(p.x, p.y))
-            }
+                snapEngine: snapEngine, snapOverlay: snapOverley, dataSource: snapDataCache, viewport: viewport
+            };
             tools = new ToolController(toolContext, geometryLayers);
 
             // Stage interaction defaults
@@ -106,33 +122,58 @@ export function PixiStage() {
             input = new InputRouter(app, world);
 
             // Route pointer events to tools with world only co-ords
-            input.on("pointerDown", ({ world }) => tools?.onDown({ world }));
-            input.on("pointerMove", ({ world }) => tools?.onMove({ world }));
+            // Don't call tools pointer handlers if we're panning
+            input.on("pointerDown", ({ world }) => {
+                if (!spacePressed) tools?.onDown({ world })
+            });
+            input.on("pointerMove", ({ world }) => {
+                if (!spacePressed) tools?.onMove({ world })
+            });
 
             // Setup camera pan and zoom
             input.on("panByScreen", ({ dx, dy }) => {
                 camera.panByScreen(dx, dy);
-                redrawGrid();
+                redrawGridAndViewport();
             })
 
             input.on("zoomAt", ({ factor, screen }) => {
                 camera.zoomAtScreenPoint(factor, screen);
-                redrawGrid();
+                redrawGridAndViewport();
             });
 
             // Default panning gate
-            input.shouldPan = (e) => e.buttons === 4;
+            input.shouldPan = (e) => e.buttons === 4 || spacePressed;
 
             // Attach input listeners
             input.mount();
         })();
 
         // Keyboard routing
-        const onKeyDown = (e: KeyboardEvent) => tools?.onKeyDown(e);
+        const onKeyDown = (e: KeyboardEvent) => {
+            // First check if space is pressed to enable panning
+            if (e.code === "Space") {
+                spacePressed = true;
+                app.stage.cursor = "grab";
+                e.preventDefault();
+            }
+            // Then delegate to tools
+            tools?.onKeyDown(e);
+
+        }
+
+        const onKeyUp = (e: KeyboardEvent) => {
+            if (e.code === "Space") {
+                spacePressed = false;
+                app.stage.cursor = "crosshair";
+            }
+        }
+
         window.addEventListener("keydown", (e) => onKeyDown(e));
+        window.addEventListener("keyup", (e) => onKeyUp(e));
 
         return () => {
             window.removeEventListener("keydown", onKeyDown);
+            window.removeEventListener("keyup", onKeyUp);
             input?.umount();
             if (app.renderer) {
                 app.destroy(true, { children: true, texture: true });

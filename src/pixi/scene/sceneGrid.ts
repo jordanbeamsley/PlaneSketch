@@ -1,6 +1,8 @@
 // Heavily inspired from this infinite grid example provided on stackoverflow:
 // https://stackoverflow.com/questions/73035945/infinite-grid-zoom-symmetrical-zoom-in-and-out
 
+import { DEFAULT_GRID_CONF } from "@/constants/canvas";
+import type { Vec2 } from "@/models/vectors";
 import { Container, Graphics, Point, type StrokeStyle } from "pixi.js";
 
 export interface GridConfig {
@@ -19,22 +21,6 @@ export interface GridConfig {
     minorAlphaNearCombine: number;
     minorAlphaMid: number;
     minorAlphaNearSubdiv: number;
-}
-
-const DEFAULTS: GridConfig = {
-    axisColor: { x: 0xFC5C65, y: 0x48BB78 },
-    axisWidth: 2,
-    medianCellSize: 40,
-
-    minorsPerMajor: 5,
-
-    majorAlphaNearCombine: 0.7,
-    majorAlphaMid: 0.6,
-    majorAlphaNearSubdiv: 0.5,
-
-    minorAlphaNearCombine: 0.05,
-    minorAlphaMid: 0.10,
-    minorAlphaNearSubdiv: 0.4
 }
 
 export class SceneGrid extends Graphics {
@@ -63,13 +49,19 @@ export class SceneGrid extends Graphics {
     /** Remember camera scale from the last draw so we can apply the scale factor */
     private prevScale: number | null = null;
 
-    constructor(cfg: GridConfig = DEFAULTS) {
+    /** Grid offset calculated in screen space at each draw */
+    private axisX = 0; axisY = 0;
+
+    constructor(cfg: GridConfig = DEFAULT_GRID_CONF) {
         super();
         this.cfg = cfg;
         this.cellSize = cfg.medianCellSize;
         this.zIndex = -1000;
         this.eventMode = "none";
     }
+
+    getStepPx() { return this.cellSize };
+    getOffsetPx(): Vec2 { return { x: this.axisX, y: this.axisY } };
 
     draw(world: Container, viewportWidth: number, viewportHeight: number) {
         const currentScale = world.scale.x;
@@ -95,25 +87,25 @@ export class SceneGrid extends Graphics {
 
         // Get the world origin projected to screen space
         const screenOrigin = world.toGlobal(new Point(0, 0));
-        const axisX = screenOrigin.x;
-        const axisY = screenOrigin.y;
+        this.axisX = screenOrigin.x;
+        this.axisY = screenOrigin.y;
 
         // Calculate how many grid lines we need to draw in each direction
         // We only draw lines that are visible in the viewport
         // 
         // minDivY/maxDivY: How many horizontal lines above/below the X-axis
         // minDivX/maxDivX: How many vertical lines left/right of the Y-axis
-        const minDivY = Math.ceil((0 - axisY) / this.cellSize);
-        const maxDivY = Math.floor((viewportHeight - axisY) / this.cellSize);
-        const minDivX = Math.ceil((0 - axisX) / this.cellSize);
-        const maxDivX = Math.floor((viewportWidth - axisX) / this.cellSize);
+        const minDivY = Math.ceil((0 - this.axisY) / this.cellSize);
+        const maxDivY = Math.floor((viewportHeight - this.axisY) / this.cellSize);
+        const minDivX = Math.ceil((0 - this.axisX) / this.cellSize);
+        const maxDivX = Math.floor((viewportWidth - this.axisX) / this.cellSize);
 
         // Clear any previous grid drawings
         this.clear();
 
         // Draw horizontal grid lines (along the y axis)
         for (let lineIndex = minDivY; lineIndex <= maxDivY; lineIndex++) {
-            const y = Math.round(axisY + lineIndex * this.cellSize) + 0.5;
+            const y = Math.round(this.axisY + lineIndex * this.cellSize) + 0.5;
             this.moveTo(0, y);
             this.lineTo(viewportWidth, y);
             this.stroke(this.getStrokeStyle(lineIndex));
@@ -122,7 +114,7 @@ export class SceneGrid extends Graphics {
 
         // Draw vertical grid lines (along the x axis)
         for (let lineIndex = minDivX; lineIndex <= maxDivX; lineIndex++) {
-            const x = Math.round(axisX + lineIndex * this.cellSize) + 0.5;
+            const x = Math.round(this.axisX + lineIndex * this.cellSize) + 0.5;
             this.moveTo(x, 0);
             this.lineTo(x, viewportHeight);
             this.stroke(this.getStrokeStyle(lineIndex));

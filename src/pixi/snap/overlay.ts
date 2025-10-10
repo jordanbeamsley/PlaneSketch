@@ -1,7 +1,7 @@
 import { Graphics, RenderTexture, Sprite, type Container, type Renderer } from "pixi.js";
 import type { SnapKind, SnapResult } from "./types";
-import type { Vec2 } from "@/models/vectors";
 import { SNAP_ICON_SIZE, SNAP_STROKE } from "@/constants/canvas";
+import type { Viewport } from "../scene/viewportService";
 
 type IconKind = Exclude<SnapKind, "none">;
 
@@ -9,8 +9,8 @@ export class SnapOverlay {
 
     // Guide layer, node hover, on edge hover, etc.
     private layer: Container;
-    // transform to screen space callback
-    private transform: (p: Vec2) => Vec2;
+
+    private viewport: Viewport;
 
     // One sprite per icon kind, create once
     // Render call will make 1 icon visible at snap result
@@ -18,9 +18,9 @@ export class SnapOverlay {
     private textures = new Map<IconKind, RenderTexture>();
     private active?: IconKind;
 
-    constructor(layer: Container, transformToScreen: (p: Vec2) => Vec2) {
+    constructor(layer: Container, viewport: Viewport) {
         this.layer = layer;
-        this.transform = (p: Vec2) => transformToScreen(p);
+        this.viewport = viewport;
     }
 
     // Initialise sprites once pixi renderer is available
@@ -53,18 +53,22 @@ export class SnapOverlay {
 
         makeSprite("node", { x: 0.5, y: 0.5 }, (g, s) => {
             g.rect(0.5, 0.5, s - 1, s - 1).stroke(SNAP_STROKE);
-        })
+        });
 
         makeSprite("origin", { x: 0.5, y: 0.5 }, (g, s) => {
             g.rect(0.5, 0.5, s - 1, s - 1).stroke(SNAP_STROKE);
-        })
+        });
 
         makeSprite("axisH", { x: 0.5, y: 0 }, (g, s) => {
             g.moveTo(1, s - 1).lineTo(s - 2, s - 1).stroke(SNAP_STROKE);
-        })
+        });
 
         makeSprite("axisV", { x: 0, y: 0.5 }, (g, s) => {
             g.moveTo(s - 1, 1).lineTo(s - 1, s - 2).stroke(SNAP_STROKE);
+        });
+
+        makeSprite("grid", { x: 0.5, y: 0.5 }, (g, s) => {
+            g.rect(0.5, 0.5, s - 1, s - 1).stroke(SNAP_STROKE);
         })
     }
 
@@ -84,7 +88,7 @@ export class SnapOverlay {
 
         // Transform snap point to screen space
         // Round down to avoid weird anti-aliasing 
-        const pt = this.transform(result.p);
+        const pt = this.viewport.worldToScreen(result.p);
         sprite.position.set(Math.floor(pt.x), Math.floor(pt.y));
         sprite.visible = true;
         this.active = result.kind;
