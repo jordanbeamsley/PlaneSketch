@@ -1,4 +1,4 @@
-import { Application, Container, Point } from "pixi.js";
+import { Application, Container } from "pixi.js";
 import { useEffect, useRef } from "react";
 import { ToolController } from "./tools/ToolController";
 import { SnapOverlay } from "./snap/overlay";
@@ -28,10 +28,6 @@ export function PixiStage() {
 
         // For keybinding to enable panning
         let spacePressed: boolean = false;
-
-        // DEBUG
-        let zPressed: boolean = false;
-        let xPressed: boolean = false;
 
         (async () => {
             // Bootstrap pixiCanvas
@@ -130,17 +126,6 @@ export function PixiStage() {
             // Route pointer events to tools with world only co-ords
             // Don't call tools pointer handlers if we're panning
             input.on("pointerDown", ({ world }) => {
-                // DEBUG
-                if (zPressed) {
-                    camera.applyDeltaTicks(1, new Point(0, 0));
-                    redrawGridAndViewport();
-                    return;
-                }
-                if (xPressed) {
-                    camera.applyDeltaTicks(-1, new Point(0, 0));
-                    redrawGridAndViewport();
-                    return;
-                }
                 if (!spacePressed) tools?.onDown({ world })
             });
             input.on("pointerMove", ({ world }) => {
@@ -173,15 +158,6 @@ export function PixiStage() {
                 app.stage.cursor = "grab";
                 e.preventDefault();
             }
-            else if (e.key === "z") {
-                zPressed = true;
-                e.preventDefault();
-            }
-            else if (e.key === "x") {
-                xPressed = true;
-                e.preventDefault();
-            }
-
             // Then delegate to tools
             tools?.onKeyDown(e);
 
@@ -191,12 +167,6 @@ export function PixiStage() {
             if (e.code === "Space") {
                 spacePressed = false;
                 app.stage.cursor = "crosshair";
-            }
-            else if (e.key === "z") {
-                zPressed = false;
-            }
-            else if (e.key === "x") {
-                xPressed = false;
             }
         }
 
