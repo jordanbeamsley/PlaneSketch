@@ -14,6 +14,8 @@ export interface GridConfig {
 
     minorsPerMajor: number
 
+    gridColor: number;
+
     // Grid alpha endpoints
     majorAlphaNearCombine: number;
     majorAlphaMid: number;
@@ -122,7 +124,7 @@ export class SceneGrid extends Graphics {
         const alpha = this.computeAlpha(isMajor ? "major" : "minor", z);
 
         return {
-            color: 0xbfbfbf,
+            color: this.cfg.gridColor,
             alpha: alpha,
             pixelLine: true
         }

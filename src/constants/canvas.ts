@@ -11,6 +11,8 @@ export const DEFAULT_GRID_CONF: GridConfig = {
 
     minorsPerMajor: 4,
 
+    gridColor: 0x4f5259,
+
     majorAlphaNearCombine: 0.7,
     majorAlphaMid: 0.6,
     majorAlphaNearSubdiv: 0.5,
