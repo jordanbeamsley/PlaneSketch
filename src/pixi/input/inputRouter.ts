@@ -1,4 +1,5 @@
 import { Point, type Application, type Container, type FederatedPointerEvent } from "pixi.js";
+import { ZoomAccumulator } from "../camera/zoomQuantizer";
 
 type Handler<T> = (payload: T) => void;
 
@@ -40,7 +41,7 @@ export interface RoutedPointer {
 // Zoom instruction for the camera controller
 export interface ZoomPayload {
     // Zoom factor, >1 zoom in, <1 zoom out
-    factor: number;
+    deltaTicks: number;
     // Screen space pixel position to anchor the zoom under
     screen: Point;
 }
@@ -74,6 +75,8 @@ export class InputRouter extends TinyEmitter<InputEventPayloads> {
     private isPanning: boolean = false;
     // Last screen position while panning (for computing dx, dy)
     private lastScreen = new Point();
+
+    private zoomAccum = new ZoomAccumulator();
 
     // Callback to decide whether panning should start/ continue based on pointer event
     // Default: only when middle mouse button is down
@@ -160,23 +163,14 @@ export class InputRouter extends TinyEmitter<InputEventPayloads> {
             // Prevent page scrolling while interacting with the canvas
             ev.preventDefault();
 
-            // Normalise the wheel delta to pixels. deltaMode: 0=pixels, 1=lines (~16px)
-            const LINE = 16;
-            const dyPx = ev.deltaY * (ev.deltaMode === 1 ? LINE : 1);
-
-            // Heuristic
-            // - small deltas (trackpad) -> gentle factor (~1.03 per step)
-            // - large deltas (mouse wheel) -> chunkier (~1.10 per step) 
-            const base = Math.abs(dyPx) < 30 ? 1.03 : 1.10;
-            const steps = Math.max(1, Math.min(10, Math.round(Math.abs(dyPx) / 100)));
-            const zoomIn = dyPx < 0;
-            const factor = zoomIn ? Math.pow(base, steps) : Math.pow(1 / base, steps);
+            const deltaTicks = this.zoomAccum.add(ev.deltaY, ev.deltaMode as 0 | 1 | 2);
+            if (deltaTicks === 0) return;
 
             // Calculate screen space anchor (relative to canvas)
             const rect = this.viewEl.getBoundingClientRect();
             const screen = new Point(ev.clientX - rect.left, ev.clientY - rect.top);
 
-            this.emit("zoomAt", { factor, screen });
+            this.emit("zoomAt", { deltaTicks, screen });
         }
 
         this.viewEl.addEventListener("wheel", onWheel, { passive: false });

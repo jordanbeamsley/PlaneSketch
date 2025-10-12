@@ -1,4 +1,4 @@
-import { Application, Container } from "pixi.js";
+import { Application, Container, Point } from "pixi.js";
 import { useEffect, useRef } from "react";
 import { ToolController } from "./tools/ToolController";
 import { SnapOverlay } from "./snap/overlay";
@@ -8,10 +8,10 @@ import type { GeometryLayers } from "@/models/stage";
 import { SceneGrid } from "./scene/sceneGrid";
 import { SceneGraphics } from "./scene/sceneGraphics";
 import type { ToolContext } from "./tools/baseTool";
-import { CameraController } from "./scene/cameraController";
 import { MAX_SCALE, MIN_SCALE } from "@/constants/canvas";
 import { InputRouter } from "./input/inputRouter";
-import { ViewportService } from "./scene/viewportService";
+import { CameraController } from "./camera/cameraController";
+import { ViewportService } from "./camera/viewportService";
 
 export function PixiStage() {
     const hostRef = useRef<HTMLDivElement>(null);
@@ -19,6 +19,7 @@ export function PixiStage() {
     useEffect(() => {
         if (!hostRef.current) return;
 
+        let disposed = false;
         const app = new Application();
         let tools: ToolController | null = null;
         let snapDataCache: CachedDataSource | null = null;
@@ -28,9 +29,14 @@ export function PixiStage() {
         // For keybinding to enable panning
         let spacePressed: boolean = false;
 
+        // DEBUG
+        let zPressed: boolean = false;
+        let xPressed: boolean = false;
+
         (async () => {
             // Bootstrap pixiCanvas
             await app.init({ resizeTo: window, background: "#202124", antialias: true });
+            if (disposed) { app.destroy(true); return; }
             hostRef.current!.appendChild(app.canvas);
 
             // Camera container (handles zoom, pan, etc.)
@@ -38,10 +44,6 @@ export function PixiStage() {
             const world = new Container();
             world.eventMode = "passive";
             world.sortableChildren = true;
-
-            // Adapable grid overlay, sits in screen space
-            const sceneGrid = new SceneGrid();
-            app.stage.addChild(sceneGrid);
 
             // Build layer stack
             const edgeLayer = new Container();
@@ -76,6 +78,10 @@ export function PixiStage() {
 
             // Set origin to centre of screen by default
             camera.panByScreen(app.screen.width / 2, app.screen.height / 2);
+
+            // Adapable grid overlay, sits in screen space
+            const sceneGrid = new SceneGrid(() => camera.ticks);
+            app.stage.addChild(sceneGrid);
 
             // Create Viewport service
             const viewport = new ViewportService();
@@ -124,6 +130,17 @@ export function PixiStage() {
             // Route pointer events to tools with world only co-ords
             // Don't call tools pointer handlers if we're panning
             input.on("pointerDown", ({ world }) => {
+                // DEBUG
+                if (zPressed) {
+                    camera.applyDeltaTicks(1, new Point(0, 0));
+                    redrawGridAndViewport();
+                    return;
+                }
+                if (xPressed) {
+                    camera.applyDeltaTicks(-1, new Point(0, 0));
+                    redrawGridAndViewport();
+                    return;
+                }
                 if (!spacePressed) tools?.onDown({ world })
             });
             input.on("pointerMove", ({ world }) => {
@@ -136,8 +153,8 @@ export function PixiStage() {
                 redrawGridAndViewport();
             })
 
-            input.on("zoomAt", ({ factor, screen }) => {
-                camera.zoomAtScreenPoint(factor, screen);
+            input.on("zoomAt", ({ deltaTicks, screen }) => {
+                camera.applyDeltaTicks(deltaTicks, screen);
                 redrawGridAndViewport();
             });
 
@@ -156,6 +173,15 @@ export function PixiStage() {
                 app.stage.cursor = "grab";
                 e.preventDefault();
             }
+            else if (e.key === "z") {
+                zPressed = true;
+                e.preventDefault();
+            }
+            else if (e.key === "x") {
+                xPressed = true;
+                e.preventDefault();
+            }
+
             // Then delegate to tools
             tools?.onKeyDown(e);
 
@@ -166,12 +192,20 @@ export function PixiStage() {
                 spacePressed = false;
                 app.stage.cursor = "crosshair";
             }
+            else if (e.key === "z") {
+                zPressed = false;
+            }
+            else if (e.key === "x") {
+                xPressed = false;
+            }
         }
 
-        window.addEventListener("keydown", (e) => onKeyDown(e));
-        window.addEventListener("keyup", (e) => onKeyUp(e));
+        window.addEventListener("keydown", onKeyDown);
+        window.addEventListener("keyup", onKeyUp);
 
         return () => {
+            disposed = true;
+
             window.removeEventListener("keydown", onKeyDown);
             window.removeEventListener("keyup", onKeyUp);
             input?.umount();

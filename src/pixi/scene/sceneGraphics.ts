@@ -74,8 +74,6 @@ export class SceneGraphics {
     syncNodes(withDelete = false) {
         const nodes = useNodeStore.getState().byId;
 
-        console.log(`${nodes.size} nodes in store`);
-
         for (const [id, n] of nodes) {
             let g = this.nodeGfx.get(id);
             if (!g) {

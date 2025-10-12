@@ -1,5 +1,5 @@
 import type { Vec2 } from "@/models/vectors"
-import type { Viewport } from "../scene/viewportService";
+import type { Viewport } from "../camera/viewportService";
 
 export type SnapKind =
     | "none"

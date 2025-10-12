@@ -4,6 +4,7 @@
 import { DEFAULT_GRID_CONF } from "@/constants/canvas";
 import type { Vec2 } from "@/models/vectors";
 import { Container, Graphics, Point, type StrokeStyle } from "pixi.js";
+import { scaleFromTicks, TICKS_PER_OCTAVE } from "../camera/zoomQuantizer";
 
 export interface GridConfig {
     axisColor: { x: number, y: number },
@@ -33,57 +34,36 @@ export class SceneGrid extends Graphics {
      */
     private cellSize: number;
 
-    /**
-     * How many world units each grid cell represents
-     * This creates the adaptive grid that shows "nice" numbers
-     * Follows a 1,2,5 scale (e.g 1,2,5,10,20,50) for readable values at every zoom scale
-     */
-    private ratio: number = 1;
-
-    /**
-     * “Generation” counter to know which rung of 1–2–5 we are on.
-     * We double/halve this so that log2(gen) % 3 cycles through 0,1,2 → (×2, ×2.5, ×2).
-     */
-    private gen: number = 1;
-
-    /** Remember camera scale from the last draw so we can apply the scale factor */
-    private prevScale: number | null = null;
-
     /** Grid offset calculated in screen space at each draw */
     private axisX = 0; axisY = 0;
 
-    constructor(cfg: GridConfig = DEFAULT_GRID_CONF) {
+    private getCameraTicks: () => number;
+
+    constructor(getCameraTicks: () => number, cfg: GridConfig = DEFAULT_GRID_CONF,) {
         super();
         this.cfg = cfg;
         this.cellSize = cfg.medianCellSize;
         this.zIndex = -1000;
         this.eventMode = "none";
+
+        this.getCameraTicks = getCameraTicks;
     }
 
     getStepPx() { return this.cellSize };
     getOffsetPx(): Vec2 { return { x: this.axisX, y: this.axisY } };
 
     draw(world: Container, viewportWidth: number, viewportHeight: number) {
-        const currentScale = world.scale.x;
+        const ticksNow = this.getCameraTicks();
 
-        // Update cellSize by how the scale changed from last frame
-        // First check if first draw call and set a reference
-        if (this.prevScale === null) this.prevScale = currentScale;
+        // Calculate how many ticks to get to the start of the current octave
+        // E.g 1*TPO, 2*TPO
+        const baseOctaveTicks = Math.floor(ticksNow / TICKS_PER_OCTAVE) * TICKS_PER_OCTAVE;
+        // Then calculate how many ticks "into" the octave we are
+        const phaseTicks = ticksNow - baseOctaveTicks;
 
-        const scaleFactor = currentScale / this.prevScale;
-        this.prevScale = currentScale;
-
-        this.cellSize *= scaleFactor;
-
-
-        // First, check if we need to subdivide or combine the grid,
-        // Use loops to catch fast user zooms, and potentially missed thresholds
-        while (this.cellSize >= 2 * this.cfg.medianCellSize) {
-            this.subdivide();
-        }
-        while (this.cellSize < this.cfg.medianCellSize / 2) {
-            this.combine();
-        }
+        // Calculate the scale factor from 1x to 2x
+        const scaleFactor = scaleFromTicks(phaseTicks);
+        this.cellSize = this.cfg.medianCellSize * scaleFactor;
 
         // Get the world origin projected to screen space
         const screenOrigin = world.toGlobal(new Point(0, 0));
@@ -105,7 +85,7 @@ export class SceneGrid extends Graphics {
 
         // Draw horizontal grid lines (along the y axis)
         for (let lineIndex = minDivY; lineIndex <= maxDivY; lineIndex++) {
-            const y = Math.round(this.axisY + lineIndex * this.cellSize) + 0.5;
+            const y = this.axisY + lineIndex * this.cellSize;
             this.moveTo(0, y);
             this.lineTo(viewportWidth, y);
             this.stroke(this.getStrokeStyle(lineIndex));
@@ -114,73 +94,22 @@ export class SceneGrid extends Graphics {
 
         // Draw vertical grid lines (along the x axis)
         for (let lineIndex = minDivX; lineIndex <= maxDivX; lineIndex++) {
-            const x = Math.round(this.axisX + lineIndex * this.cellSize) + 0.5;
+            const x = this.axisX + lineIndex * this.cellSize;
             this.moveTo(x, 0);
             this.lineTo(x, viewportHeight);
             this.stroke(this.getStrokeStyle(lineIndex));
         }
 
-        // Draw axis last so they're always on top
-        this.drawAxis(screenOrigin.y, screenOrigin.x, viewportWidth, viewportHeight);
-    }
+        // Draw x axis
+        this.moveTo(0, this.axisY);
+        this.lineTo(viewportWidth, this.axisY);
+        this.stroke({ color: this.cfg.axisColor.x, width: this.cfg.axisWidth })
 
-    /**
-    * Called when zooming in and cells become to large
-    *
-    * Each call: 
-    * - Adjusts the ration based on which state we're in
-    * - Doubles the generation
-    * - Resets the cell size to median
-    */
-    private subdivide() {
-        // Prevent floating-point drift
-        this.ratio = parseFloat(this.ratio.toExponential(8));
+        // Draw y axis
+        this.moveTo(this.axisX, 0);
+        this.lineTo(this.axisX, viewportHeight);
+        this.stroke({ color: this.cfg.axisColor.y, width: this.cfg.axisWidth })
 
-        // Determine which state of the 1-2-5 cycle we're in
-        // Math.log2(gen) tells us how many times we've doubled
-        // Examples:
-        // - gen = 1   → log2(1) = 0   → 0 % 3 = 0 (state 0)
-        // - gen = 2   → log2(2) = 1   → 1 % 3 = 1 (state 1)
-        // - gen = 4   → log2(4) = 2   → 2 % 3 = 2 (state 2)
-        // - gen = 8   → log2(8) = 3   → 3 % 3 = 0 (state 0, cycle repeats)
-        // - gen = 0.5 → log2(0.5) = -1 → |-1| % 3 = 1
-        const modulo = Math.abs(Math.log2(this.gen)) % 3;
-
-        // STATE 0: currently showing 1, 10, 100... units per cell
-        // Next state should show 2, 20, 200... (multiply by 2)
-        if (modulo === 0) this.ratio *= 2;
-
-        // STATE 1: currently showing 2, 20, 200.. units per cell
-        // Next state should show 5, 50, 500... (multiple by 2.5)
-        else if (modulo === 1) this.ratio *= 2.5;
-
-        // STATE 2: currently showing 5, 50, 500... units per cell
-        // Next state should show 10, 100, 1000... (multiply by 2)
-        else if (modulo === 2) this.ratio *= 2;
-
-        // Every subdivide results in a doubling of generation
-        this.gen *= 2;
-        // Every subdivide resets cell spacing to median size
-        this.cellSize = this.cfg.medianCellSize;
-    }
-
-    /**
-    * Called when zooming out and cells become to small
-    *
-    * Reverses the pattern of subdivide (see this.subdivide for documentation)
-    */
-    private combine() {
-        // Prevent floating-point drift
-        this.ratio = parseFloat(this.ratio.toExponential(8));
-
-        const modulo = Math.abs(Math.log2(this.gen)) % 3;
-
-        if (modulo === 0) this.ratio /= 2;
-        else if (modulo === 1) this.ratio /= 2.5;
-        else if (modulo === 2) this.ratio /= 2;
-
-        this.gen /= 2;
-        this.cellSize = this.cfg.medianCellSize;
     }
 
     private getStrokeStyle(lineIndex: number): StrokeStyle {
@@ -240,17 +169,5 @@ export class SceneGrid extends Graphics {
     // Linear interpolation
     private lerp(a: number, b: number, t: number): number {
         return a + (b - a) * t;
-    }
-
-    private drawAxis(axisY: number, axisX: number, viewportWidth: number, viewportHeight: number) {
-        // Draw x axis
-        this.moveTo(0, axisY);
-        this.lineTo(viewportWidth, axisY);
-        this.stroke({ color: this.cfg.axisColor.x, width: this.cfg.axisWidth })
-
-        // Draw y axis
-        this.moveTo(axisX, 0);
-        this.lineTo(axisX, viewportHeight);
-        this.stroke({ color: this.cfg.axisColor.y, width: this.cfg.axisWidth })
     }
 }

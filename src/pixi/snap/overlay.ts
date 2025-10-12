@@ -1,7 +1,7 @@
 import { Graphics, RenderTexture, Sprite, type Container, type Renderer } from "pixi.js";
 import type { SnapKind, SnapResult } from "./types";
 import { SNAP_ICON_SIZE, SNAP_STROKE } from "@/constants/canvas";
-import type { Viewport } from "../scene/viewportService";
+import type { Viewport } from "../camera/viewportService";
 
 type IconKind = Exclude<SnapKind, "none">;
 

@@ -1,7 +1,6 @@
 import type { GridConfig } from "@/pixi/scene/sceneGrid";
 import type { StrokeStyle } from "pixi.js";
 
-export const ZOOM_STEP = 1.1;
 export const MIN_SCALE = 0.05;
 export const MAX_SCALE = 8;
 
@@ -10,7 +9,7 @@ export const DEFAULT_GRID_CONF: GridConfig = {
     axisWidth: 2,
     medianCellSize: 40,
 
-    minorsPerMajor: 5,
+    minorsPerMajor: 4,
 
     majorAlphaNearCombine: 0.7,
     majorAlphaMid: 0.6,

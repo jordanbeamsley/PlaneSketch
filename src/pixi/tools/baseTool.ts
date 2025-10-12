@@ -4,7 +4,7 @@ import type { SnapEngine } from "../snap/engine";
 import type { CachedDataSource } from "../snap/cachedDataSource";
 import type { SnapRuleContext } from "../snap/types";
 import { SNAP_RADIUS } from "@/constants/drawing";
-import type { Viewport } from "../scene/viewportService";
+import type { Viewport } from "../camera/viewportService";
 
 export interface ToolContext {
     snapOverlay: SnapOverlay;
