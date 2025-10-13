@@ -29,6 +29,7 @@ export class ToolController {
             case "circle": this.current = new CircleTool(this.context, this.layers); break;
             default: break;
         }
+        this.current.activate();
     }
 
     onDown(e: PointerPayload) { this.current.onDown(e); }

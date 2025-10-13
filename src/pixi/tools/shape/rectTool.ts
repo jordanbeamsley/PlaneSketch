@@ -8,6 +8,7 @@ import type { Node, Segment } from "@/models/geometry";
 import type { GeometryLayers } from "@/models/stage";
 import type { ToolContext } from "../baseTool";
 import type { SnapResult, SnapRuleContext } from "@/pixi/snap/types";
+import { scaleFromTicks } from "@/pixi/camera/zoomQuantizer";
 
 export class RectTool extends BaseShapeTool {
 
@@ -47,6 +48,15 @@ export class RectTool extends BaseShapeTool {
         this.rectGfx.eventMode = "none";
         this.rectGfx.visible = false;
         this.layers.preview.addChild(this.rectGfx);
+    }
+
+    rescaleNodes(zoomTicks: number): void {
+        const s = scaleFromTicks(zoomTicks);
+        const nodeScale = 1 / s;
+
+        for (const g of this.vertexNodesGfx) {
+            g.scale.set(nodeScale);
+        }
     }
 
     onMoveDraw(p: Vec2): void {

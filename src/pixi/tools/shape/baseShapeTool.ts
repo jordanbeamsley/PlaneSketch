@@ -2,6 +2,7 @@ import { copyVec, type Vec2 } from "@/models/vectors";
 import { BaseTool, type PointerPayload, type ToolContext } from "../baseTool";
 import type { SnapResult, SnapRuleContext } from "@/pixi/snap/types";
 import type { Node } from "@/models/geometry";
+import { useViewportStore } from "@/store/viewportStore";
 
 export abstract class BaseShapeTool extends BaseTool {
 
@@ -23,6 +24,10 @@ export abstract class BaseShapeTool extends BaseTool {
     sid = () => crypto.randomUUID();
     cid = () => crypto.randomUUID();
 
+    // Unsub from zoom ticks when destruct is called
+    private unsubZoom: () => void = () => { };
+
+    abstract rescaleNodes(zoomTicks: number): void;
     abstract onMoveDraw(p: Vec2): void;
     abstract isZeroSize(): boolean;
     abstract commitGeometry(): void;
@@ -35,6 +40,15 @@ export abstract class BaseShapeTool extends BaseTool {
         this.totalRequiredAnchors = 0;
         this.anchors = [];
         this.currentSnap = { kind: "none", p: { x: 0, y: 0 } };
+    }
+
+    activate(): void {
+        this.unsubZoom = useViewportStore.subscribe(
+            (state) => state.zoomTicks,
+            (state, _prevState) => {
+                this.rescaleNodes(state);
+            }
+        )
     }
 
     onDown(_e: PointerPayload) {
@@ -97,5 +111,6 @@ export abstract class BaseShapeTool extends BaseTool {
 
     public destruct(): void {
         this.discardGeometry();
+        this.unsubZoom();
     }
 }

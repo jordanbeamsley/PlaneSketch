@@ -46,6 +46,7 @@ export abstract class BaseTool {
         }
     }
 
+    abstract activate(): void;
     abstract onDown(p: PointerPayload): void;
     abstract onMove(p: PointerPayload): void;
     abstract onKeyDown(e: KeyboardEvent): void;

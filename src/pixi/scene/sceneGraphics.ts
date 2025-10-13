@@ -3,7 +3,9 @@ import type { GeometryLayers } from "@/models/stage";
 import { useCircleStore } from "@/store/circleStore";
 import { useNodeStore } from "@/store/nodeStore";
 import { useSegmentStore } from "@/store/segmentStore";
+import { useViewportStore } from "@/store/viewportStore";
 import { Graphics } from "pixi.js";
+import { scaleFromTicks } from "../camera/zoomQuantizer";
 
 export class SceneGraphics {
     private layers: GeometryLayers;
@@ -28,6 +30,14 @@ export class SceneGraphics {
                     this.syncNodes(withDelete);
                     this.syncSegments(withDelete);
                     this.syncCircles(withDelete);
+                }
+            )
+        )
+        this.subs.push(
+            useViewportStore.subscribe(
+                (state) => state.zoomTicks,
+                (state, _prevState) => {
+                    this.rescaleNodes(state);
                 }
             )
         )
@@ -73,6 +83,7 @@ export class SceneGraphics {
 
     syncNodes(withDelete = false) {
         const nodes = useNodeStore.getState().byId;
+        const zoomTicks = useViewportStore.getState().zoomTicks;
 
         for (const [id, n] of nodes) {
             let g = this.nodeGfx.get(id);
@@ -91,6 +102,22 @@ export class SceneGraphics {
             for (const [id, g] of this.nodeGfx) {
                 if (!nodes.has(id)) { g.destroy(); this.nodeGfx.delete(id); }
             }
+        }
+
+        this.rescaleNodes(zoomTicks);
+    }
+
+    rescaleNodes(zoomTicks: number) {
+        const nodes = useNodeStore.getState().byId;
+
+        const s = scaleFromTicks(zoomTicks);
+        const nodeScale = 1 / s;
+
+        for (const [id] of nodes) {
+            let g = this.nodeGfx.get(id);
+            if (!g) continue;
+
+            g.scale.set(nodeScale);
         }
     }
 

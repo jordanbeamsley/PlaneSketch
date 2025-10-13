@@ -7,6 +7,8 @@ import { useSegmentStore } from "@/store/segmentStore";
 import type { GeometryLayers } from "@/models/stage";
 import type { ToolContext } from "../baseTool";
 import type { SnapResult, SnapRuleContext } from "@/pixi/snap/types";
+import { scaleFromTicks } from "@/pixi/camera/zoomQuantizer";
+import { useViewportStore } from "@/store/viewportStore";
 
 export class LineTool extends BaseShapeTool {
 
@@ -37,6 +39,16 @@ export class LineTool extends BaseShapeTool {
         this.lineGfx.eventMode = "none";
         this.lineGfx.visible = false;
         this.layers.preview.addChild(this.lineGfx);
+
+        this.rescaleNodes(useViewportStore.getState().zoomTicks);
+    }
+
+    rescaleNodes(zoomTicks: number): void {
+        const s = scaleFromTicks(zoomTicks);
+        const nodeScale = 1 / s;
+
+        this.startNodeGfx.scale.set(nodeScale);
+        this.endNodeGfx.scale.set(nodeScale);
     }
 
     onMoveDraw(p: Vec2): void {
@@ -65,7 +77,6 @@ export class LineTool extends BaseShapeTool {
         if (compareVec(this.anchors[0].p, this.anchors[1].p)) return true;
 
         return false;
-
     }
 
     commitGeometry(): void {

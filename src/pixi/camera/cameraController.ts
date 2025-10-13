@@ -1,5 +1,6 @@
 import { Point, type Container } from "pixi.js";
 import { scaleFromTicks, ticksFromScale } from "./zoomQuantizer";
+import { useViewportStore } from "@/store/viewportStore";
 
 export interface CameraLimits {
     minScale: number;
@@ -65,6 +66,8 @@ export class CameraController {
             this.zoomTicks = clampedTicks;
             return;
         }
+
+        useViewportStore.getState().update(targetTicks);
 
         // Calculate where point moves to after scaling
         const worldBefore = this.world.toLocal(screenP);

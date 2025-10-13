@@ -7,6 +7,7 @@ import type { GeometryLayers } from "@/models/stage";
 import type { ToolContext } from "../baseTool";
 import { useCircleStore } from "@/store/circleStore";
 import type { SnapResult, SnapRuleContext } from "@/pixi/snap/types";
+import { scaleFromTicks } from "@/pixi/camera/zoomQuantizer";
 
 export class CircleTool extends BaseShapeTool {
 
@@ -31,6 +32,13 @@ export class CircleTool extends BaseShapeTool {
         this.arcGfx.eventMode = "none";
         this.arcGfx.visible = false;
         this.layers.preview.addChild(this.arcGfx);
+    }
+
+    rescaleNodes(zoomTicks: number): void {
+        const s = scaleFromTicks(zoomTicks);
+        const nodeScale = 1 / s;
+
+        this.centreNodeGfx.scale.set(nodeScale);
     }
 
     onMoveDraw(p: Vec2): void {
