@@ -13,7 +13,7 @@ function key(e: EntityRef): Key { return `${e.kind}:${e.id}`; }
 
 type SelectState = {
     selected: Set<Key>;
-    hovered?: Key | null;
+    hovered: Key | null;
 }
 
 type SelectAction = {

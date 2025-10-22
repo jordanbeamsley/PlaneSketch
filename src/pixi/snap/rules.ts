@@ -107,7 +107,8 @@ export const segmentRule: SnapRule = {
         const r = opts.radius;
         const r2 = r * r;
 
-        const min2 = SEGMENT_MINIMUM * SEGMENT_MINIMUM;
+        const min = opts.segmentMin ?? SEGMENT_MINIMUM;
+        const min2 = min * min;
 
         let best: SnapCandidate | undefined;
 

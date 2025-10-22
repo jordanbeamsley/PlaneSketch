@@ -11,8 +11,10 @@ import type { GraphIndex } from "../graph/graphIndex";
 
 const SEG_SELECT_TINT = 0xFF8A00;
 const SEG_NORMAL_TINT = 0xFFFFFF;
+const SEG_HOVER_TINT = 0xf5ac58;
 const NODE_SELECT_TINT = 0xFF8A00;
 const NODE_NORMAL_TINT = NODE_COLOR;
+const NODE_HOVER_TINT = 0xf5ac58;
 
 // TODO: 
 // Only touch graphics on diffs, not full updates
@@ -51,6 +53,16 @@ export class SceneGraphics {
                 }
             )
         )
+
+        this.unsubs.push(
+            useSelectStore.subscribe(
+                (state) => state.hovered,
+                (state, prevState) => {
+                    this.applyHover(state, prevState);
+                }
+            )
+        )
+
         this.unsubs.push(
             useNodeStore.subscribe(
                 (state) => state.byId,
@@ -148,6 +160,44 @@ export class SceneGraphics {
         for (const [id, g] of this.circleGfx) {
             const k = `circle:${id}`;
             g.tint = selected.has(k) ? SEG_SELECT_TINT : SEG_NORMAL_TINT;
+        }
+    }
+
+    applyHover(currEntity: string | null, prevEntity: string | null) {
+        if (prevEntity && !useSelectStore.getState().selected.has(prevEntity)) {
+            const [kind, id] = prevEntity.split(":");
+
+            if (kind === "node") {
+                const g = this.nodeGfx.get(id);
+                if (g) {
+                    g.tint = NODE_NORMAL_TINT;
+                    g.visible = this.graph.getDegree(id) < 2;
+                }
+            }
+
+            else if (kind === "segment") {
+                const g = this.segGfx.get(id);
+                if (g) g.tint = SEG_NORMAL_TINT;
+            }
+        }
+
+        if (currEntity && !useSelectStore.getState().selected.has(currEntity)) {
+            const [kind, id] = currEntity.split(":");
+
+            if (kind === "node") {
+                const g = this.nodeGfx.get(id);
+                if (g) {
+                    g.tint = NODE_HOVER_TINT;
+                    // Node might be invisible if degree > 2
+                    // Always show on hover
+                    g.visible = true;
+                }
+            }
+
+            else if (kind === "segment") {
+                const g = this.segGfx.get(id);
+                if (g) g.tint = SEG_HOVER_TINT;
+            }
         }
     }
 

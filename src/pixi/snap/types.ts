@@ -41,6 +41,10 @@ export interface SnapOptions {
     // Sticky factor, use > 1.0 to prefer last snap over new
     hysterisisMult?: number
     lastTarget?: { kind: Exclude<SnapKind, "none">, id?: string }
+
+    // Optionally set the minimum segment distance
+    // Used by select tool set to 0
+    segmentMin?: number
 }
 
 export interface SnapRuleContext {

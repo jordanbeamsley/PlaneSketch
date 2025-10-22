@@ -33,10 +33,14 @@ export class SelectTool extends BaseTool {
         // Node snapping may be off, but we still want to select it
     }
     onMove(p: PointerPayload): void {
-        // Run snapping and render hover 
-        // Resolve snap context for the current tool
         this.currentSnap = this.snapEngine.snap(this.resolveSnapContext(this.baseSnapContext, p.world));
-        this.snapOverlay.render(this.currentSnap);
+
+        const snapKind = this.currentSnap.kind;
+
+        if (snapKind === "none" && useSelectStore.getState().hovered)
+            useSelectStore.getState().setHovered(null);
+        else if (snapKind === "node" || snapKind === "segment")
+            useSelectStore.getState().setHovered({ kind: snapKind, id: this.currentSnap.id! })
     }
     onKeyDown(e: KeyboardEvent): void {
     }
@@ -47,6 +51,7 @@ export class SelectTool extends BaseTool {
         // Disable axis snapping for circles
         const resolvedContext = { ...context, p: p };
         resolvedContext.opts.enable = { ...resolvedContext.opts.enable, axisH: false, axisV: false, grid: false }
+        resolvedContext.opts.segmentMin = 0;
 
         return resolvedContext;
     }
