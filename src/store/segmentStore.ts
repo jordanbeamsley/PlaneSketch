@@ -18,22 +18,26 @@ export const useSegmentStore = create<SegmentState & SegmentAction>()(
     subscribeWithSelector((set) => ({
         byId: new Map(),
         add: (n) => set(s => {
-            s.byId.set(n.id, n);
-            return { byId: new Map(s.byId) };
+            const byId = new Map(s.byId);
+            byId.set(n.id, n);
+            return { byId };
         }),
         addMany: (ns) => set(s => {
-            for (const n of ns) s.byId.set(n.id, n);
-            return { byId: new Map(s.byId) };
+            const byId = new Map(s.byId);
+            for (const n of ns) byId.set(n.id, n);
+            return { byId };
         }),
         update: (id, patch) => set(s => {
             const cur = s.byId.get(id);
             if (!cur) return {};
-            s.byId.set(id, { ...cur, ...patch });
-            return { byId: new Map(s.byId) };
+            const byId = new Map(s.byId);
+            byId.set(id, { ...cur, ...patch });
+            return { byId };
         }),
         remove: (id) => set(s => {
-            s.byId.delete(id);
-            return { byId: new Map(s.byId) };
+            const byId = new Map(s.byId);
+            byId.delete(id);
+            return { byId };
         }),
         asArray: () => [] // implement later
 

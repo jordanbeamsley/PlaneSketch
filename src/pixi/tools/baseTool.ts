@@ -5,6 +5,7 @@ import type { CachedDataSource } from "../snap/cachedDataSource";
 import type { SnapRuleContext } from "../snap/types";
 import { SNAP_RADIUS } from "@/constants/drawing";
 import type { Viewport } from "../camera/viewportService";
+import type { Modifiers } from "../input/types";
 
 export interface ToolContext {
     snapOverlay: SnapOverlay;
@@ -15,6 +16,7 @@ export interface ToolContext {
 
 export interface PointerPayload {
     world: Point;
+    modifiers: Modifiers;
 }
 
 export abstract class BaseTool {
@@ -40,15 +42,15 @@ export abstract class BaseTool {
             viewport: this.viewport,
             opts: {
                 radius: SNAP_RADIUS,
-                enable: { node: true, axisH: true, axisV: true, origin: true },
+                enable: { node: true, axisH: true, axisV: true, origin: true, grid: true, segment: true },
                 hysterisisMult: 1.5,
             }
         }
     }
 
     abstract activate(): void;
-    abstract onDown(p: PointerPayload): void;
-    abstract onMove(p: PointerPayload): void;
+    abstract onDown(e: PointerPayload): void;
+    abstract onMove(e: PointerPayload): void;
     abstract onKeyDown(e: KeyboardEvent): void;
     abstract destruct(): void;
 }

@@ -5,6 +5,7 @@ import type { Tool } from "@/models/tools";
 import type { GeometryLayers } from "@/models/stage";
 import { RectTool } from "./shape/rectTool";
 import { CircleTool } from "./shape/circleTool";
+import { SelectTool } from "./selectTool";
 
 export class ToolController {
     private current: BaseTool;
@@ -27,6 +28,7 @@ export class ToolController {
             case "line": this.current = new LineTool(this.context, this.layers); break;
             case "rect": this.current = new RectTool(this.context, this.layers); break;
             case "circle": this.current = new CircleTool(this.context, this.layers); break;
+            case "select": this.current = new SelectTool(this.context); break;
             default: break;
         }
         this.current.activate();

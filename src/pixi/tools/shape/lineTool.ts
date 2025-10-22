@@ -96,7 +96,7 @@ export class LineTool extends BaseShapeTool {
         const lastAnchor = this.anchors[1];
         this.discardGeometry();
 
-        // If we're snapped to a guide then end line drawing
+        // If we're snapped to a node then end line drawing
         if (snap.kind === "node") {
             return;
         }

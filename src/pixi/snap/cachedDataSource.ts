@@ -6,7 +6,7 @@ import { copyVec } from "@/models/vectors";
 export class CachedDataSource implements SnapDataSource {
     private nodesLite: NodeLite[] = [];
     private segmentLite: SegmentLite[] = [];
-    private subs: Array<() => void> = [];
+    private unsubs: Array<() => void> = [];
 
     // Build cached store and subscribe to data store changes
     mount() {
@@ -15,7 +15,7 @@ export class CachedDataSource implements SnapDataSource {
         this.rebuildSegments();
 
         // Store subscriptions
-        this.subs.push(
+        this.unsubs.push(
             useNodeStore.subscribe(
                 (state) => state.byId,
                 () => {
@@ -25,7 +25,7 @@ export class CachedDataSource implements SnapDataSource {
             )
         );
 
-        this.subs.push(
+        this.unsubs.push(
             useSegmentStore.subscribe(
                 (state) => state.byId,
                 () => {
@@ -35,11 +35,11 @@ export class CachedDataSource implements SnapDataSource {
         );
     }
 
-    umount() {
-        this.subs.forEach(u => u());
+    unmount() {
+        this.unsubs.forEach(u => u());
         this.nodesLite = [];
         this.segmentLite = [];
-        this.subs = [];
+        this.unsubs = [];
     }
 
     *getNodes(): Iterable<NodeLite> {

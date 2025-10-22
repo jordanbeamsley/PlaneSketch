@@ -7,7 +7,7 @@ type IconKind = Exclude<SnapKind, "none">;
 
 export class SnapOverlay {
 
-    // Guide layer, node hover, on edge hover, etc.
+    // HUD layer, node hover, on edge hover, etc.
     private layer: Container;
 
     private viewport: Viewport;
@@ -69,7 +69,12 @@ export class SnapOverlay {
 
         makeSprite("grid", { x: 0.5, y: 0.5 }, (g, s) => {
             g.rect(0.5, 0.5, s - 1, s - 1).stroke(SNAP_STROKE);
-        })
+        });
+
+        makeSprite("segment", { x: 0.5, y: 0.5 }, (g, s) => {
+            g.rect(0.5, 0.5, s - 1, s - 1).stroke(SNAP_STROKE);
+        });
+
     }
 
     // TODO: Needs to be recalled on world pan/ zoom

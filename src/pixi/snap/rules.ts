@@ -1,6 +1,9 @@
-import { copyVec, type Vec2 } from "@/models/vectors";
+import { copyVec, dist2, type Vec2 } from "@/models/vectors";
 import type { SnapCandidate, SnapRule } from "./types";
-import { dist2 } from "./math";
+
+// Minimum distances before certain snaps kick in
+const AXIS_MINIMUM = 40;
+const SEGMENT_MINIMUM = 30;
 
 export const nodeRule: SnapRule = {
     name: "node",
@@ -18,7 +21,7 @@ export const nodeRule: SnapRule = {
             const nt = viewport.worldToScreen(n.p);
             const d2 = dist2(pt, nt);
             if (d2 <= r2 && (!best || d2 < best.dist2)) {
-                best = { kind: "node", p: copyVec(n.p), dist2: d2, id: n.id, priority: 100 }
+                best = { kind: "node", p: copyVec(n.p), dist2: d2, id: n.id, priority: 200 }
             }
         }
         return best ? [best] : [];
@@ -41,11 +44,11 @@ export const axisRule: SnapRule = {
 
         const candidates: SnapCandidate[] = [];
         // Don't enable axis snapping until a certain length line is drawn
-        if (opts.enable.axisH !== false && Math.abs(dy) <= tol && Math.abs(dx) > 40) {
-            candidates.push({ kind: "axisH", p: { x: p.x, y: axis.anchor.y }, dist2: dy * dy, priority: 40 })
+        if (opts.enable.axisH !== false && Math.abs(dy) <= tol && Math.abs(dx) > AXIS_MINIMUM) {
+            candidates.push({ kind: "axisH", p: { x: p.x, y: axis.anchor.y }, dist2: dy * dy, priority: 30 })
         }
-        if (opts.enable.axisV !== false && Math.abs(dx) <= tol && Math.abs(dy) > 40) {
-            candidates.push({ kind: "axisV", p: { x: axis.anchor.x, y: p.y }, dist2: dx * dx, priority: 40 })
+        if (opts.enable.axisV !== false && Math.abs(dx) <= tol && Math.abs(dy) > AXIS_MINIMUM) {
+            candidates.push({ kind: "axisV", p: { x: axis.anchor.x, y: p.y }, dist2: dx * dx, priority: 30 })
         }
         return candidates;
     }
@@ -73,7 +76,7 @@ export const originRule: SnapRule = {
 };
 
 export const gridRule: SnapRule = {
-    name: "origin",
+    name: "grid",
     evaluate: ({ p, viewport, opts }) => {
         // Return no candidates (empty array) if grid snapping is disabled
         if (opts.enable.grid === false) return [];
@@ -92,5 +95,67 @@ export const gridRule: SnapRule = {
         const pw = viewport.screenToWorld({ x: gx, y: gy });
         if (d2 <= r2) return [{ kind: "grid", p: pw, dist2: d2, priority: 10 }]
         else return [];
+    }
+}
+
+export const segmentRule: SnapRule = {
+    name: "segment",
+    evaluate: ({ p, ds, viewport, opts }) => {
+        // Return no candidates (empty array) if grid snapping is disabled
+        if (opts.enable.segment === false) return [];
+        // Radius2 for evaluation
+        const r = opts.radius;
+        const r2 = r * r;
+
+        const min2 = SEGMENT_MINIMUM * SEGMENT_MINIMUM;
+
+        let best: SnapCandidate | undefined;
+
+        const pt = viewport.worldToScreen(p);
+        const { x: ptX, y: ptY } = pt;
+
+        for (const s of ds.getSegments()) {
+            const { x: x1, y: y1 } = viewport.worldToScreen(s.a);
+            const { x: x2, y: y2 } = viewport.worldToScreen(s.b);
+
+            // Reject snap if distance from cursor to either node end is less than segment snap minimum
+            // Ideally this would check the distance along the line from either node end, but this is cheaper
+            // May need some more finesse in the future
+            if (dist2({ x: x1, y: y1 }, pt) < min2 || dist2({ x: x2, y: y2 }, pt) < min2) continue;
+
+            // Vector from start to end node
+            const dx = x2 - x1;
+            const dy = y2 - y1;
+            const len2 = dx * dx + dy * dy;
+
+            // TODO: Profile early rejection performance
+
+            // Early rejection if p is outside of lines bounding box + radius
+            if (len2 === 0) continue;
+            const minX = Math.min(x1, x2) - r;
+            const maxX = Math.max(x1, x2) + r;
+            const minY = Math.min(y1, y2) - r;
+            const maxY = Math.max(y1, y2) + r;
+            if (ptX < minX || ptX > maxX || ptY < minY || ptY > maxY) continue;
+
+            // Find closest point on line segment
+            let t = 0;
+            if (len2 !== 0) {
+                // Project cursor onto line segment (clamped to [0,1])
+                t = ((ptX - x1) * dx + (ptY - y1) * dy) / len2;
+                t = Math.max(0, Math.min(1, t));
+            }
+
+            // Closest point on segment
+            const closestP: Vec2 = { x: x1 + t * dx, y: y1 + t * dy };
+
+            const d2 = dist2(pt, closestP)
+
+            if (d2 <= r2 && (!best || d2 < best.dist2)) {
+                best = { kind: "segment", p: viewport.screenToWorld(closestP), dist2: d2, id: s.id, priority: 80 }
+            }
+        }
+        return best ? [best] : [];
+
     }
 }

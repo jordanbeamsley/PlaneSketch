@@ -12,6 +12,7 @@ import { MAX_SCALE, MIN_SCALE } from "@/constants/canvas";
 import { InputRouter } from "./input/inputRouter";
 import { CameraController } from "./camera/cameraController";
 import { ViewportService } from "./camera/viewportService";
+import { GraphIndex } from "./graph/graphIndex";
 
 export function PixiStage() {
     const hostRef = useRef<HTMLDivElement>(null);
@@ -23,6 +24,7 @@ export function PixiStage() {
         const app = new Application();
         let tools: ToolController | null = null;
         let snapDataCache: CachedDataSource | null = null;
+        let graphIndex: GraphIndex | null = null;
         let sceneGraphics: SceneGraphics | null = null;
         let input: InputRouter | null = null;
 
@@ -45,12 +47,12 @@ export function PixiStage() {
             const edgeLayer = new Container();
             const nodeLayer = new Container();
             const previewLayer = new Container(); // Ghost shapes while drawing
-            const guidesLayer = new Container(); // Snaps points, alignment lines, etc.
+            const hudLayer = new Container(); // Snaps points, alignment lines, etc.
 
             edgeLayer.zIndex = 10;
             nodeLayer.zIndex = 20;
             previewLayer.zIndex = 30;
-            guidesLayer.zIndex = 40;
+            hudLayer.zIndex = 40;
 
             const geometryLayers: GeometryLayers = {
                 edges: edgeLayer,
@@ -61,7 +63,7 @@ export function PixiStage() {
             // All geometry containers are scaled by the world container
             // Stage holds the world/ camera
             world.addChild(edgeLayer, nodeLayer, previewLayer);
-            app.stage.addChild(world, guidesLayer);
+            app.stage.addChild(world, hudLayer);
 
             // Setup world camera
             // Controls all zoom/ pan operations
@@ -97,14 +99,16 @@ export function PixiStage() {
             redrawGridAndViewport();
             app.renderer.on("resize", () => redrawGridAndViewport());
 
-            // Setup scene renderer
-            sceneGraphics = new SceneGraphics(geometryLayers);
+            // Setup scene renderer and topology graph
+            graphIndex = new GraphIndex();
+            graphIndex.mount();
+            sceneGraphics = new SceneGraphics(geometryLayers, graphIndex);
             sceneGraphics.mount();
 
             // Setup snapping engine
             snapDataCache = new CachedDataSource();
             snapDataCache.mount();
-            const snapOverley = new SnapOverlay(guidesLayer, viewport);
+            const snapOverley = new SnapOverlay(hudLayer, viewport);
             snapOverley.initSprites(app.renderer);
             const snapEngine = createDefaultSnapEngine();
 
@@ -125,11 +129,11 @@ export function PixiStage() {
 
             // Route pointer events to tools with world only co-ords
             // Don't call tools pointer handlers if we're panning
-            input.on("pointerDown", ({ world }) => {
-                if (!spacePressed) tools?.onDown({ world })
+            input.on("pointerDown", ({ world, modifiers }) => {
+                if (!spacePressed) tools?.onDown({ world, modifiers })
             });
-            input.on("pointerMove", ({ world }) => {
-                if (!spacePressed) tools?.onMove({ world })
+            input.on("pointerMove", ({ world, modifiers }) => {
+                if (!spacePressed) tools?.onMove({ world, modifiers })
             });
 
             // Setup camera pan and zoom
@@ -178,12 +182,13 @@ export function PixiStage() {
 
             window.removeEventListener("keydown", onKeyDown);
             window.removeEventListener("keyup", onKeyUp);
-            input?.umount();
+            input?.unmount();
             if (app.renderer) {
                 app.destroy(true, { children: true, texture: true });
             }
-            sceneGraphics?.umount();
-            snapDataCache?.umount();
+            graphIndex?.unmount();
+            sceneGraphics?.unmount();
+            snapDataCache?.unmount();
         }
     }, []);
 

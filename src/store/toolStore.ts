@@ -7,6 +7,6 @@ interface ToolState {
 }
 
 export const useToolStore = create<ToolState>((set) => ({
-    tool: "select",
-    setTool: (tool) => set({tool})
+    tool: "line",
+    setTool: (tool) => set({ tool })
 }))

@@ -1,5 +1,6 @@
 import { Point, type Application, type Container, type FederatedPointerEvent } from "pixi.js";
 import { ZoomAccumulator } from "../camera/zoomQuantizer";
+import type { InputEventName, InputEventPayloads, Modifiers } from "./types";
 
 type Handler<T> = (payload: T) => void;
 
@@ -28,39 +29,6 @@ class TinyEmitter<Events extends Record<string, any>> {
 
     removeAll(): void { this.map.clear(); }
 }
-// What pointer events emit
-export interface RoutedPointer {
-    // Pixel co-ordinates in view (screen space)
-    screen: Point;
-    // World co-ordinates after world transformations
-    world: Point;
-    // Mouse/ touch button bitmask
-    buttons: number;
-}
-
-// Zoom instruction for the camera controller
-export interface ZoomPayload {
-    // Zoom factor, >1 zoom in, <1 zoom out
-    deltaTicks: number;
-    // Screen space pixel position to anchor the zoom under
-    screen: Point;
-}
-
-type InputEventName =
-    | "pointerDown"
-    | "pointerMove"
-    | "pointerUp"
-    | "panByScreen"
-    | "zoomAt";
-
-// Mapping from event name to payload type
-interface InputEventPayloads {
-    pointerDown: RoutedPointer;
-    pointerMove: RoutedPointer;
-    pointerUp: RoutedPointer;
-    panByScreen: { dx: number, dy: number };
-    zoomAt: ZoomPayload;
-}
 
 export class InputRouter extends TinyEmitter<InputEventPayloads> {
     // Pixi app for pointer events
@@ -70,7 +38,7 @@ export class InputRouter extends TinyEmitter<InputEventPayloads> {
     // Canvas element we attach wheel/ trackpad events to
     private viewEl: HTMLCanvasElement;
     // Unsubscribe callbacks for teardown
-    private subs: Array<() => void> = [];
+    private unsubs: Array<() => void> = [];
     // True while in a panning session (i.e press -> drag -> release)
     private isPanning: boolean = false;
     // Last screen position while panning (for computing dx, dy)
@@ -107,13 +75,23 @@ export class InputRouter extends TinyEmitter<InputEventPayloads> {
         return super.emit(event, payload);
     }
 
+    // Extract a readonly copy of modifier keys from pointer event
+    getModifiers(e: { altKey?: boolean; ctrlKey?: boolean; metaKey?: boolean; shiftKey?: boolean }): Modifiers {
+        return Object.freeze({
+            alt: !!e.altKey,
+            ctrl: !!e.ctrlKey,
+            meta: !!e.metaKey,
+            shift: !!e.shiftKey,
+        });
+    }
     // Attach Pixi + DOM listeners
     public mount(): void {
         // --- Pixi pointer events (down,move,up) ----------------------------------------
         const onDown = (e: FederatedPointerEvent) => {
             const screen = e.global.clone();
             const world = this.world.toLocal(screen);
-            this.emit("pointerDown", { screen, world, buttons: e.buttons });
+            const modifiers = this.getModifiers(e);
+            this.emit("pointerDown", { screen, world, buttons: e.buttons, modifiers });
 
             // If we should be panning, then start a session
             if (this.shouldPan(e)) {
@@ -125,7 +103,8 @@ export class InputRouter extends TinyEmitter<InputEventPayloads> {
         const onMove = (e: FederatedPointerEvent) => {
             const screen = e.global.clone();
             const world = this.world.toLocal(screen);
-            this.emit("pointerMove", { screen, world, buttons: e.buttons });
+            const modifiers = this.getModifiers(e);
+            this.emit("pointerMove", { screen, world, buttons: e.buttons, modifiers });
 
             // If we are panning, emit dx/dy in screen pixels
             // Panning should be relative to screen space, not world transformations
@@ -140,7 +119,8 @@ export class InputRouter extends TinyEmitter<InputEventPayloads> {
         const onUp = (e: FederatedPointerEvent) => {
             const screen = e.global.clone();
             const world = this.world.toLocal(screen);
-            this.emit("pointerUp", { screen, world, buttons: e.buttons });
+            const modifiers = this.getModifiers(e);
+            this.emit("pointerUp", { screen, world, buttons: e.buttons, modifiers });
             // Always end panning session on pointer up
             this.isPanning = false;
         }
@@ -150,7 +130,7 @@ export class InputRouter extends TinyEmitter<InputEventPayloads> {
         this.app.stage.on("pointerup", onUp);
         this.app.stage.on("pointerupoutside", onUp);
 
-        this.subs.push(() => {
+        this.unsubs.push(() => {
             this.app.stage.off("pointerdown", onDown);
             this.app.stage.off("pointermove", onMove);
             this.app.stage.off("pointerup", onUp);
@@ -174,10 +154,10 @@ export class InputRouter extends TinyEmitter<InputEventPayloads> {
         }
 
         this.viewEl.addEventListener("wheel", onWheel, { passive: false });
-        this.subs.push(() => this.viewEl.removeEventListener("wheel", onWheel));
+        this.unsubs.push(() => this.viewEl.removeEventListener("wheel", onWheel));
     }
 
-    public umount(): void {
-        this.subs.splice(0).forEach((off) => off());
+    public unmount(): void {
+        this.unsubs.splice(0).forEach((off) => off());
     }
 }

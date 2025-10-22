@@ -6,23 +6,52 @@ import { useSegmentStore } from "@/store/segmentStore";
 import { useViewportStore } from "@/store/viewportStore";
 import { Graphics } from "pixi.js";
 import { scaleFromTicks } from "../camera/zoomQuantizer";
+import { useSelectStore } from "@/store/selectStore";
+import type { GraphIndex } from "../graph/graphIndex";
 
+const SEG_SELECT_TINT = 0xFF8A00;
+const SEG_NORMAL_TINT = 0xFFFFFF;
+const NODE_SELECT_TINT = 0xFF8A00;
+const NODE_NORMAL_TINT = NODE_COLOR;
+
+// TODO: 
+// Only touch graphics on diffs, not full updates
 export class SceneGraphics {
     private layers: GeometryLayers;
-    private subs: Array<() => void> = [];
+    private graph: GraphIndex;
+
+    private unsubs: Array<() => void> = [];
 
     private nodeGfx = new Map<string, Graphics>();
     private segGfx = new Map<string, Graphics>();
     private circleGfx = new Map<string, Graphics>();
 
-    constructor(layers: GeometryLayers) {
+    constructor(layers: GeometryLayers, graphIndex: GraphIndex) {
         this.layers = layers;
+        this.graph = graphIndex;
     }
 
     mount() {
         this.rebuildAll();
 
-        this.subs.push(
+        this.unsubs.push(
+            useViewportStore.subscribe(
+                (state) => state.zoomTicks,
+                (state, _prevState) => {
+                    this.rescaleNodes(state);
+                }
+            )
+        )
+
+        this.unsubs.push(
+            useSelectStore.subscribe(
+                (state) => state.selected,
+                (state) => {
+                    this.applySelectionTints(state);
+                }
+            )
+        )
+        this.unsubs.push(
             useNodeStore.subscribe(
                 (state) => state.byId,
                 (state, prevState) => {
@@ -33,23 +62,16 @@ export class SceneGraphics {
                 }
             )
         )
-        this.subs.push(
-            useViewportStore.subscribe(
-                (state) => state.zoomTicks,
-                (state, _prevState) => {
-                    this.rescaleNodes(state);
-                }
-            )
-        )
-        this.subs.push(
+        this.unsubs.push(
             useSegmentStore.subscribe(
                 (state) => state.byId,
                 (state, prevState) => {
                     this.syncSegments(state.size < prevState.size);
+                    this.syncNodeDegrees();
                 }
             )
         )
-        this.subs.push(
+        this.unsubs.push(
             useCircleStore.subscribe(
                 (state) => state.byId,
                 (state, prevState) => {
@@ -59,9 +81,9 @@ export class SceneGraphics {
         )
     }
 
-    umount() {
-        this.subs.forEach(u => u());
-        this.subs = [];
+    unmount() {
+        this.unsubs.forEach(u => u());
+        this.unsubs = [];
 
         // Destroy all graphics
         for (const g of this.nodeGfx.values()) g.destroy();
@@ -81,6 +103,54 @@ export class SceneGraphics {
         this.syncCircles(true);
     }
 
+    syncNodeDegrees() {
+        const nodes = useNodeStore.getState().byId;
+
+        for (const [id] of nodes) {
+            let g = this.nodeGfx.get(id);
+            if (!g) continue;
+
+            // If degrees on node > 2, then don't render
+            g.visible = this.graph.getDegree(id) < 2;
+        }
+    }
+
+    rescaleNodes(zoomTicks: number) {
+        const nodes = useNodeStore.getState().byId;
+
+        const s = scaleFromTicks(zoomTicks);
+        const nodeScale = 1 / s;
+
+        for (const [id] of nodes) {
+            let g = this.nodeGfx.get(id);
+            if (!g) continue;
+
+            g.scale.set(nodeScale);
+        }
+    }
+
+    applySelectionTints(selected: Set<String>) {
+        for (const [id, g] of this.nodeGfx) {
+            const k = `node:${id}`;
+            if (selected.has(k)) {
+                g.tint = NODE_SELECT_TINT;
+                // May be hidden if degree > 2, however always show when selected
+                g.visible = true;
+            } else {
+                g.tint = NODE_NORMAL_TINT;
+                g.visible = false;
+            }
+        }
+        for (const [id, g] of this.segGfx) {
+            const k = `segment:${id}`;
+            g.tint = selected.has(k) ? SEG_SELECT_TINT : SEG_NORMAL_TINT;
+        }
+        for (const [id, g] of this.circleGfx) {
+            const k = `circle:${id}`;
+            g.tint = selected.has(k) ? SEG_SELECT_TINT : SEG_NORMAL_TINT;
+        }
+    }
+
     syncNodes(withDelete = false) {
         const nodes = useNodeStore.getState().byId;
         const zoomTicks = useViewportStore.getState().zoomTicks;
@@ -96,6 +166,7 @@ export class SceneGraphics {
             // Reset node position
             // Eventually implement partial updates
             g.position.set(n.p.x, n.p.y);
+
         }
 
         if (withDelete) {
@@ -105,20 +176,6 @@ export class SceneGraphics {
         }
 
         this.rescaleNodes(zoomTicks);
-    }
-
-    rescaleNodes(zoomTicks: number) {
-        const nodes = useNodeStore.getState().byId;
-
-        const s = scaleFromTicks(zoomTicks);
-        const nodeScale = 1 / s;
-
-        for (const [id] of nodes) {
-            let g = this.nodeGfx.get(id);
-            if (!g) continue;
-
-            g.scale.set(nodeScale);
-        }
     }
 
     syncSegments(withDelete = false) {
@@ -187,7 +244,8 @@ export class SceneGraphics {
     }
 
     makeNodeGfx() {
-        const g = new Graphics().circle(0, 0, NODE_RADIUS).fill(NODE_COLOR);
+        const g = new Graphics().circle(0, 0, NODE_RADIUS).fill(0xffffff);
+        g.tint = NODE_NORMAL_TINT;
         g.eventMode = "none";
         return g;
 
