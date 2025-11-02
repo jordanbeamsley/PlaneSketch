@@ -98,6 +98,10 @@ export abstract class BaseShapeTool extends BaseTool {
         }
     }
 
+    public onUp(_e: PointerPayload): void {
+        //no op
+    }
+
     public onKeyDown(e: KeyboardEvent): void {
         switch (e.key) {
             // Abort current preview shapes
