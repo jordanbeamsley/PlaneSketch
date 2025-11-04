@@ -34,7 +34,12 @@ export class SelectTool extends BaseTool {
         // If we're already snapped to a node or segment, then select it
         const snapKind = this.currentSnap.kind;
         if (snapKind === "node" || snapKind === "segment") {
-            useSelectStore.getState().add({ kind: snapKind, id: this.currentSnap.id! })
+            const entity: EntityRef = { kind: snapKind, id: this.currentSnap.id! };
+            const entityKey = `${snapKind}:${this.currentSnap.id}`;
+
+            // If it's already in the select store then remove it
+            if (useSelectStore.getState().selected.has(entityKey)) useSelectStore.getState().remove(entity);
+            else useSelectStore.getState().add(entity);
             return;
         }
 

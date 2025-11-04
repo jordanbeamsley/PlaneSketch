@@ -164,24 +164,26 @@ export class SceneGraphics {
     }
 
     applyHover(currEntity: string | null, prevEntity: string | null) {
-        if (prevEntity && !useSelectStore.getState().selected.has(prevEntity)) {
+        if (prevEntity) {
             const [kind, id] = prevEntity.split(":");
+
+            const selected = useSelectStore.getState().selected.has(prevEntity);
 
             if (kind === "node") {
                 const g = this.nodeGfx.get(id);
                 if (g) {
-                    g.tint = NODE_NORMAL_TINT;
-                    g.visible = this.graph.getDegree(id) < 2;
+                    g.tint = (selected) ? NODE_SELECT_TINT : NODE_NORMAL_TINT;
+                    g.visible = selected || this.graph.getDegree(id) < 2;
                 }
             }
 
             else if (kind === "segment") {
                 const g = this.segGfx.get(id);
-                if (g) g.tint = SEG_NORMAL_TINT;
+                if (g) g.tint = (selected) ? SEG_SELECT_TINT : SEG_NORMAL_TINT;
             }
         }
 
-        if (currEntity && !useSelectStore.getState().selected.has(currEntity)) {
+        if (currEntity) {
             const [kind, id] = currEntity.split(":");
 
             if (kind === "node") {
