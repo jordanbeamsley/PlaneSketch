@@ -14,7 +14,6 @@ export class GraphIndex {
             useSegmentStore.subscribe(
                 (state) => state.byId,
                 (state, prevState) => {
-                    // Determine diffs
                     // Removals
                     for (const [sid, prevSeg] of prevState) {
                         if (!state.has(sid)) {

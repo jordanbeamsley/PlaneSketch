@@ -50,6 +50,7 @@ export class KeyboardRouter {
         };
 
         const handled = this.opts.resolver.resolveAndExecute(chord, this.opts.ctx);
+
         if (handled) {
             e.preventDefault();
             e.stopPropagation();

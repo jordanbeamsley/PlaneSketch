@@ -41,10 +41,11 @@ export const useSegmentStore = create<SegmentState & SegmentAction>()(
             return { byId };
         }),
         removeMany: (ids) => set(s => {
+            const byId = new Map(s.byId);
             for (const id of ids) {
-                s.byId.delete(id);
+                byId.delete(id);
             }
-            return { byId: new Map(s.byId) };
+            return { byId };
         }),
         asArray: () => [] // implement later
 

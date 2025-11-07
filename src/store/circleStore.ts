@@ -19,12 +19,14 @@ export const useCircleStore = create<CircleState & CircleAction>()(
     subscribeWithSelector((set) => ({
         byId: new Map(),
         add: (n) => set(s => {
-            s.byId.set(n.id, n);
-            return { byId: new Map(s.byId) };
+            const byId = new Map(s.byId);
+            byId.set(n.id, n);
+            return { byId };
         }),
         addMany: (ns) => set(s => {
-            for (const n of ns) s.byId.set(n.id, n);
-            return { byId: new Map(s.byId) };
+            const byId = new Map(s.byId);
+            for (const n of ns) byId.set(n.id, n);
+            return { byId };
         }),
         update: (id, patch) => set(s => {
             const cur = s.byId.get(id);
@@ -33,14 +35,16 @@ export const useCircleStore = create<CircleState & CircleAction>()(
             return { byId: new Map(s.byId) };
         }),
         remove: (id) => set(s => {
-            s.byId.delete(id);
-            return { byId: new Map(s.byId) };
+            const byId = new Map(s.byId);
+            byId.delete(id);
+            return { byId };
         }),
         removeMany: (ids) => set(s => {
+            const byId = new Map(s.byId);
             for (const id of ids) {
-                s.byId.delete(id);
+                byId.delete(id);
             }
-            return { byId: new Map(s.byId) };
+            return { byId };
         }),
         asArray: () => [] // implement later
     }))
