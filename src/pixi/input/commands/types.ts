@@ -9,7 +9,7 @@ export type CommandContext = {
         /** Return true if current select buffer has any entities */
         hasAny: () => boolean;
         /** Delete selected entities and return number of deletions */
-        delete: () => number;
+        delete: () => void;
     },
     tools: {
         getActiveToolId: () => ToolId;

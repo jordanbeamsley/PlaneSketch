@@ -16,10 +16,10 @@ import { PointerRouter } from "./input/pointer/pointerRouter";
 import type { KeyboardRouter } from "./input/keyboard/KeyboardRouter";
 import type { CommandContext } from "./input/commands/types";
 import { useSelectStore } from "@/store/selectStore";
-import { useNodeStore } from "@/store/nodeStore";
 import { useSegmentStore } from "@/store/segmentStore";
 import { useCircleStore } from "@/store/circleStore";
 import { createDefaultKeyboardRouter } from "./input/keyboard";
+import { deleteNodesAndIncidents } from "./graph/graphOps";
 
 export function PixiStage() {
     const hostRef = useRef<HTMLDivElement>(null);
@@ -139,10 +139,9 @@ export function PixiStage() {
                     hasAny: () => useSelectStore.getState().hasAny(),
                     delete: () => {
                         const selected = useSelectStore.getState().getByKind();
-                        useNodeStore.getState().removeMany(selected.nodes);
-                        useSegmentStore.getState().removeMany(selected.segments);
-                        useCircleStore.getState().removeMany(selected.circles);
-                        return (selected.nodes.length + selected.segments.length + selected.circles.length);
+                        deleteNodesAndIncidents(graphIndex!, selected.nodes);
+                        if (selected.segments.length) useSegmentStore.getState().removeMany(selected.segments);
+                        if (selected.circles.length) useCircleStore.getState().removeMany(selected.circles);
                     }
                 },
                 tools: {

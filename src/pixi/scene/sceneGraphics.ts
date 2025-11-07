@@ -150,7 +150,7 @@ export class SceneGraphics {
                 g.visible = true;
             } else {
                 g.tint = NODE_NORMAL_TINT;
-                g.visible = false;
+                g.visible = this.graph.getDegree(id) < 2;
             }
         }
         for (const [id, g] of this.segGfx) {
