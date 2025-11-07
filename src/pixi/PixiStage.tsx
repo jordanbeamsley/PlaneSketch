@@ -170,7 +170,6 @@ export function PixiStage() {
             input.shouldPan = (e: FederatedPointerEvent) => e.buttons === 4 || keyboardRouter!.isSpacePressed();
 
             input.on("pointerDown", ({ world, modifiers }) => {
-                console.log("pointer down: ", keyboardRouter?.isSpacePressed);
                 // Don't delegate to tool if we're panning
                 if (!keyboardRouter?.isSpacePressed()) tools?.onDown({ world, modifiers });
             });
@@ -187,14 +186,21 @@ export function PixiStage() {
 
             // Setup camera pan and zoom
             input.on("panByScreen", ({ dx, dy }) => {
-                console.log("panByScreen");
                 camera.panByScreen(dx, dy);
                 redrawGridAndViewport();
+
+                // Snap overlay is in screen space, so whenever we pan it becomes misaligned
+                // Hide it and let it be picked up on the next mouse move
+                snapOverley.hideOverlay();
             })
 
             input.on("zoomAt", ({ deltaTicks, screen }) => {
                 camera.applyDeltaTicks(deltaTicks, screen);
                 redrawGridAndViewport();
+
+                // Snap overlay is in screen space, so whenever we zoom it becomes misaligned
+                // Hide it and let it be picked up on the next mouse move
+                snapOverley.hideOverlay();
             });
 
             // Attach input listeners

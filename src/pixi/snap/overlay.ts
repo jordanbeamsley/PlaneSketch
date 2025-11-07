@@ -77,14 +77,18 @@ export class SnapOverlay {
 
     }
 
-    // TODO: Needs to be recalled on world pan/ zoom
-    render(result: SnapResult) {
-        // Hide previous snap sprite
+    public hideOverlay() {
         if (this.active) {
             const prev = this.sprites.get(this.active);
             if (prev) prev.visible = false;
             this.active = undefined;
         }
+    }
+
+    // TODO: Needs to be recalled on world pan/ zoom
+    render(result: SnapResult) {
+        // Hide previous snap sprite
+        this.hideOverlay();
 
         if (result.kind === "none") return;
 
