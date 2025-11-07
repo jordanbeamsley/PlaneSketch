@@ -1,4 +1,4 @@
-import { Application, Container } from "pixi.js";
+import { Application, Container, FederatedPointerEvent } from "pixi.js";
 import { useEffect, useRef } from "react";
 import { ToolController } from "./tools/ToolController";
 import { SnapOverlay } from "./snap/overlay";
@@ -9,10 +9,17 @@ import { SceneGrid } from "./scene/sceneGrid";
 import { SceneGraphics } from "./scene/sceneGraphics";
 import type { ToolContext } from "./tools/baseTool";
 import { MAX_SCALE, MIN_SCALE } from "@/constants/canvas";
-import { InputRouter } from "./input/inputRouter";
 import { CameraController } from "./camera/cameraController";
 import { ViewportService } from "./camera/viewportService";
 import { GraphIndex } from "./graph/graphIndex";
+import { PointerRouter } from "./input/pointer/pointerRouter";
+import type { KeyboardRouter } from "./input/keyboard/KeyboardRouter";
+import type { CommandContext } from "./input/commands/types";
+import { useSelectStore } from "@/store/selectStore";
+import { useNodeStore } from "@/store/nodeStore";
+import { useSegmentStore } from "@/store/segmentStore";
+import { useCircleStore } from "@/store/circleStore";
+import { createDefaultKeyboardRouter } from "./input/keyboard";
 
 export function PixiStage() {
     const hostRef = useRef<HTMLDivElement>(null);
@@ -26,10 +33,8 @@ export function PixiStage() {
         let snapDataCache: CachedDataSource | null = null;
         let graphIndex: GraphIndex | null = null;
         let sceneGraphics: SceneGraphics | null = null;
-        let input: InputRouter | null = null;
-
-        // For keybinding to enable panning
-        let spacePressed: boolean = false;
+        let input: PointerRouter | null = null;
+        let keyboardRouter: KeyboardRouter | null;
 
         (async () => {
             // Bootstrap pixiCanvas
@@ -47,12 +52,14 @@ export function PixiStage() {
             const edgeLayer = new Container();
             const nodeLayer = new Container();
             const previewLayer = new Container(); // Ghost shapes while drawing
+            const selectLayer = new Container({ label: "select" });
             const hudLayer = new Container(); // Snaps points, alignment lines, etc.
 
             edgeLayer.zIndex = 10;
             nodeLayer.zIndex = 20;
             previewLayer.zIndex = 30;
-            hudLayer.zIndex = 40;
+            selectLayer.zIndex = 40;
+            hudLayer.zIndex = 50;
 
             const geometryLayers: GeometryLayers = {
                 edges: edgeLayer,
@@ -62,7 +69,7 @@ export function PixiStage() {
 
             // All geometry containers are scaled by the world container
             // Stage holds the world/ camera
-            world.addChild(edgeLayer, nodeLayer, previewLayer);
+            world.addChild(edgeLayer, nodeLayer, previewLayer, selectLayer);
             app.stage.addChild(world, hudLayer);
 
             // Setup world camera
@@ -116,28 +123,71 @@ export function PixiStage() {
             const toolContext: ToolContext = {
                 snapEngine: snapEngine, snapOverlay: snapOverley, dataSource: snapDataCache, viewport: viewport
             };
-            tools = new ToolController(toolContext, geometryLayers);
+            tools = new ToolController(toolContext, geometryLayers, selectLayer, graphIndex);
 
             // Stage interaction defaults
             app.stage.eventMode = "static";
             app.stage.hitArea = app.screen;
             app.stage.cursor = "crosshair";
 
+            // Build command context and setup keyboard router
+            const ctx: CommandContext = {
+                input: {
+                    isCanvasFocused: () => document.activeElement === app.canvas,
+                },
+                selection: {
+                    hasAny: () => useSelectStore.getState().hasAny(),
+                    delete: () => {
+                        const selected = useSelectStore.getState().getByKind();
+                        useNodeStore.getState().removeMany(selected.nodes);
+                        useSegmentStore.getState().removeMany(selected.segments);
+                        useCircleStore.getState().removeMany(selected.circles);
+                        return (selected.nodes.length + selected.segments.length + selected.circles.length);
+                    }
+                },
+                tools: {
+                    getActiveToolId: () => tools!.getActive(),
+                    dispatchToActiveTool: (cmd, ctx) => tools!.executeCommand(cmd, ctx)
+                }
+            }
+
+            // Make sure the canvas is focusable so shortcuts only work in stage
+            app.canvas.tabIndex = 0;
+            app.canvas.focus();
+
+            const keyboard = createDefaultKeyboardRouter({
+                ctx,
+                setCursor: (cursor) => { app.stage.cursor = cursor; },
+                setShouldPan: (fn) => { if (input) input.shouldPan = fn; },
+                target: app.canvas
+            });
+            keyboardRouter = keyboard.router;
+            keyboardRouter.mount();
+
             // Input router
             // Single place for pointer and wheel events, emits high level events
-            input = new InputRouter(app, world);
+            input = new PointerRouter(app, world);
+            input.shouldPan = (e: FederatedPointerEvent) => e.buttons === 4 || keyboardRouter!.isSpacePressed();
 
-            // Route pointer events to tools with world only co-ords
-            // Don't call tools pointer handlers if we're panning
             input.on("pointerDown", ({ world, modifiers }) => {
-                if (!spacePressed) tools?.onDown({ world, modifiers })
+                console.log("pointer down: ", keyboardRouter?.isSpacePressed);
+                // Don't delegate to tool if we're panning
+                if (!keyboardRouter?.isSpacePressed()) tools?.onDown({ world, modifiers });
             });
+
             input.on("pointerMove", ({ world, modifiers }) => {
-                if (!spacePressed) tools?.onMove({ world, modifiers })
+                // Don't delegate to tool if we're panning
+                if (!keyboardRouter?.isSpacePressed()) tools?.onMove({ world, modifiers });
             });
+
+            input.on("pointerUp", ({ world, modifiers }) => {
+                // Don't delegate to tool if we're panning
+                if (!keyboardRouter?.isSpacePressed()) tools?.onUp({ world, modifiers });
+            })
 
             // Setup camera pan and zoom
             input.on("panByScreen", ({ dx, dy }) => {
+                console.log("panByScreen");
                 camera.panByScreen(dx, dy);
                 redrawGridAndViewport();
             })
@@ -147,45 +197,18 @@ export function PixiStage() {
                 redrawGridAndViewport();
             });
 
-            // Default panning gate
-            input.shouldPan = (e) => e.buttons === 4 || spacePressed;
-
             // Attach input listeners
             input.mount();
         })();
 
         // Keyboard routing
-        const onKeyDown = (e: KeyboardEvent) => {
-            // First check if space is pressed to enable panning
-            if (e.code === "Space") {
-                spacePressed = true;
-                app.stage.cursor = "grab";
-                e.preventDefault();
-            }
-            // Then delegate to tools
-            tools?.onKeyDown(e);
-
-        }
-
-        const onKeyUp = (e: KeyboardEvent) => {
-            if (e.code === "Space") {
-                spacePressed = false;
-                app.stage.cursor = "crosshair";
-            }
-        }
-
-        window.addEventListener("keydown", onKeyDown);
-        window.addEventListener("keyup", onKeyUp);
-
         return () => {
             disposed = true;
-
-            window.removeEventListener("keydown", onKeyDown);
-            window.removeEventListener("keyup", onKeyUp);
-            input?.unmount();
             if (app.renderer) {
                 app.destroy(true, { children: true, texture: true });
             }
+            input?.unmount();
+            keyboardRouter?.unmount();
             graphIndex?.unmount();
             sceneGraphics?.unmount();
             snapDataCache?.unmount();

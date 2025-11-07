@@ -11,6 +11,7 @@ type SegmentAction = {
     addMany: (ns: Segment[]) => void;
     update: (id: SegmentId, patch: Partial<Segment>) => void;
     remove: (id: SegmentId) => void;
+    removeMany: (ids: SegmentId[]) => void;
     asArray: () => Segment[]; // For serializing data on save
 }
 
@@ -38,6 +39,12 @@ export const useSegmentStore = create<SegmentState & SegmentAction>()(
             const byId = new Map(s.byId);
             byId.delete(id);
             return { byId };
+        }),
+        removeMany: (ids) => set(s => {
+            for (const id of ids) {
+                s.byId.delete(id);
+            }
+            return { byId: new Map(s.byId) };
         }),
         asArray: () => [] // implement later
 

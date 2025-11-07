@@ -22,6 +22,7 @@ type SelectAction = {
     remove: (e: EntityRef) => void;
     toggle: (e: EntityRef) => void;
     clear: () => void;
+    hasAny: () => boolean;
 
     setHovered: (e: EntityRef | null) => void;
 
@@ -56,6 +57,7 @@ export const useSelectStore = create<SelectState & SelectAction>()(
             return { selected: c };
         }),
         clear: () => set({ selected: new Set<Key>() }),
+        hasAny: () => get().selected.size > 0,
 
         setHovered: (e) => set({ hovered: e ? key(e) : null }),
 

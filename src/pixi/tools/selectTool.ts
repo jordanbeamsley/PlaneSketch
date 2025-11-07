@@ -7,6 +7,9 @@ import { useNodeStore } from "@/store/nodeStore";
 import type { GraphIndex } from "../graph/graphIndex";
 import type { NodeId, SegmentId } from "@/models/geometry";
 import { useSegmentStore } from "@/store/segmentStore";
+import type { CommandId } from "../input/commands/defaultCommands";
+import type { CommandContext } from "../input/commands/types";
+import type { ToolId } from "./types";
 
 export class SelectTool extends BaseTool {
     private dragStartP: Point | null = null;
@@ -21,6 +24,10 @@ export class SelectTool extends BaseTool {
         this.marqueeGfx = new Graphics();
         this.graphIndex = graph;
         selectLayer.addChild(this.marqueeGfx);
+    }
+
+    getId(): ToolId {
+        return "select";
     }
 
     activate(): void {
@@ -83,9 +90,6 @@ export class SelectTool extends BaseTool {
         this.dragStartP = null;
     }
 
-    onKeyDown(_e: KeyboardEvent): void {
-    }
-
     resolveSnapContext(context: SnapRuleContext, p: Vec2): SnapRuleContext {
         // Disable axis snapping for circles
         const resolvedContext = { ...context, p: p };
@@ -132,6 +136,11 @@ export class SelectTool extends BaseTool {
         segs.forEach(sid => es.push({ kind: "segment", id: sid }));
 
         useSelectStore.getState().addMany(es);
+    }
+
+    executeCommand(_cmd: CommandId, _ctx: CommandContext): boolean {
+        // no op yet
+        return false;
     }
 
     destruct(): void {

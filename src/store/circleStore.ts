@@ -11,6 +11,7 @@ type CircleAction = {
     addMany: (ns: Circle[]) => void;
     update: (id: CircleId, patch: Partial<Circle>) => void;
     remove: (id: CircleId) => void;
+    removeMany: (ids: CircleId[]) => void;
     asArray: () => Circle[]; // For serializing data on save
 }
 
@@ -33,6 +34,12 @@ export const useCircleStore = create<CircleState & CircleAction>()(
         }),
         remove: (id) => set(s => {
             s.byId.delete(id);
+            return { byId: new Map(s.byId) };
+        }),
+        removeMany: (ids) => set(s => {
+            for (const id of ids) {
+                s.byId.delete(id);
+            }
             return { byId: new Map(s.byId) };
         }),
         asArray: () => [] // implement later

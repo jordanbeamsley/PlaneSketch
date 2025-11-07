@@ -8,6 +8,7 @@ import type { ToolContext } from "../baseTool";
 import { useCircleStore } from "@/store/circleStore";
 import type { SnapResult, SnapRuleContext } from "@/pixi/snap/types";
 import { scaleFromTicks } from "@/pixi/camera/zoomQuantizer";
+import type { ToolId } from "../types";
 
 export class CircleTool extends BaseShapeTool {
 
@@ -32,6 +33,10 @@ export class CircleTool extends BaseShapeTool {
         this.arcGfx.eventMode = "none";
         this.arcGfx.visible = false;
         this.layers.preview.addChild(this.arcGfx);
+    }
+
+    getId(): ToolId {
+        return "circle";
     }
 
     rescaleNodes(zoomTicks: number): void {

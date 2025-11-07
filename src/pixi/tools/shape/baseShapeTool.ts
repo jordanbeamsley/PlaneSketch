@@ -3,6 +3,8 @@ import { BaseTool, type PointerPayload, type ToolContext } from "../baseTool";
 import type { SnapResult, SnapRuleContext } from "@/pixi/snap/types";
 import type { Node } from "@/models/geometry";
 import { useViewportStore } from "@/store/viewportStore";
+import type { CommandId } from "@/pixi/input/commands/defaultCommands";
+import type { CommandContext } from "@/pixi/input/commands/types";
 
 export abstract class BaseShapeTool extends BaseTool {
 
@@ -102,14 +104,13 @@ export abstract class BaseShapeTool extends BaseTool {
         //no op
     }
 
-    public onKeyDown(e: KeyboardEvent): void {
-        switch (e.key) {
-            // Abort current preview shapes
-            case "q": {
+    executeCommand(cmd: CommandId, _ctx: CommandContext): boolean {
+        switch (cmd) {
+            case "tool.cancel": {
                 this.discardGeometry();
-                break;
+                return true;
             }
-            default: break;
+            default: return false;
         }
     }
 

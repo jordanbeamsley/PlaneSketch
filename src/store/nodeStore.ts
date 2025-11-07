@@ -11,6 +11,7 @@ type NodeAction = {
     addMany: (ns: Node[]) => void;
     update: (id: NodeId, patch: Partial<Node>) => void;
     remove: (id: NodeId) => void;
+    removeMany: (ids: NodeId[]) => void;
     asArray: () => Node[]; // For serializing data on save
 }
 
@@ -33,6 +34,12 @@ export const useNodeStore = create<NodeState & NodeAction>()(
         }),
         remove: (id) => set(s => {
             s.byId.delete(id);
+            return { byId: new Map(s.byId) };
+        }),
+        removeMany: (ids) => set(s => {
+            for (const id of ids) {
+                s.byId.delete(id);
+            }
             return { byId: new Map(s.byId) };
         }),
         asArray: () => [] // implement later

@@ -9,6 +9,7 @@ import type { GeometryLayers } from "@/models/stage";
 import type { ToolContext } from "../baseTool";
 import type { SnapResult, SnapRuleContext } from "@/pixi/snap/types";
 import { scaleFromTicks } from "@/pixi/camera/zoomQuantizer";
+import type { ToolId } from "../types";
 
 export class RectTool extends BaseShapeTool {
 
@@ -48,6 +49,10 @@ export class RectTool extends BaseShapeTool {
         this.rectGfx.eventMode = "none";
         this.rectGfx.visible = false;
         this.layers.preview.addChild(this.rectGfx);
+    }
+
+    getId(): ToolId {
+        return "rectangle";
     }
 
     rescaleNodes(zoomTicks: number): void {

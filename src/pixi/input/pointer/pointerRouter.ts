@@ -1,6 +1,6 @@
 import { Point, type Application, type Container, type FederatedPointerEvent } from "pixi.js";
-import { ZoomAccumulator } from "../camera/zoomQuantizer";
 import type { InputEventName, InputEventPayloads, Modifiers } from "./types";
+import { ZoomAccumulator } from "@/pixi/camera/zoomQuantizer";
 
 type Handler<T> = (payload: T) => void;
 
@@ -30,7 +30,7 @@ class TinyEmitter<Events extends Record<string, any>> {
     removeAll(): void { this.map.clear(); }
 }
 
-export class InputRouter extends TinyEmitter<InputEventPayloads> {
+export class PointerRouter extends TinyEmitter<InputEventPayloads> {
     // Pixi app for pointer events
     private app: Application;
     // World container used for screen -> world conversions
@@ -46,9 +46,11 @@ export class InputRouter extends TinyEmitter<InputEventPayloads> {
 
     private zoomAccum = new ZoomAccumulator();
 
-    // Callback to decide whether panning should start/ continue based on pointer event
-    // Default: only when middle mouse button is down
-    // This can be overwritten to enable LMB+space or dedicated "Pan Tool"
+    /** 
+     * Callback to decide whether panning should start/ continue based on pointer event 
+     * Default: only when middle mouse button is down 
+     * This can be overwritten to enable LMB+space or dedicated "Pan Tool" 
+     */
     public shouldPan: (e: FederatedPointerEvent) => boolean = (e) => e.buttons === 4;
 
     constructor(app: Application, world: Container) {
@@ -75,7 +77,7 @@ export class InputRouter extends TinyEmitter<InputEventPayloads> {
         return super.emit(event, payload);
     }
 
-    // Extract a readonly copy of modifier keys from pointer event
+    /** Extract a readonly copy of modifier keys from pointer event */
     getModifiers(e: { altKey?: boolean; ctrlKey?: boolean; metaKey?: boolean; shiftKey?: boolean }): Modifiers {
         return Object.freeze({
             alt: !!e.altKey,
@@ -84,7 +86,8 @@ export class InputRouter extends TinyEmitter<InputEventPayloads> {
             shift: !!e.shiftKey,
         });
     }
-    // Attach Pixi + DOM listeners
+
+    /** Attach Pixi + DOM listeners */
     public mount(): void {
         // --- Pixi pointer events (down,move,up) ----------------------------------------
         const onDown = (e: FederatedPointerEvent) => {
