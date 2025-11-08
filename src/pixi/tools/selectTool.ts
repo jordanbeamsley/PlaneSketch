@@ -5,11 +5,12 @@ import { useSelectStore, type EntityRef } from "@/store/selectStore";
 import type { Vec2 } from "@/models/vectors";
 import { useNodeStore } from "@/store/nodeStore";
 import type { GraphIndex } from "../graph/graphIndex";
-import type { NodeId, SegmentId } from "@/models/geometry";
+import type { CircleId, NodeId, SegmentId } from "@/models/geometry";
 import { useSegmentStore } from "@/store/segmentStore";
 import type { CommandId } from "../input/commands/defaultCommands";
 import type { CommandContext } from "../input/commands/types";
 import type { ToolId } from "./types";
+import { useCircleStore } from "@/store/circleStore";
 
 export class SelectTool extends BaseTool {
     private dragStartP: Point | null = null;
@@ -109,31 +110,51 @@ export class SelectTool extends BaseTool {
         // Grab store states once
         const nodeMap = useNodeStore.getState().byId;
         const segMap = useSegmentStore.getState().byId;
+        const circleMap = useCircleStore.getState().byId;
 
         // List of entities to be added to the selection
-        const nodes: Set<NodeId> = new Set();
-        const segs: Set<SegmentId> = new Set();
+        const nodesInHitbox: Set<NodeId> = new Set();
+        const segsInHitbox: Set<SegmentId> = new Set();
+        const circlesInHitbox: Set<CircleId> = new Set();
 
         // Find all nodes contained within hitbox
         nodeMap.forEach(n => {
-            if (n.p.x > x1 && n.p.y > y1 && n.p.x < x2 && n.p.y < y2) nodes.add(n.id);
+            if (n.p.x > x1 && n.p.y > y1 && n.p.x < x2 && n.p.y < y2) nodesInHitbox.add(n.id);
         });
 
-        // For each node found, check if it has incident segments
-        nodes.forEach(nid => {
-            // Then check if both nodes of the segment are in the hitbox, i.e they are in the node set
-            this.graphIndex.getIncidentSegments(nid).forEach(sid => {
-                if (segs.has(sid)) return;
+        // For each node found, check if it has incident entities 
+        nodesInHitbox.forEach(nid => {
+            const { incSids, incCids } = this.graphIndex.getAllIncidents(nid);
+
+            // Check incident segments
+            // Check if both nodes of the segment are in the hitbox, i.e they are in the node set
+            for (const sid of incSids) {
+                if (segsInHitbox.has(sid)) return;
                 const s = segMap.get(sid);
                 if (!s) return; // should never happen
-                if (nodes.has(s.p1) && nodes.has(s.p2)) segs.add(sid);
-            });
+                if (nodesInHitbox.has(s.p1) && nodesInHitbox.has(s.p2)) segsInHitbox.add(sid);
+            }
+
+            // Check incident circles
+            // Check if radius is within hitbox
+            for (const cid of incCids) {
+                if (circlesInHitbox.has(cid)) return;
+                const c = circleMap.get(cid);
+                if (!c) return; // should never happen
+
+                const { x, y } = nodeMap.get(c.center)!.p;
+                const r = c.radius;
+                if ((x - r > x1) && (x + r < x2) && (y - r > y1) && (y + r < y2)) {
+                    circlesInHitbox.add(cid);
+                }
+            }
         });
 
         // convert nids, sids into entity refs
         const es: Array<EntityRef> = [];
-        nodes.forEach(nid => es.push({ kind: "node", id: nid }));
-        segs.forEach(sid => es.push({ kind: "segment", id: sid }));
+        nodesInHitbox.forEach(nid => es.push({ kind: "node", id: nid }));
+        segsInHitbox.forEach(sid => es.push({ kind: "segment", id: sid }));
+        circlesInHitbox.forEach(cid => es.push({ kind: "circle", id: cid }));
 
         useSelectStore.getState().addMany(es);
     }

@@ -123,7 +123,7 @@ export class SceneGraphics {
             if (!g) continue;
 
             // If degrees on node > 2, then don't render
-            g.visible = this.graph.getDegree(id) < 2;
+            g.visible = this.graph.getSegDegree(id) < 2;
         }
     }
 
@@ -150,7 +150,7 @@ export class SceneGraphics {
                 g.visible = true;
             } else {
                 g.tint = NODE_NORMAL_TINT;
-                g.visible = this.graph.getDegree(id) < 2;
+                g.visible = this.graph.getSegDegree(id) < 2;
             }
         }
         for (const [id, g] of this.segGfx) {
@@ -173,7 +173,7 @@ export class SceneGraphics {
                 const g = this.nodeGfx.get(id);
                 if (g) {
                     g.tint = (selected) ? NODE_SELECT_TINT : NODE_NORMAL_TINT;
-                    g.visible = selected || this.graph.getDegree(id) < 2;
+                    g.visible = selected || this.graph.getSegDegree(id) < 2;
                 }
             }
 
