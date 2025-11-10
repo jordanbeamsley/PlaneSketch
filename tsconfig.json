@@ -3,5 +3,11 @@
   "references": [
     { "path": "./tsconfig.app.json" },
     { "path": "./tsconfig.node.json" }
-  ]
+  ],
+  "compilerOptions": {
+    "baseUrl": ".",          // <- matches the setup you already use
+    "paths": {
+      "@/*": ["src/*"]       // <- same alias you’re already using
+    }
+  }
 }

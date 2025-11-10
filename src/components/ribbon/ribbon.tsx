@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { RibbonHome } from "./RibbonHome";
+import { RibbonHome } from "./ribbonHome";
 
 export type RibbonTabId =
     | "home"
@@ -26,7 +26,7 @@ export default function Ribbon() {
                         <button
                             key={tab.id} role="tab" aria-selected={isActive} aria-controls={`ribbon-panel-${tab.id}`}
                             className={[
-                                "text-sm px-4 py-1 hover:bg-zinc-800/90 transition-colors duration-200",
+                                "text-sm text-white px-4 py-1 hover:bg-zinc-800/70 cursor-pointer",
                                 isActive ? "bg-zinc-800" : "bg-zinc-900"
                             ].join(" ")}
                             onClick={() => setActiveTab(tab.id)}
