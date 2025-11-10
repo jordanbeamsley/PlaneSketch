@@ -9,8 +9,8 @@ import type { CircleId, NodeId, SegmentId } from "@/models/geometry";
 import { useSegmentStore } from "@/store/segmentStore";
 import type { CommandId } from "../input/commands/defaultCommands";
 import type { CommandContext } from "../input/commands/types";
-import type { ToolId } from "./types";
 import { useCircleStore } from "@/store/circleStore";
+import type { Tool } from "@/models/tools";
 
 export class SelectTool extends BaseTool {
     private dragStartP: Point | null = null;
@@ -27,7 +27,7 @@ export class SelectTool extends BaseTool {
         selectLayer.addChild(this.marqueeGfx);
     }
 
-    getId(): ToolId {
+    getId(): Tool {
         return "select";
     }
 

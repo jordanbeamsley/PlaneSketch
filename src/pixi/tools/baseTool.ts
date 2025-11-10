@@ -5,10 +5,10 @@ import type { CachedDataSource } from "../snap/cachedDataSource";
 import type { SnapRuleContext } from "../snap/types";
 import { SNAP_RADIUS } from "@/constants/drawing";
 import type { Viewport } from "../camera/viewportService";
-import type { ToolId } from "./types";
 import type { Modifiers } from "../input/pointer/types";
 import type { CommandContext } from "../input/commands/types";
 import type { CommandId } from "../input/commands/defaultCommands";
+import type { Tool } from "@/models/tools";
 
 export interface ToolContext {
     snapOverlay: SnapOverlay;
@@ -51,7 +51,7 @@ export abstract class BaseTool {
         }
     }
 
-    abstract getId(): ToolId;
+    abstract getId(): Tool;
     abstract activate(): void;
     abstract onDown(e: PointerPayload): void;
     abstract onMove(e: PointerPayload): void;

@@ -1,4 +1,4 @@
-import type { ToolId } from "@/pixi/tools/types";
+import type { Tool } from "@/models/tools";
 import type { CommandId } from "./defaultCommands";
 
 export type CommandContext = {
@@ -12,7 +12,7 @@ export type CommandContext = {
         delete: () => void;
     },
     tools: {
-        getActiveToolId: () => ToolId;
+        getActiveToolId: () => Tool;
         /** Delegate command to active tool, pass full command context
          * Return true if command execution was successful */
         dispatchToActiveTool: (cmd: CommandId, ctx: CommandContext) => boolean;

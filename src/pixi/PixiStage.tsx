@@ -38,7 +38,7 @@ export function PixiStage() {
 
         (async () => {
             // Bootstrap pixiCanvas
-            await app.init({ resizeTo: window, background: "#202124", antialias: true });
+            await app.init({ resizeTo: document.querySelector("#canvas-container") as HTMLElement, background: "#202124", antialias: true });
             if (disposed) { app.destroy(true); return; }
             hostRef.current!.appendChild(app.canvas);
 
@@ -152,7 +152,7 @@ export function PixiStage() {
 
             // Make sure the canvas is focusable so shortcuts only work in stage
             app.canvas.tabIndex = 0;
-            app.canvas.focus();
+            //app.canvas.focus();
 
             const keyboard = createDefaultKeyboardRouter({
                 ctx,

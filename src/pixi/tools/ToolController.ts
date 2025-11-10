@@ -36,7 +36,7 @@ export class ToolController {
 
         switch (name) {
             case "line": this.current = new LineTool(this.context, this.layers); break;
-            case "rect": this.current = new RectTool(this.context, this.layers); break;
+            case "rectangle": this.current = new RectTool(this.context, this.layers); break;
             case "circle": this.current = new CircleTool(this.context, this.layers); break;
             case "select": this.current = new SelectTool(this.context, this.selectLayer, this.graph); break;
             default: break;

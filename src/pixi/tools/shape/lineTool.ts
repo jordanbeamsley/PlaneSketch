@@ -9,7 +9,7 @@ import type { ToolContext } from "../baseTool";
 import type { SnapResult, SnapRuleContext } from "@/pixi/snap/types";
 import { scaleFromTicks } from "@/pixi/camera/zoomQuantizer";
 import { useViewportStore } from "@/store/viewportStore";
-import type { ToolId } from "../types";
+import type { Tool } from "@/models/tools";
 
 export class LineTool extends BaseShapeTool {
 
@@ -44,7 +44,7 @@ export class LineTool extends BaseShapeTool {
         this.rescaleNodes(useViewportStore.getState().zoomTicks);
     }
 
-    getId(): ToolId {
+    getId(): Tool {
         return "line";
     }
 

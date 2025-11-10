@@ -1,1 +1,1 @@
-export type Tool = "select" | "line" | "circle" | "rect";
+export type Tool = "none" | "select" | "line" | "circle" | "rectangle" | "text";
