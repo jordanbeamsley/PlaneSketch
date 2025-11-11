@@ -60,8 +60,11 @@ export class GraphIndex {
                         if (!prevCircle) {
                             this.addEntityRef<CircleId>(this.incCircs, cid, currCircle.center);
                         } else {
-                            this.removeEntityRef<CircleId>(this.incCircs, cid, prevCircle.center);
-                            this.addEntityRef<CircleId>(this.incSegs, cid, currCircle.center);
+                            // Centre node changed
+                            if (prevCircle.center !== currCircle.center) {
+                                this.removeEntityRef<CircleId>(this.incCircs, cid, prevCircle.center);
+                                this.addEntityRef<CircleId>(this.incCircs, cid, currCircle.center);
+                            }
                         }
                     }
                 }
@@ -73,6 +76,7 @@ export class GraphIndex {
         this.unsubs.forEach(u => u());
         this.unsubs = [];
         this.incSegs.clear();
+        this.incCircs.clear();
     }
 
     /** Get count of incident segments on node */

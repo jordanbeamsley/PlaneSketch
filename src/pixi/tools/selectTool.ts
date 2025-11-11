@@ -129,18 +129,16 @@ export class SelectTool extends BaseTool {
             // Check incident segments
             // Check if both nodes of the segment are in the hitbox, i.e they are in the node set
             for (const sid of incSids) {
-                if (segsInHitbox.has(sid)) return;
                 const s = segMap.get(sid);
-                if (!s) return; // should never happen
+                if (!s) continue; // should never happen
                 if (nodesInHitbox.has(s.p1) && nodesInHitbox.has(s.p2)) segsInHitbox.add(sid);
             }
 
             // Check incident circles
             // Check if radius is within hitbox
             for (const cid of incCids) {
-                if (circlesInHitbox.has(cid)) return;
                 const c = circleMap.get(cid);
-                if (!c) return; // should never happen
+                if (!c) continue; // should never happen
 
                 const { x, y } = nodeMap.get(c.center)!.p;
                 const r = c.radius;
