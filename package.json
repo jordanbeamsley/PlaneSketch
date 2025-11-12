@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@pixi/devtools": "^2.0.1",
+    "@radix-ui/react-dropdown-menu": "^2.1.16",
     "@radix-ui/react-slot": "^1.2.4",
     "@radix-ui/react-tooltip": "^1.2.8",
     "@salusoft89/planegcs": "^1.1.7",

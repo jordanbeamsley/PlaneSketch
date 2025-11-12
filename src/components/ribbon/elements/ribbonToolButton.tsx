@@ -1,7 +1,7 @@
 import * as React from "react";
 import type { ReactNode } from "react";
 import clsx from "clsx";
-import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface RibbonToolButtonProps
     extends React.ButtonHTMLAttributes<HTMLButtonElement> {
