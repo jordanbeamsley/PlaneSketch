@@ -45,8 +45,14 @@ export class ToolController {
     }
 
     getActive() { return this.current.getId(); }
+    isInOperation() { return this.current.getOperationState }
 
     executeCommand(cmd: CommandId, ctx: CommandContext): boolean {
+        const [category, command, specific] = cmd.split(".");
+        if (category === "tool" && command === "change") {
+            useToolStore.getState().setTool(specific as Tool);
+            return true;
+        }
         return this.current.executeCommand(cmd, ctx);
     }
 

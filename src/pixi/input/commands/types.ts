@@ -16,6 +16,9 @@ export type CommandContext = {
         /** Delegate command to active tool, pass full command context
          * Return true if command execution was successful */
         dispatchToActiveTool: (cmd: CommandId, ctx: CommandContext) => boolean;
+        /** Return true if tool is actively doing something 
+         * e.g. select tool is drawing marquee, line tool is drawing preview, etc*/
+        isInOperation: () => boolean;
     }
 }
 
@@ -23,5 +26,7 @@ export type Command = {
     id: CommandId;
     description?: string;
     canExecute?: (ctx: CommandContext) => boolean;
-    execute: (ctx: CommandContext) => void;
+    // Commands dispatched to tools parse the command id directly,
+    // They don't call execute
+    execute?: (ctx: CommandContext) => void;
 } 

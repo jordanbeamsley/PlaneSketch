@@ -146,7 +146,8 @@ export function PixiStage() {
                 },
                 tools: {
                     getActiveToolId: () => tools!.getActive(),
-                    dispatchToActiveTool: (cmd, ctx) => tools!.executeCommand(cmd, ctx)
+                    dispatchToActiveTool: (cmd, ctx) => tools!.executeCommand(cmd, ctx),
+                    isInOperation: () => tools!.isInOperation()
                 }
             }
 

@@ -28,6 +28,8 @@ export abstract class BaseTool {
     protected dataSource: CachedDataSource;
     protected viewport: Viewport;
 
+    protected isInOperation: boolean = false;
+
     // Resolve active snap rules based on tool
     // i.e axis snapping may be enabled, but only applies to line based tools
     // TODO: Subscribe to snap rule changes from here
@@ -50,6 +52,8 @@ export abstract class BaseTool {
             }
         }
     }
+
+    get getOperationState() { return this.isInOperation }
 
     abstract getId(): Tool;
     abstract activate(): void;

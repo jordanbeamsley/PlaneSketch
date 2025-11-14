@@ -5,7 +5,8 @@ export type CommandId =
     | "tool.cancel"
     | "tool.change.select"
     | "tool.change.line"
-    | "tool.change.rect";
+    | "tool.change.rectangle"
+    | "tool.change.circle";
 
 export const DefaultCommands: Command[] = [
     {
@@ -18,5 +19,17 @@ export const DefaultCommands: Command[] = [
         id: "tool.cancel",
         description: "Cancel current tool operation",
         execute: (ctx) => ctx.tools.dispatchToActiveTool("tool.cancel", ctx)
+    },
+    {
+        id: "tool.change.line",
+        description: "Activate line tool",
+    },
+    {
+        id: "tool.change.rectangle",
+        description: "Activate rectangle tool",
+    },
+    {
+        id: "tool.change.circle",
+        description: "Activate circle tool",
     }
 ]

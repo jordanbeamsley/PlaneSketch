@@ -17,6 +17,27 @@ export const DefaultKeybindings: Keybinding[] = [
     {
         id: "kb.escape-cancel",
         chord: { code: "Escape" },
-        command: "tool.cancel"
-    }
+        command: "tool.cancel",
+        when: (ctx) => ctx.tools.isInOperation()
+    },
+    {
+        id: "kb.activate-select-tool",
+        chord: { code: "Escape" },
+        command: "tool.change.select",
+    },
+    {
+        id: "kb.activate-line-tool",
+        chord: { code: "KeyL" },
+        command: "tool.change.line",
+    },
+    {
+        id: "kb.activate-rectangle-tool",
+        chord: { code: "KeyR" },
+        command: "tool.change.rectangle"
+    },
+    {
+        id: "kb.activate-circle-tool",
+        chord: { code: "KeyC" },
+        command: "tool.change.circle"
+    },
 ]

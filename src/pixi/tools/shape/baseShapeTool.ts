@@ -64,8 +64,11 @@ export abstract class BaseShapeTool extends BaseTool {
         // Each tools on move handler will use anchors to construct preview geometry
         this.anchors.push({ id: id, p: copyVec(snap.p) });
         if (this.anchors.length < this.totalRequiredAnchors) {
+            this.isInOperation = true;
             return;
         }
+
+        this.isInOperation = false;
 
         // If we get here, then geometry has been fully defined
         // First check if geometry is zero size (e.g line.start = line.end)
@@ -107,6 +110,7 @@ export abstract class BaseShapeTool extends BaseTool {
     executeCommand(cmd: CommandId, _ctx: CommandContext): boolean {
         switch (cmd) {
             case "tool.cancel": {
+                this.isInOperation = false;
                 this.discardGeometry();
                 return true;
             }

@@ -51,7 +51,7 @@ export class KeybindingResolver {
             if (!handledByTool) {
                 // The tool didnt handle it, look up the global command and execute it as a fallback
                 const cmd = this.commands.get(kb.command as CommandId);
-                if (!cmd) {
+                if (!cmd || !cmd.execute) {
                     // Binding points to a command that doesn't exist, ignore it
                     continue;
                 }
