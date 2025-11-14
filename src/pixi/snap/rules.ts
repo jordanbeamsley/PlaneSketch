@@ -96,12 +96,12 @@ export const gridRule: SnapRule = {
         if (d2 <= r2) return [{ kind: "grid", p: pw, dist2: d2, priority: 10 }]
         else return [];
     }
-}
+};
 
 export const segmentRule: SnapRule = {
     name: "segment",
     evaluate: ({ p, ds, viewport, opts }) => {
-        // Return no candidates (empty array) if grid snapping is disabled
+        // Return no candidates (empty array) if segment snapping is disabled
         if (opts.enable.segment === false) return [];
         // Radius2 for evaluation
         const r = opts.radius;
@@ -157,6 +157,53 @@ export const segmentRule: SnapRule = {
             }
         }
         return best ? [best] : [];
+    }
+};
 
+export const circleRule: SnapRule = {
+    name: "circle",
+    evaluate: ({ p, ds, viewport, opts }) => {
+        // Return no candidates (empty array) if circle snapping is disabled
+        if (opts.enable.circle === false) return [];
+        // Radius2 for evaluation
+        const r = opts.radius;
+
+        let best: SnapCandidate | undefined;
+
+        // Cursor position in screen space
+        const pt = viewport.worldToScreen(p);
+
+        for (const c of ds.getCircles()) {
+
+            // Circle properties in screen space
+            const ct = viewport.worldToScreen(c.centre);
+            const radt = viewport.worldScale * c.rad;
+
+            // Radius bounds for snapping
+            const min2 = (radt - r) * (radt - r);
+            const max2 = (radt + r) * (radt + r);
+
+            // Distance from centre of circle to point
+            const d2 = dist2(pt, ct);
+            const d = Math.sqrt(d2);
+
+            // Reject
+            if (d2 < min2 || d2 > max2) continue;
+
+            // Unit vector from circle center to point
+            const dxu = (pt.x - ct.x) / d;
+            const dyu = (pt.y - ct.y) / d;
+
+            // Closest point on circle
+            const closestP: Vec2 = { x: ct.x + radt * dxu, y: ct.y + radt * dyu };
+
+            // Evaluation dist
+            const closestDist2 = dist2(closestP, pt);
+
+            if (!best || closestDist2 < best.dist2) {
+                best = { kind: "circle", p: viewport.screenToWorld(closestP), dist2: closestDist2, id: c.id, priority: 80 }
+            }
+        }
+        return best ? [best] : [];
     }
 }

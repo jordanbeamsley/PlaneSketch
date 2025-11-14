@@ -107,6 +107,7 @@ export class LineTool extends BaseShapeTool {
         }
         // Otherwise create a new line from the end point of the previous
         this.anchors.push(lastAnchor);
+        this.isInOperation = true;
     }
 
     resolveSnapContext(context: SnapRuleContext, p: Vec2): SnapRuleContext {

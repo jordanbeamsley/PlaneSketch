@@ -41,7 +41,7 @@ export class SelectTool extends BaseTool {
 
         // If we're already snapped to a node or segment, then select it
         const snapKind = this.currentSnap.kind;
-        if (snapKind === "node" || snapKind === "segment") {
+        if (snapKind === "node" || snapKind === "segment" || snapKind === "circle") {
             const entity: EntityRef = { kind: snapKind, id: this.currentSnap.id! };
             const entityKey = `${snapKind}:${this.currentSnap.id}`;
 
@@ -77,7 +77,7 @@ export class SelectTool extends BaseTool {
 
         if (snapKind === "none" && useSelectStore.getState().hovered)
             useSelectStore.getState().setHovered(null);
-        else if (snapKind === "node" || snapKind === "segment")
+        else if (snapKind === "node" || snapKind === "segment" || snapKind === "circle")
             useSelectStore.getState().setHovered({ kind: snapKind, id: this.currentSnap.id! })
     }
 

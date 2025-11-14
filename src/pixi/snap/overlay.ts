@@ -75,6 +75,9 @@ export class SnapOverlay {
             g.rect(0.5, 0.5, s - 1, s - 1).stroke(SNAP_STROKE);
         });
 
+        makeSprite("circle", { x: 0.5, y: 0.5 }, (g, s) => {
+            g.rect(0.5, 0.5, s - 1, s - 1).stroke(SNAP_STROKE);
+        });
     }
 
     public hideOverlay() {

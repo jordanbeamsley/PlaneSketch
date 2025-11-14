@@ -2,6 +2,7 @@ import { DEFAULT_GRID_CONF } from "@/constants/canvas";
 import type { Vec2 } from "@/models/vectors";
 
 export type PointTransform = (p: Vec2) => Vec2;
+export type DistTransform = (dist: number) => number;
 
 export interface Viewport {
     // Transforms
@@ -15,6 +16,9 @@ export interface Viewport {
     // Grid offset in screen space
     gridOffsetX: number;
     gridOffsetY: number;
+
+    // Zoom scale
+    worldScale: number;
 }
 
 export class ViewportService implements Viewport {
@@ -26,6 +30,8 @@ export class ViewportService implements Viewport {
     gridOffsetX = 0;
     gridOffsetY = 0;
 
+    worldScale = 1;
+
     setTransform(worldToScreen: PointTransform, screenToWorld: PointTransform) {
         this.worldToScreen = worldToScreen;
         this.screenToWorld = screenToWorld;
@@ -35,5 +41,9 @@ export class ViewportService implements Viewport {
         this.gridStep = params.step;
         this.gridOffsetX = params.offsetX;
         this.gridOffsetY = params.offsetY;
+    }
+
+    setScale(scale: number) {
+        this.worldScale = scale;
     }
 }

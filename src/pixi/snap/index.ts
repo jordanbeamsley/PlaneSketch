@@ -1,5 +1,5 @@
 import { SnapEngine } from "./engine";
-import { axisRule, gridRule, nodeRule, originRule, segmentRule } from "./rules";
+import { axisRule, circleRule, gridRule, nodeRule, originRule, segmentRule } from "./rules";
 
 export function createDefaultSnapEngine() {
     return new SnapEngine([
@@ -7,6 +7,7 @@ export function createDefaultSnapEngine() {
         axisRule,
         originRule,
         gridRule,
-        segmentRule
+        segmentRule,
+        circleRule
     ]);
 }

@@ -15,6 +15,10 @@ const SEG_HOVER_TINT = 0xf5ac58;
 const NODE_SELECT_TINT = 0xFF8A00;
 const NODE_NORMAL_TINT = NODE_COLOR;
 const NODE_HOVER_TINT = 0xf5ac58;
+const CIRCLE_SELECT_TINT = 0xFF8A00;
+const CIRCLE_NORMAL_TINT = 0xFFFFFF;
+const CIRCLE_HOVER_TINT = 0xf5ac58;
+
 
 // TODO: 
 // Only touch graphics on diffs, not full updates
@@ -181,6 +185,11 @@ export class SceneGraphics {
                 const g = this.segGfx.get(id);
                 if (g) g.tint = (selected) ? SEG_SELECT_TINT : SEG_NORMAL_TINT;
             }
+
+            else if (kind === "circle") {
+                const g = this.circleGfx.get(id);
+                if (g) g.tint = selected ? CIRCLE_SELECT_TINT : CIRCLE_NORMAL_TINT;
+            }
         }
 
         if (currEntity) {
@@ -199,6 +208,11 @@ export class SceneGraphics {
             else if (kind === "segment") {
                 const g = this.segGfx.get(id);
                 if (g) g.tint = SEG_HOVER_TINT;
+            }
+
+            else if (kind === "circle") {
+                const g = this.circleGfx.get(id);
+                if (g) g.tint = CIRCLE_HOVER_TINT;
             }
         }
     }

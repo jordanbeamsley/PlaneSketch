@@ -100,7 +100,8 @@ export function PixiStage() {
                     step: sceneGrid.getStepPx(),
                     offsetX: offset.x,
                     offsetY: offset.y
-                })
+                });
+                viewport.setScale(camera.scale);
             };
 
             redrawGridAndViewport();

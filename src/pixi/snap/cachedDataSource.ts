@@ -1,11 +1,13 @@
 import { useNodeStore } from "@/store/nodeStore";
-import type { NodeLite, SegmentLite, SnapDataSource } from "./types";
+import type { CircleLite, NodeLite, SegmentLite, SnapDataSource } from "./types";
 import { useSegmentStore } from "@/store/segmentStore";
 import { copyVec } from "@/models/vectors";
+import { useCircleStore } from "@/store/circleStore";
 
 export class CachedDataSource implements SnapDataSource {
     private nodesLite: NodeLite[] = [];
     private segmentLite: SegmentLite[] = [];
+    private circleLite: CircleLite[] = [];
     private unsubs: Array<() => void> = [];
 
     // Build cached store and subscribe to data store changes
@@ -33,12 +35,22 @@ export class CachedDataSource implements SnapDataSource {
                 }
             )
         );
+
+        this.unsubs.push(
+            useCircleStore.subscribe(
+                (state) => state.byId,
+                () => {
+                    this.rebuildCircles();
+                }
+            )
+        )
     }
 
     unmount() {
         this.unsubs.forEach(u => u());
         this.nodesLite = [];
         this.segmentLite = [];
+        this.circleLite = [];
         this.unsubs = [];
     }
 
@@ -48,6 +60,10 @@ export class CachedDataSource implements SnapDataSource {
 
     *getSegments(): Iterable<SegmentLite> {
         for (const s of this.segmentLite) yield s;
+    }
+
+    *getCircles(): Iterable<CircleLite> {
+        for (const c of this.circleLite) yield c;
     }
 
     private rebuildNodes() {
@@ -74,5 +90,25 @@ export class CachedDataSource implements SnapDataSource {
         }
 
         this.segmentLite = out;
+    }
+
+    private rebuildCircles() {
+        const circles = useCircleStore.getState().byId;
+        const nodes = useNodeStore.getState().byId;
+
+        const out: CircleLite[] = [];
+        for (const c of circles.values()) {
+            const center = nodes.get(c.center);
+
+            // Should never happen, but handle edge case of dangling entity
+            if (!center) continue;
+            out.push({
+                id: c.id,
+                centre: copyVec(center.p),
+                rad: c.radius
+            })
+        }
+
+        this.circleLite = out;
     }
 }

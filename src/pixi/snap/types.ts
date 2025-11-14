@@ -10,16 +10,19 @@ export type SnapKind =
     | "axisV"
     | "perpendicular"
     | "origin"
-    | "grid";
+    | "grid"
+    | "circle";
 
 // ID and geometric only data-sources, exclude pixi information
 export interface NodeLite { id: string, p: Vec2 }
 export interface SegmentLite { id: string, a: Vec2, b: Vec2 }
+export interface CircleLite { id: string, centre: Vec2, rad: number }
 
 export interface SnapDataSource {
-    // Simple for now, introduce spacial indexing in the future
+    // Introduce spacial indexing in the future
     getNodes(): Iterable<NodeLite>;
     getSegments(): Iterable<SegmentLite>;
+    getCircles(): Iterable<CircleLite>;
 }
 
 // What snap engine returns to tools

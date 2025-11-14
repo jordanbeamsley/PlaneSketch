@@ -47,7 +47,7 @@ export abstract class BaseTool {
             viewport: this.viewport,
             opts: {
                 radius: SNAP_RADIUS,
-                enable: { node: true, axisH: true, axisV: true, origin: true, grid: true, segment: true },
+                enable: { node: true, axisH: true, axisV: true, origin: true, grid: true, segment: true, circle: true },
                 hysterisisMult: 1.5,
             }
         }
