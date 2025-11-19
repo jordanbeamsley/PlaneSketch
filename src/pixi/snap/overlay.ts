@@ -16,7 +16,6 @@ export class SnapOverlay {
     // Render call will make 1 icon visible at snap result
     private sprites = new Map<IconKind, Sprite>();
     private textures = new Map<IconKind, RenderTexture>();
-    private active?: IconKind;
 
     constructor(layer: Container, viewport: Viewport) {
         this.layer = layer;
@@ -81,10 +80,8 @@ export class SnapOverlay {
     }
 
     public hideOverlay() {
-        if (this.active) {
-            const prev = this.sprites.get(this.active);
-            if (prev) prev.visible = false;
-            this.active = undefined;
+        for (const sprite of this.sprites.values()) {
+            sprite.visible = false;
         }
     }
 
@@ -95,14 +92,21 @@ export class SnapOverlay {
 
         if (result.kind === "none") return;
 
-        const sprite = this.sprites.get(result.kind);
+        const sprite = this.sprites.get(result.primary.kind);
         if (!sprite) return;
+
+
+        const spriteRes = (result.residual) ? this.sprites.get(result.residual.kind) : undefined;
 
         // Transform snap point to screen space
         // Round down to avoid weird anti-aliasing 
         const pt = this.viewport.worldToScreen(result.p);
         sprite.position.set(Math.floor(pt.x), Math.floor(pt.y));
         sprite.visible = true;
-        this.active = result.kind;
+
+        if (spriteRes) {
+            spriteRes.position.set(Math.floor(pt.x), Math.floor(pt.y));
+            spriteRes.visible = true;
+        }
     }
 }

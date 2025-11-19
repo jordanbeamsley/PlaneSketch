@@ -57,7 +57,7 @@ export abstract class BaseShapeTool extends BaseTool {
         // If we're snapped to a node, then use the existing nodes ID
         // When committing geometry to store, the existing node ID will be used for segments
         const snap = this.currentSnap;
-        const id = (snap.kind === "node" && snap.id) ? snap.id : this.nid();
+        const id = (snap.kind === "node" && snap.primary.id) ? snap.primary.id : this.nid();
 
         // Push preview anchors to array, then check if we're at total required anchors to completely define geometry
         // If not, then return

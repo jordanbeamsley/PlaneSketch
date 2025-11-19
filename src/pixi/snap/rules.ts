@@ -1,5 +1,6 @@
-import { copyVec, dist2, type Vec2 } from "@/models/vectors";
+import { compareVecWithEps, copyVec, dist2, type Vec2 } from "@/models/vectors";
 import type { SnapCandidate, SnapRule } from "./types";
+import { FP_EPS } from "@/constants/Math";
 
 // Minimum distances before certain snaps kick in
 const AXIS_MINIMUM = 40;
@@ -25,15 +26,15 @@ export const nodeRule: SnapRule = {
             }
         }
         return best ? [best] : [];
-    }
+    },
 };
 
-export const axisRule: SnapRule = {
-    name: "axis",
+export const axisVRule: SnapRule = {
+    name: "axisV",
     evaluate: ({ p, opts, viewport, axis }) => {
         // Return no candidates (empty array) if axis snapping is disabled
         // Or if no axis anchor provided
-        if (opts.enable.axisH === false && opts.enable.axisV === false) return [];
+        if (opts.enable.axisV === false) return [];
         if (!axis?.anchor) return [];
 
         // tolerance, and x and y deltas for evaluation
@@ -42,17 +43,53 @@ export const axisRule: SnapRule = {
         const dx = pt.x - at.x, dy = pt.y - at.y;
         const tol = opts.radius;
 
-        const candidates: SnapCandidate[] = [];
         // Don't enable axis snapping until a certain length line is drawn
-        if (opts.enable.axisH !== false && Math.abs(dy) <= tol && Math.abs(dx) > AXIS_MINIMUM) {
-            candidates.push({ kind: "axisH", p: { x: p.x, y: axis.anchor.y }, dist2: dy * dy, priority: 30 })
+        if (Math.abs(dx) <= tol && Math.abs(dy) > AXIS_MINIMUM) {
+            return [{ kind: "axisV", p: { x: axis.anchor.x, y: p.y }, dist2: dx * dx, priority: 30 }];
         }
-        if (opts.enable.axisV !== false && Math.abs(dx) <= tol && Math.abs(dy) > AXIS_MINIMUM) {
-            candidates.push({ kind: "axisV", p: { x: axis.anchor.x, y: p.y }, dist2: dx * dx, priority: 30 })
+        return [];
+    },
+    validateAt: (p, { axis }) => {
+        if (!axis?.anchor) return false;
+        if (Math.abs(p.x - axis.anchor.x) < 1e-9) {
+            return true;
         }
-        return candidates;
+
+        return false;
     }
 };
+
+export const axisHRule: SnapRule = {
+    name: "axisH",
+    evaluate: ({ p, opts, viewport, axis }) => {
+        // Return no candidates (empty array) if axis snapping is disabled
+        // Or if no axis anchor provided
+        if (opts.enable.axisH === false) return [];
+        if (!axis?.anchor) return [];
+
+        // tolerance, and x and y deltas for evaluation
+        const at = viewport.worldToScreen(axis.anchor);
+        const pt = viewport.worldToScreen(p);
+        const dx = pt.x - at.x, dy = pt.y - at.y;
+        const tol = opts.radius;
+
+        // Don't enable axis snapping until a certain length line is drawn
+        if (Math.abs(dy) <= tol && Math.abs(dx) > AXIS_MINIMUM) {
+            return [{ kind: "axisH", p: { x: p.x, y: axis.anchor.y }, dist2: dy * dy, priority: 30 }];
+        }
+        return [];
+    },
+    validateAt: (p, { axis }) => {
+        if (!axis?.anchor) return false;
+        if (Math.abs(p.y - axis.anchor.y) < 1e-9) {
+            return true;
+        }
+
+        return false;
+    }
+};
+
+
 
 export const originRule: SnapRule = {
     name: "origin",
@@ -72,6 +109,11 @@ export const originRule: SnapRule = {
 
         if (d2 <= r2) return [{ kind: "origin", p: copyVec(o), dist2: d2, priority: 100 }]
         else return [];
+    },
+    validateAt(p) {
+        const o: Vec2 = { x: 0, y: 0 };
+        if (compareVecWithEps(o, p)) return true;
+        return false;
     }
 };
 
@@ -95,6 +137,21 @@ export const gridRule: SnapRule = {
         const pw = viewport.screenToWorld({ x: gx, y: gy });
         if (d2 <= r2) return [{ kind: "grid", p: pw, dist2: d2, priority: 10 }]
         else return [];
+    },
+    validateAt: (p, { viewport }) => {
+        const { gridOffsetX, gridOffsetY, gridStep } = viewport;
+
+        // Convert world point → screen space
+        const pt = viewport.worldToScreen(p);
+
+        // Recompute which grid intersection pt *should* lie on
+        const gx = Math.round((pt.x - gridOffsetX) / gridStep) * gridStep + gridOffsetX;
+        const gy = Math.round((pt.y - gridOffsetY) / gridStep) * gridStep + gridOffsetY;
+
+        if (Math.abs(pt.x - gx) > FP_EPS) return false;
+        if (Math.abs(pt.y - gy) > FP_EPS) return false;
+
+        return true;
     }
 };
 
