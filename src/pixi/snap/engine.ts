@@ -66,7 +66,6 @@ export class SnapEngine {
             if (score > bestResidualScore) {
                 bestResidual = c;
                 bestResidualScore = score;
-                primaryResult.p = c.p;
             }
         });
 
@@ -83,8 +82,8 @@ export class SnapEngine {
         }
 
         return {
-            kind: bestPrimary.kind,
-            p: bestPrimary.p,
+            kind: primaryResult.kind,
+            p: primaryResult.p,
             primary: primaryResult,
             residual: undefined
         }

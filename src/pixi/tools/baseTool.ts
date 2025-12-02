@@ -1,4 +1,4 @@
-import type { Point } from "pixi.js";
+import type { Point, Ticker } from "pixi.js";
 import type { SnapOverlay } from "../snap/overlay";
 import type { SnapEngine } from "../snap/engine";
 import type { CachedDataSource } from "../snap/cachedDataSource";
@@ -15,6 +15,7 @@ export interface ToolContext {
     snapEngine: SnapEngine;
     dataSource: CachedDataSource;
     viewport: Viewport;
+    ticker: Ticker;
 }
 
 export interface PointerPayload {

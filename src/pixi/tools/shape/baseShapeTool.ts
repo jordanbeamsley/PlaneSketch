@@ -1,10 +1,22 @@
-import { copyVec, type Vec2 } from "@/models/vectors";
+import { copyVec, dist2, type Vec2 } from "@/models/vectors";
 import { BaseTool, type PointerPayload, type ToolContext } from "../baseTool";
-import type { SnapResult, SnapRuleContext } from "@/pixi/snap/types";
+import type { SnapCandidate, SnapResult, SnapRuleContext } from "@/pixi/snap/types";
 import type { Node } from "@/models/geometry";
 import { useViewportStore } from "@/store/viewportStore";
 import type { CommandId } from "@/pixi/input/commands/defaultCommands";
 import type { CommandContext } from "@/pixi/input/commands/types";
+import type { Ticker } from "pixi.js";
+import { RESIDUAL_DWELL_MS, RESIDUAL_MAX_DRIFT_PX2 } from "@/constants/tools";
+
+interface residualDwellState {
+    /** Last residual candidate from snap engine */
+    pending?: Omit<SnapCandidate, "dist2">;
+    /** Screen space anchor where dwell started */
+    anchorScreen?: Vec2;
+    /** Start time from when residual was first returned */
+    startedAtMs: number;
+    active: boolean;
+}
 
 export abstract class BaseShapeTool extends BaseTool {
 
@@ -20,6 +32,17 @@ export abstract class BaseShapeTool extends BaseTool {
     // Store the current snap position from the OnMove handler
     // Pass this into the onDown handler so that final geometry uses the snapped position
     protected currentSnap: SnapResult;
+
+    // Shared ticker passed in from stage.
+    // Used to track residual dwell
+    protected ticker: Ticker;
+
+    protected lastPointerScreen: Vec2 = { x: 0, y: 0 };
+
+    protected residualDwell: residualDwellState = {
+        startedAtMs: 0,
+        active: false
+    }
 
     // May want to append an identifier to the start of the UUID in the future
     nid = () => crypto.randomUUID();
@@ -42,6 +65,10 @@ export abstract class BaseShapeTool extends BaseTool {
         this.totalRequiredAnchors = 0;
         this.anchors = [];
         this.currentSnap = { kind: "none", p: { x: 0, y: 0 } };
+        this.ticker = context.ticker;
+
+        this.ticker.add(this.onTick, this);
+        this.ticker.start();
     }
 
     activate(): void {
@@ -86,25 +113,110 @@ export abstract class BaseShapeTool extends BaseTool {
 
     public onMove(e: PointerPayload): void {
         let p: Vec2 = e.world;
+        this.lastPointerScreen = this.viewport.worldToScreen(p);
 
         // If we already have a first point, use it as the axis anchor (for H and V snapping)
         const hasAnchor = this.anchors.length > 0;
 
         // Run snapping and render hover 
         // Resolve snap context for the current tool
-        this.currentSnap = this.snapEngine.snap(this.resolveSnapContext(this.baseSnapContext, p));
-        this.snapOverlay.render(this.currentSnap);
+        const res = this.snapEngine.snap(this.resolveSnapContext(this.baseSnapContext, p));
+
+        this.currentSnap = res;
+
+        let snappedP = p;
+
+        if (res.kind === "none") {
+            this.clearDwell();
+            this.snapOverlay.render(res);
+        } else {
+            // Dont render residual if the dwell is not active
+            if (!this.residualDwell.active || !res.residual) {
+                this.snapOverlay.render({
+                    kind: res.kind,
+                    p: res.p,
+                    primary: res.primary,
+                    residual: undefined
+                });
+                snappedP = res.p;
+            } else {
+                this.snapOverlay.render(res);
+                snappedP = res.residual.p;
+            }
+        }
+
+        if (res.kind !== "none") {
+            if (res.residual) {
+                this.updateDwellCandidate(res.residual, this.viewport.worldToScreen(p));
+            } else {
+                this.clearDwell();
+            }
+        }
 
 
         // First check if we are actually drawing
         // If we are, then delegate to tools onMove to render preview
         if (hasAnchor) {
-            this.onMoveDraw(this.currentSnap.p);
+            this.onMoveDraw(snappedP);
         }
     }
 
     public onUp(_e: PointerPayload): void {
         //no op
+    }
+
+    private updateDwellCandidate(residual: Omit<SnapCandidate, "dist2">, screenP: Vec2) {
+        const pending = this.residualDwell.pending;
+
+        // If kind or position changed significantly --> reset dwell
+        if (
+            !pending ||
+            pending.kind !== residual.kind ||
+            dist2(screenP, pending.p) > RESIDUAL_MAX_DRIFT_PX2
+        ) {
+            this.residualDwell.pending = residual;
+            this.residualDwell.anchorScreen = copyVec(screenP);
+            this.residualDwell.startedAtMs = performance.now();
+            this.residualDwell.active = false;
+        }
+    }
+
+    private onTick() {
+        // If there is no pending residual, or if its already active, do nothing
+        if (!this.residualDwell.pending || this.residualDwell.active) return;
+
+        // Reject if residual has not been pending for cutoff
+        const now = performance.now();
+        const elapsed = now - this.residualDwell.startedAtMs;
+        if (elapsed < RESIDUAL_DWELL_MS) return;
+
+        const currScreen = this.lastPointerScreen;
+        const anchor = this.residualDwell.anchorScreen;
+        if (!anchor) return;
+
+        // Check if cursor is still within residual hitbox
+        if (dist2(currScreen, anchor) < RESIDUAL_MAX_DRIFT_PX2) {
+            // Dwell satisfied, enable residual
+            this.residualDwell.active = true;
+
+            const res = this.currentSnap;
+            const pending = this.residualDwell.pending;
+            if (res.kind !== "none" && pending) {
+                const p = pending.p;
+                // Redraw preview at residual position
+                this.onMoveDraw(p);
+
+                // Render both primary + residual
+                this.snapOverlay.render(res);
+            }
+        } else {
+            // Cursor moved too much, clear dwell
+            this.clearDwell();
+        }
+    }
+
+    private clearDwell() {
+        this.residualDwell = { startedAtMs: 0, active: false };
     }
 
     executeCommand(cmd: CommandId, _ctx: CommandContext): boolean {
@@ -121,5 +233,6 @@ export abstract class BaseShapeTool extends BaseTool {
     public destruct(): void {
         this.discardGeometry();
         this.unsubZoom();
+        this.ticker.remove(this.onTick, this);
     }
 }

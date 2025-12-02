@@ -100,7 +100,7 @@ export class SnapOverlay {
 
         // Transform snap point to screen space
         // Round down to avoid weird anti-aliasing 
-        const pt = this.viewport.worldToScreen(result.p);
+        const pt = this.viewport.worldToScreen((result.residual) ? result.residual.p : result.p);
         sprite.position.set(Math.floor(pt.x), Math.floor(pt.y));
         sprite.visible = true;
 

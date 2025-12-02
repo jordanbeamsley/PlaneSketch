@@ -122,7 +122,11 @@ export function PixiStage() {
 
             // Setup tool controller
             const toolContext: ToolContext = {
-                snapEngine: snapEngine, snapOverlay: snapOverley, dataSource: snapDataCache, viewport: viewport
+                snapEngine: snapEngine,
+                snapOverlay: snapOverley,
+                dataSource: snapDataCache,
+                viewport: viewport,
+                ticker: app.ticker
             };
             tools = new ToolController(toolContext, geometryLayers, selectLayer, graphIndex);
 
