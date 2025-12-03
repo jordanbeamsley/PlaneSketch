@@ -29,3 +29,11 @@ export function dist2(a: Vec2, b: Vec2) {
     const dx = a.x - b.x, dy = a.y - b.y;
     return dx * dx + dy * dy
 }
+
+export function crossP(a: Vec2, b: Vec2) {
+    return (a.x * b.y) - (b.x * a.y);
+}
+
+export function dotP(a: Vec2, b: Vec2) {
+    return (a.x * b.x) + (a.y * b.y);
+}

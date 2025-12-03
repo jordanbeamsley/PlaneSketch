@@ -1,5 +1,5 @@
-import { compareVecWithEps, copyVec, dist2, type Vec2 } from "@/models/vectors";
-import type { SnapCandidate, SnapRule } from "./types";
+import { compareVecWithEps, copyVec, crossP, dist2, dotP, type Vec2 } from "@/models/vectors";
+import type { SegmentLite, SnapCandidate, SnapRule } from "./types";
 import { FP_EPS } from "@/constants/Math";
 
 // Minimum distances before certain snaps kick in
@@ -141,7 +141,7 @@ export const gridRule: SnapRule = {
     validateAt: (p, { viewport }) => {
         const { gridOffsetX, gridOffsetY, gridStep } = viewport;
 
-        // Convert world point → screen space
+        // Convert world point to screen space
         const pt = viewport.worldToScreen(p);
 
         // Recompute which grid intersection pt *should* lie on
@@ -214,7 +214,41 @@ export const segmentRule: SnapRule = {
             }
         }
         return best ? [best] : [];
+    },
+    validateAt: (p, { ds, entityId }) => {
+
+        if (entityId === "") return false;
+
+        let seg: SegmentLite | undefined = undefined;
+
+        for (const s of ds.getSegments()) {
+            if (s.id === entityId) seg = s;
+        }
+
+        if (!seg) return false;
+
+        const ap: Vec2 = {
+            x: p.x - seg.a.x,
+            y: p.y - seg.a.y
+        }
+        const ab: Vec2 = {
+            x: seg.b.x - seg.a.x,
+            y: seg.b.y - seg.a.y
+        }
+
+        // Check if p is colinear infinite line AB.
+        // i.e cross product = ~0
+        if (Math.abs(crossP(ap, ab)) > FP_EPS) return false;
+
+        // Check that p is within segment bounds
+        const dot = dotP(ap, ab);
+        if (dot < - FP_EPS) return false; // before AB
+
+        if (dot - dist2(seg.a, seg.b) > FP_EPS) return false; // after AB
+
+        return true;
     }
+
 };
 
 export const circleRule: SnapRule = {

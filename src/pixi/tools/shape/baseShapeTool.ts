@@ -86,10 +86,12 @@ export abstract class BaseShapeTool extends BaseTool {
         const snap = this.currentSnap;
         const id = (snap.kind === "node" && snap.primary.id) ? snap.primary.id : this.nid();
 
+        const p = (this.residualDwell.active) ? this.residualDwell.pending!.p : snap.p;
+
         // Push preview anchors to array, then check if we're at total required anchors to completely define geometry
         // If not, then return
         // Each tools on move handler will use anchors to construct preview geometry
-        this.anchors.push({ id: id, p: copyVec(snap.p) });
+        this.anchors.push({ id: id, p: copyVec(p) });
         if (this.anchors.length < this.totalRequiredAnchors) {
             this.isInOperation = true;
             return;
@@ -108,7 +110,7 @@ export abstract class BaseShapeTool extends BaseTool {
         // Finally, call tools handler for committing geometry to store
         // Then call any post create steps (e.g in line tool, immediately start drawing new line)
         this.commitGeometry();
-        this.postCreate(snap.p, this.currentSnap);
+        this.postCreate(p, this.currentSnap);
     }
 
     public onMove(e: PointerPayload): void {
@@ -204,7 +206,7 @@ export abstract class BaseShapeTool extends BaseTool {
             if (res.kind !== "none" && pending) {
                 const p = pending.p;
                 // Redraw preview at residual position
-                this.onMoveDraw(p);
+                if (this.anchors.length > 0) this.onMoveDraw(p);
 
                 // Render both primary + residual
                 this.snapOverlay.render(res);

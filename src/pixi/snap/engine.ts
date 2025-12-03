@@ -59,8 +59,8 @@ export class SnapEngine {
             const rule = this.kindToRule[bestPrimary.kind];
 
             if (!rule?.validateAt) return;
+            const ok = rule.validateAt(c.p, { ...ctx, entityId: primaryResult.id });
 
-            const ok = rule.validateAt(c.p, ctx);
             if (!ok) return;
 
             if (score > bestResidualScore) {
@@ -69,10 +69,12 @@ export class SnapEngine {
             }
         });
 
+
         if (bestResidual !== undefined) {
             // TS narrowing residual as "never"
             // May need investigation in the future
             const r = bestResidual as SnapCandidate;
+
             return {
                 kind: primaryResult.kind,
                 p: primaryResult.p,

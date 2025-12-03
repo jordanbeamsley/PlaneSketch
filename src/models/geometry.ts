@@ -5,6 +5,8 @@ export type SegmentId = string;
 export type ArcId = string;
 export type CircleId = string;
 
+export type EntityId = NodeId | SegmentId | ArcId | CircleId;
+
 export type Node = {
     id: NodeId;
     p: Vec2;

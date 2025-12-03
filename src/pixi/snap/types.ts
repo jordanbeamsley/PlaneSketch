@@ -1,5 +1,6 @@
 import type { Vec2 } from "@/models/vectors"
 import type { Viewport } from "../camera/viewportService";
+import type { EntityId } from "@/models/geometry";
 
 export type SnapKind =
     | "none"
@@ -68,6 +69,7 @@ export interface SnapRuleContext {
     viewport: Viewport;
     opts: SnapOptions;  // rule switches / tuning
     axis?: AxisAnchor;
+    entityId?: EntityId;
 }
 
 // What snap rules return, engine picks the best option
