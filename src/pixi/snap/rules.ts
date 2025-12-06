@@ -1,5 +1,5 @@
 import { compareVecWithEps, copyVec, crossP, dist2, dotP, type Vec2 } from "@/models/vectors";
-import type { SegmentLite, SnapCandidate, SnapRule } from "./types";
+import type { CircleLite, SegmentLite, SnapCandidate, SnapRule } from "./types";
 import { FP_EPS } from "@/constants/Math";
 
 // Minimum distances before certain snaps kick in
@@ -296,5 +296,21 @@ export const circleRule: SnapRule = {
             }
         }
         return best ? [best] : [];
+    },
+    validateAt: (p, { ds, entityId }) => {
+
+        if (entityId === "") return false;
+
+        let circ: CircleLite | undefined = undefined;
+
+        for (const c of ds.getCircles()) {
+            if (c.id === entityId) circ = c;
+        }
+
+        if (!circ) return false;
+
+        if (Math.abs(dist2(p, circ.centre) - (circ.rad * circ.rad)) > FP_EPS) return false;
+
+        return true;
     }
 }

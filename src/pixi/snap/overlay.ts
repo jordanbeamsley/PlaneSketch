@@ -75,7 +75,7 @@ export class SnapOverlay {
         });
 
         makeSprite("circle", { x: 0.5, y: 0.5 }, (g, s) => {
-            g.rect(0.5, 0.5, s - 1, s - 1).stroke(SNAP_STROKE);
+            g.moveTo(2, 2).lineTo(s - 2, s - 2).moveTo(s - 2, 2).lineTo(2, s - 2).stroke(SNAP_STROKE);
         });
     }
 
