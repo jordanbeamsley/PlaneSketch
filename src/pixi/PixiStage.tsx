@@ -20,6 +20,8 @@ import { useSegmentStore } from "@/store/segmentStore";
 import { useCircleStore } from "@/store/circleStore";
 import { createDefaultKeyboardRouter } from "./input/keyboard";
 import { deleteNodesAndIncidents } from "./graph/graphOps";
+import { HistoryManager } from "./input/commands/historyManager";
+import { createDefaultCommands } from "./input/commands/defaultCommands";
 
 export function PixiStage() {
     const hostRef = useRef<HTMLDivElement>(null);
@@ -120,15 +122,6 @@ export function PixiStage() {
             snapOverley.initSprites(app.renderer);
             const snapEngine = createDefaultSnapEngine();
 
-            // Setup tool controller
-            const toolContext: ToolContext = {
-                snapEngine: snapEngine,
-                snapOverlay: snapOverley,
-                dataSource: snapDataCache,
-                viewport: viewport,
-                ticker: app.ticker
-            };
-            tools = new ToolController(toolContext, geometryLayers, selectLayer, graphIndex);
 
             // Stage interaction defaults
             app.stage.eventMode = "static";
@@ -136,7 +129,7 @@ export function PixiStage() {
             app.stage.cursor = "crosshair";
 
             // Build command context and setup keyboard router
-            const ctx: CommandContext = {
+            const commandCtx: CommandContext = {
                 input: {
                     isCanvasFocused: () => document.activeElement === app.canvas,
                 },
@@ -153,15 +146,36 @@ export function PixiStage() {
                     getActiveToolId: () => tools!.getActive(),
                     dispatchToActiveTool: (cmd, ctx) => tools!.executeCommand(cmd, ctx),
                     isInOperation: () => tools!.isInOperation()
+                },
+                graph: {
+                    index: graphIndex
                 }
             }
+
+            // Setup History Buffer
+            const history = new HistoryManager(commandCtx);
+
+            const defaultCommands = createDefaultCommands(history);
+
+            // Setup tool controller
+            const toolContext: ToolContext = {
+                snapEngine: snapEngine,
+                snapOverlay: snapOverley,
+                dataSource: snapDataCache,
+                viewport: viewport,
+                ticker: app.ticker,
+                history: history
+            };
+            tools = new ToolController(toolContext, geometryLayers, selectLayer, graphIndex);
+
 
             // Make sure the canvas is focusable so shortcuts only work in stage
             app.canvas.tabIndex = 0;
             //app.canvas.focus();
 
             const keyboard = createDefaultKeyboardRouter({
-                ctx,
+                ctx: commandCtx,
+                commands: defaultCommands,
                 setCursor: (cursor) => { app.stage.cursor = cursor; },
                 setShouldPan: (fn) => { if (input) input.shouldPan = fn; },
                 target: app.canvas

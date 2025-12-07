@@ -2,14 +2,13 @@ import { Graphics } from "pixi.js";
 import { compareVec, type Vec2 } from "@/models/vectors";
 import { NODE_COLOR, NODE_RADIUS, PREVIEW_SEGMENT_STROKE } from "@/constants/drawing";
 import { BaseShapeTool } from "./baseShapeTool";
-import { useNodeStore } from "@/store/nodeStore";
-import { useSegmentStore } from "@/store/segmentStore";
 import type { GeometryLayers } from "@/models/stage";
 import type { ToolContext } from "../baseTool";
 import type { SnapResult, SnapRuleContext } from "@/pixi/snap/types";
 import { scaleFromTicks } from "@/pixi/camera/zoomQuantizer";
 import { useViewportStore } from "@/store/viewportStore";
 import type { Tool } from "@/models/tools";
+import { AddSegmentCommand } from "@/pixi/input/commands/stateful";
 
 export class LineTool extends BaseShapeTool {
 
@@ -86,8 +85,8 @@ export class LineTool extends BaseShapeTool {
 
     commitGeometry(): void {
         // Commit nodes and segments to stores
-        useNodeStore.getState().addMany(this.anchors);
-        useSegmentStore.getState().add({ id: this.sid(), p1: this.anchors[0].id, p2: this.anchors[1].id })
+        const cmd = new AddSegmentCommand(this.anchors[0], this.anchors[1]);
+        this.history.execute(cmd);
     }
 
     discardGeometry(): void {

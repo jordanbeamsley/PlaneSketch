@@ -9,6 +9,7 @@ import type { Modifiers } from "../input/pointer/types";
 import type { CommandContext } from "../input/commands/types";
 import type { CommandId } from "../input/commands/defaultCommands";
 import type { Tool } from "@/models/tools";
+import type { HistoryManager } from "../input/commands/historyManager";
 
 export interface ToolContext {
     snapOverlay: SnapOverlay;
@@ -16,6 +17,7 @@ export interface ToolContext {
     dataSource: CachedDataSource;
     viewport: Viewport;
     ticker: Ticker;
+    history: HistoryManager;
 }
 
 export interface PointerPayload {
@@ -28,6 +30,7 @@ export abstract class BaseTool {
     protected snapEngine: SnapEngine;
     protected dataSource: CachedDataSource;
     protected viewport: Viewport;
+    protected history: HistoryManager;
 
     protected isInOperation: boolean = false;
 
@@ -41,6 +44,7 @@ export abstract class BaseTool {
         this.snapEngine = context.snapEngine;
         this.dataSource = context.dataSource;
         this.viewport = context.viewport;
+        this.history = context.history;
 
         this.baseSnapContext = {
             p: { x: 0, y: 0 },

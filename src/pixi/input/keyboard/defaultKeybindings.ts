@@ -1,7 +1,16 @@
 import type { Keybinding } from "./types";
 
 export const DefaultKeybindings: Keybinding[] = [
-    // Delete selection (works with Delete and Backspace)
+    {
+        id: "kb.undo",
+        chord: { code: "KeyZ", ctrl: true },
+        command: "edit.undo"
+    },
+    {
+        id: "kb.redo",
+        chord: { code: "KeyZ", ctrl: true, shift: true },
+        command: "edit.redo"
+    },
     {
         id: "kb.delete",
         chord: { code: "Delete" },

@@ -1,6 +1,5 @@
 import { CommandRegistry } from "../commands/commandRegistry";
-import { DefaultCommands } from "../commands/defaultCommands";
-import type { CommandContext } from "../commands/types";
+import type { Command, CommandContext } from "../commands/types";
 import { DefaultKeybindings } from "./defaultKeybindings";
 import { KeybindingResolver } from "./keybindingResolver";
 import { KeybindingRegistry } from "./keybindRegistry";
@@ -8,13 +7,14 @@ import { KeyboardRouter } from "./KeyboardRouter";
 
 export function createDefaultKeyboardRouter(params: {
     ctx: CommandContext;
+    commands: Command[];
     setShouldPan: (fn: (e: PointerEvent) => boolean) => void;
     setCursor: (cursor: string) => void;
     target?: Window | HTMLElement;
 }) {
     const cmdReg = new CommandRegistry();
     const kbReg = new KeybindingRegistry();
-    cmdReg.register(DefaultCommands);
+    cmdReg.register(params.commands);
     kbReg.register(DefaultKeybindings);
 
     const resolver = new KeybindingResolver(cmdReg, kbReg);
