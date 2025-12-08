@@ -2,13 +2,12 @@ import { Graphics } from "pixi.js";
 import { compareVec, type Vec2 } from "@/models/vectors";
 import { NODE_COLOR, NODE_RADIUS, PREVIEW_SEGMENT_STROKE } from "@/constants/drawing";
 import { BaseShapeTool } from "./baseShapeTool";
-import { useNodeStore } from "@/store/nodeStore";
 import type { GeometryLayers } from "@/models/stage";
 import type { ToolContext } from "../baseTool";
-import { useCircleStore } from "@/store/circleStore";
 import type { SnapResult, SnapRuleContext } from "@/pixi/snap/types";
 import { scaleFromTicks } from "@/pixi/camera/zoomQuantizer";
 import type { Tool } from "@/models/tools";
+import { AddCentreDiametreCircle } from "@/pixi/input/commands/stateful/circles";
 
 export class CircleTool extends BaseShapeTool {
 
@@ -74,12 +73,12 @@ export class CircleTool extends BaseShapeTool {
 
     commitGeometry(): void {
         // Commit nodes and segments to stores
-        const centreP = this.anchors[0].p;
-        const radiusP = this.anchors[1].p;
-        const radius = Math.hypot(radiusP.x - centreP.x, radiusP.y - centreP.y);
+        const centreNode = this.anchors[0];
+        const radiusNode = this.anchors[1];
+        const radius = Math.hypot(radiusNode.p.x - centreNode.p.x, radiusNode.p.y - centreNode.p.y);
 
-        useNodeStore.getState().add(this.anchors[0]);
-        useCircleStore.getState().add({ id: this.cid(), center: this.anchors[0].id, radius: radius })
+        const cmd = new AddCentreDiametreCircle(centreNode, radius);
+        this.history.execute(cmd);
     }
 
     discardGeometry(): void {
