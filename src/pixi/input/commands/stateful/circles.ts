@@ -5,7 +5,7 @@ import { useCircleStore } from "@/store/circleStore";
 
 export type cmdNode = { x: number, y: number, nid?: string }
 
-export class AddCentreDiametreCircle implements StatefulCommand {
+export class AddCentreRadiusCircleCommand implements StatefulCommand {
     label = "Add c-d circle";
 
     readonly centre: Node;

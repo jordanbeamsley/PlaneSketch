@@ -7,7 +7,7 @@ import type { ToolContext } from "../baseTool";
 import type { SnapResult, SnapRuleContext } from "@/pixi/snap/types";
 import { scaleFromTicks } from "@/pixi/camera/zoomQuantizer";
 import type { Tool } from "@/models/tools";
-import { AddCentreDiametreCircle } from "@/pixi/input/commands/stateful/circles";
+import { AddCentreRadiusCircleCommand } from "@/pixi/input/commands/stateful/circles";
 
 export class CircleTool extends BaseShapeTool {
 
@@ -77,7 +77,7 @@ export class CircleTool extends BaseShapeTool {
         const radiusNode = this.anchors[1];
         const radius = Math.hypot(radiusNode.p.x - centreNode.p.x, radiusNode.p.y - centreNode.p.y);
 
-        const cmd = new AddCentreDiametreCircle(centreNode, radius);
+        const cmd = new AddCentreRadiusCircleCommand(centreNode, radius);
         this.history.execute(cmd);
     }
 

@@ -1,4 +1,5 @@
 import type { HistoryManager } from "./historyManager";
+import { DeleteCommand } from "./stateful/edit";
 import type { Command } from "./types";
 
 export type CommandId =
@@ -17,7 +18,10 @@ export function createDefaultCommands(history: HistoryManager): Command[] {
             id: "selection.delete",
             description: "Delete selected entities",
             canExecute: (ctx) => ctx.selection.hasAny(),
-            execute: (ctx) => ctx.selection.delete(),
+            execute: (_ctx) => {
+                const deleteCommand = new DeleteCommand();
+                history.execute(deleteCommand);
+            }
         },
         {
             id: "edit.undo",

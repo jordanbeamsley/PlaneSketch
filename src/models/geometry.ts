@@ -31,4 +31,3 @@ export type Circle = {
     center: NodeId;
     radius: number;
 }
-
