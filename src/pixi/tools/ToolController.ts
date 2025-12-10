@@ -33,6 +33,7 @@ export class ToolController {
     private setTool(name: Tool) {
         this.current.destruct();
         this.layers.preview.removeChildren().forEach(g => g.destroy());
+        this.context.snapOverlay.hideOverlay();
 
         switch (name) {
             case "line": this.current = new LineTool(this.context, this.layers); break;
