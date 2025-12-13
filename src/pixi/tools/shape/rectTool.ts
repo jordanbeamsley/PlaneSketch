@@ -1,15 +1,15 @@
 import { Graphics } from "pixi.js";
-import { compareVec, type Vec2 } from "@/models/vectors";
-import { NODE_COLOR, NODE_RADIUS, PREVIEW_SEGMENT_STROKE } from "@/constants/drawing";
+import { compareVec, type Vec2 } from "@/shared/models/vectors";
 import { BaseShapeTool } from "./baseShapeTool";
-import { useNodeStore } from "@/store/nodeStore";
-import { useSegmentStore } from "@/store/segmentStore";
-import type { Node, Segment } from "@/models/geometry";
-import type { GeometryLayers } from "@/models/stage";
+import { useNodeStore } from "@/shared/store/nodeStore";
+import { useSegmentStore } from "@/shared/store/segmentStore";
+import type { Node, Segment } from "@/shared/models/geometry";
+import type { GeometryLayers } from "@/shared/models/stage";
 import type { ToolContext } from "../baseTool";
 import type { SnapResult, SnapRuleContext } from "@/pixi/snap/types";
 import { scaleFromTicks } from "@/pixi/camera/zoomQuantizer";
-import type { Tool } from "@/models/tools";
+import type { Tool } from "@/shared/models/tools";
+import { NODE_COLOR, NODE_RADIUS, PREVIEW_SEGMENT_STROKE } from "@/pixi/constants/drawing";
 
 export class RectTool extends BaseShapeTool {
 

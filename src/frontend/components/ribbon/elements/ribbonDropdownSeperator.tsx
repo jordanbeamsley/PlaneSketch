@@ -1,6 +1,6 @@
 import * as React from "react";
 import { cn } from "@/lib/utils";
-import { DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
+import { DropdownMenuSeparator } from "@/frontend/components/ui/dropdown-menu";
 
 export interface RibbonDropdownSeperatorProps
     extends React.ComponentPropsWithoutRef<typeof DropdownMenuSeparator> { }

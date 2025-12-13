@@ -1,5 +1,5 @@
-import { DEFAULT_GRID_CONF } from "@/constants/canvas";
-import type { Vec2 } from "@/models/vectors";
+import type { Vec2 } from "@/shared/models/vectors";
+import { DEFAULT_GRID_CONF } from "../constants/canvas";
 
 export type PointTransform = (p: Vec2) => Vec2;
 export type DistTransform = (dist: number) => number;

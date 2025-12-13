@@ -1,12 +1,12 @@
-import { copyVec, dist2, type Vec2 } from "@/models/vectors";
+import { copyVec, dist2, type Vec2 } from "@/shared/models/vectors";
 import { BaseTool, type PointerPayload, type ToolContext } from "../baseTool";
 import type { SnapCandidate, SnapResult, SnapRuleContext } from "@/pixi/snap/types";
-import type { Node } from "@/models/geometry";
-import { useViewportStore } from "@/store/viewportStore";
+import type { Node } from "@/shared/models/geometry";
+import { useViewportStore } from "@/shared/store/viewportStore";
 import type { CommandId } from "@/pixi/input/commands/defaultCommands";
 import type { CommandContext } from "@/pixi/input/commands/types";
 import type { Ticker } from "pixi.js";
-import { RESIDUAL_DWELL_MS, RESIDUAL_MAX_DRIFT_PX2 } from "@/constants/tools";
+import { RESIDUAL_DWELL_MS, RESIDUAL_MAX_DRIFT_PX2 } from "@/pixi/constants/tools";
 
 interface residualDwellState {
     /** Last residual candidate from snap engine */

@@ -1,6 +1,5 @@
 import type { BaseTool, PointerPayload, ToolContext } from "./baseTool";
 import { LineTool } from "./shape/lineTool";
-import { useToolStore } from "@/store/toolStore";
 import type { Tool } from "@/models/tools";
 import type { GeometryLayers } from "@/models/stage";
 import { RectTool } from "./shape/rectTool";
@@ -10,6 +9,7 @@ import type { Container } from "pixi.js";
 import type { GraphIndex } from "../graph/graphIndex";
 import type { CommandContext } from "../input/commands/types";
 import type { CommandId } from "../input/commands/defaultCommands";
+import { useToolStore } from "@/shared/store/toolStore";
 
 export class ToolController {
     private layers: GeometryLayers;

@@ -1,11 +1,11 @@
 import { Circle, Minus, Square, SquareMousePointer } from "lucide-react";
-import { useToolStore } from "@/store/toolStore";
 import { RibbonGroup } from "../elements/ribbonGroup";
 import { RibbonToolButton } from "../elements/ribbonToolButton";
-import { DropdownMenuGroup, DropdownMenuPortal, DropdownMenuShortcut, DropdownMenuSub, DropdownMenuSubContent } from "@/components/ui/dropdown-menu";
+import { DropdownMenuGroup, DropdownMenuPortal, DropdownMenuShortcut, DropdownMenuSub, DropdownMenuSubContent } from "@/frontend/components/ui/dropdown-menu";
 import { RibbonDropdownItem } from "../elements/ribbonDropdownItem";
 import { RibbonDropdownSubTrigger } from "../elements/ribbonDropdownSubTrigger";
 import { RibbonDropdownSeperator } from "../elements/ribbonDropdownSeperator";
+import { useToolStore } from "@/shared/store/toolStore";
 
 interface TabPanelProps {
     id: string;

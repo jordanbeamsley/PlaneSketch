@@ -1,6 +1,6 @@
 
 import * as React from "react";
-import { DropdownMenuSubTrigger } from "@/components/ui/dropdown-menu";
+import { DropdownMenuSubTrigger } from "@/frontend/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 
 export interface RibbonDropdownItemProps

@@ -3,13 +3,13 @@ import type { SnapOverlay } from "../snap/overlay";
 import type { SnapEngine } from "../snap/engine";
 import type { CachedDataSource } from "../snap/cachedDataSource";
 import type { SnapRuleContext } from "../snap/types";
-import { SNAP_RADIUS } from "@/constants/drawing";
 import type { Viewport } from "../camera/viewportService";
 import type { Modifiers } from "../input/pointer/types";
 import type { CommandContext } from "../input/commands/types";
 import type { CommandId } from "../input/commands/defaultCommands";
-import type { Tool } from "@/models/tools";
+import type { Tool } from "@/shared/models/tools";
 import type { HistoryManager } from "../input/commands/historyManager";
+import { SNAP_RADIUS } from "../constants/drawing";
 
 export interface ToolContext {
     snapOverlay: SnapOverlay;

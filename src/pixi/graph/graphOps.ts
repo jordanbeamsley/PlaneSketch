@@ -1,8 +1,8 @@
-import type { CircleId, NodeId, SegmentId } from "@/models/geometry";
+import type { CircleId, NodeId, SegmentId } from "@/shared/models/geometry";
 import type { GraphIndex } from "./graphIndex";
-import { useSegmentStore } from "@/store/segmentStore";
-import { useNodeStore } from "@/store/nodeStore";
-import { useCircleStore } from "@/store/circleStore";
+import { useSegmentStore } from "@/shared/store/segmentStore";
+import { useCircleStore } from "@/shared/store/circleStore";
+import { useNodeStore } from "@/shared/store/nodeStore";
 
 export function deleteNodesAndIncidents(graph: GraphIndex, nids: NodeId[]) {
     const sids = new Set<SegmentId>();

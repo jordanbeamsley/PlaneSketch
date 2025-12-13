@@ -1,10 +1,10 @@
 // Heavily inspired from this infinite grid example provided on stackoverflow:
 // https://stackoverflow.com/questions/73035945/infinite-grid-zoom-symmetrical-zoom-in-and-out
 
-import { DEFAULT_GRID_CONF } from "@/constants/canvas";
-import type { Vec2 } from "@/models/vectors";
+import type { Vec2 } from "@/shared/models/vectors";
 import { Container, Graphics, Point, type StrokeStyle } from "pixi.js";
 import { scaleFromTicks, TICKS_PER_OCTAVE } from "../camera/zoomQuantizer";
+import { DEFAULT_GRID_CONF } from "../constants/canvas";
 
 export interface GridConfig {
     axisColor: { x: number, y: number },

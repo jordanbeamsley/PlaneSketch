@@ -1,13 +1,13 @@
-import { NODE_COLOR, NODE_RADIUS, SEGMENT_STROKE } from "@/constants/drawing";
-import type { GeometryLayers } from "@/models/stage";
-import { useCircleStore } from "@/store/circleStore";
-import { useNodeStore } from "@/store/nodeStore";
-import { useSegmentStore } from "@/store/segmentStore";
-import { useViewportStore } from "@/store/viewportStore";
+import type { GeometryLayers } from "@/shared/models/stage";
+import { useCircleStore } from "@/shared/store/circleStore";
+import { useNodeStore } from "@/shared/store/nodeStore";
+import { useSegmentStore } from "@/shared/store/segmentStore";
+import { useViewportStore } from "@/shared/store/viewportStore";
 import { Graphics } from "pixi.js";
 import { scaleFromTicks } from "../camera/zoomQuantizer";
-import { useSelectStore } from "@/store/selectStore";
+import { useSelectStore } from "@/shared/store/selectStore";
 import type { GraphIndex } from "../graph/graphIndex";
+import { NODE_COLOR, NODE_RADIUS, SEGMENT_STROKE } from "../constants/drawing";
 
 const SEG_SELECT_TINT = 0xFF8A00;
 const SEG_NORMAL_TINT = 0xFFFFFF;

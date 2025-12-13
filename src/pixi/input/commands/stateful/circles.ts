@@ -1,7 +1,7 @@
-import { useNodeStore } from "@/store/nodeStore";
+import { useCircleStore } from "@/shared/store/circleStore";
 import type { CommandContext, StatefulCommand } from "../types";
-import type { CircleId, Node, NodeId } from "@/models/geometry";
-import { useCircleStore } from "@/store/circleStore";
+import type { CircleId, Node, NodeId } from "@/shared/models/geometry";
+import { useNodeStore } from "@/shared/store/nodeStore";
 
 export type cmdNode = { x: number, y: number, nid?: string }
 

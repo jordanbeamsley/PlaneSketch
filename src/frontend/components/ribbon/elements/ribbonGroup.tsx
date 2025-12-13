@@ -1,4 +1,4 @@
-import { DropdownMenuContent, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { DropdownMenuContent, DropdownMenuTrigger } from "@/frontend/components/ui/dropdown-menu";
 import { DropdownMenu, DropdownMenuSeparator } from "@radix-ui/react-dropdown-menu";
 import { ChevronDown } from "lucide-react";
 import type { ReactNode } from "react";

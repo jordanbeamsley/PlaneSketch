@@ -1,9 +1,9 @@
-import { useSelectStore } from "@/store/selectStore";
+import { useSelectStore } from "@/shared/store/selectStore";
 import type { CommandContext, StatefulCommand } from "../types";
-import type { Segment, Node, Circle, CircleId, SegmentId } from "@/models/geometry";
-import { useNodeStore } from "@/store/nodeStore";
-import { useSegmentStore } from "@/store/segmentStore";
-import { useCircleStore } from "@/store/circleStore";
+import type { Segment, Node, Circle, CircleId, SegmentId } from "@/shared/models/geometry";
+import { useCircleStore } from "@/shared/store/circleStore";
+import { useSegmentStore } from "@/shared/store/segmentStore";
+import { useNodeStore } from "@/shared/store/nodeStore";
 
 export class DeleteCommand implements StatefulCommand {
 

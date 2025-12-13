@@ -1,16 +1,16 @@
 import { Container, Graphics, Point } from "pixi.js";
 import { BaseTool, type PointerPayload, type ToolContext } from "./baseTool"
 import type { SnapResult, SnapRuleContext } from "../snap/types";
-import { useSelectStore, type EntityRef } from "@/store/selectStore";
+import { useSelectStore, type EntityRef } from "@/shared/store/selectStore";
 import type { Vec2 } from "@/models/vectors";
-import { useNodeStore } from "@/store/nodeStore";
 import type { GraphIndex } from "../graph/graphIndex";
 import type { CircleId, NodeId, SegmentId } from "@/models/geometry";
-import { useSegmentStore } from "@/store/segmentStore";
 import type { CommandId } from "../input/commands/defaultCommands";
 import type { CommandContext } from "../input/commands/types";
-import { useCircleStore } from "@/store/circleStore";
 import type { Tool } from "@/models/tools";
+import { useNodeStore } from "@/shared/store/nodeStore";
+import { useSegmentStore } from "@/shared/store/segmentStore";
+import { useCircleStore } from "@/shared/store/circleStore";
 
 export class SelectTool extends BaseTool {
     private dragStartP: Point | null = null;

@@ -1,4 +1,4 @@
-import type { Tool } from "@/models/tools";
+import type { Tool } from "@/shared/models/tools";
 import type { CommandId } from "./defaultCommands";
 import type { GraphIndex } from "@/pixi/graph/graphIndex";
 

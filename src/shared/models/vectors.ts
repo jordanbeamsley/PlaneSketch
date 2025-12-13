@@ -1,4 +1,4 @@
-import { FP_EPS } from "@/constants/Math";
+import { FP_EPS } from "@/pixi/constants/Math";
 
 export type Vec2 = {
     x: number,

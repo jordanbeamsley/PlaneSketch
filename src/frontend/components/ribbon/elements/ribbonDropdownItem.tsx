@@ -1,5 +1,5 @@
 import * as React from "react";
-import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
+import { DropdownMenuItem } from "@/frontend/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 
 export interface RibbonDropdownItemProps

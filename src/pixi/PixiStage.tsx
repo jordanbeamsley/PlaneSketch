@@ -8,20 +8,20 @@ import type { GeometryLayers } from "@/models/stage";
 import { SceneGrid } from "./scene/sceneGrid";
 import { SceneGraphics } from "./scene/sceneGraphics";
 import type { ToolContext } from "./tools/baseTool";
-import { MAX_SCALE, MIN_SCALE } from "@/constants/canvas";
+import { MAX_SCALE, MIN_SCALE } from "./constants/canvas";
 import { CameraController } from "./camera/cameraController";
 import { ViewportService } from "./camera/viewportService";
 import { GraphIndex } from "./graph/graphIndex";
 import { PointerRouter } from "./input/pointer/pointerRouter";
 import type { KeyboardRouter } from "./input/keyboard/KeyboardRouter";
 import type { CommandContext } from "./input/commands/types";
-import { useSelectStore } from "@/store/selectStore";
-import { useSegmentStore } from "@/store/segmentStore";
-import { useCircleStore } from "@/store/circleStore";
+import { useSelectStore } from "@/shared/store/selectStore";
 import { createDefaultKeyboardRouter } from "./input/keyboard";
 import { deleteNodesAndIncidents } from "./graph/graphOps";
 import { HistoryManager } from "./input/commands/historyManager";
 import { createDefaultCommands } from "./input/commands/defaultCommands";
+import { useCircleStore } from "@/shared/store/circleStore";
+import { useSegmentStore } from "@/shared/store/segmentStore";
 
 export function PixiStage() {
     const hostRef = useRef<HTMLDivElement>(null);

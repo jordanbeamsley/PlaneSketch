@@ -1,8 +1,8 @@
-import { useNodeStore } from "@/store/nodeStore";
+import { useNodeStore } from "@/shared/store/nodeStore";
 import type { CircleLite, NodeLite, SegmentLite, SnapDataSource } from "./types";
-import { useSegmentStore } from "@/store/segmentStore";
-import { copyVec } from "@/models/vectors";
-import { useCircleStore } from "@/store/circleStore";
+import { useSegmentStore } from "@/shared/store/segmentStore";
+import { copyVec } from "@/shared/models/vectors";
+import { useCircleStore } from "@/shared/store/circleStore";
 
 export class CachedDataSource implements SnapDataSource {
     private nodesLite: NodeLite[] = [];

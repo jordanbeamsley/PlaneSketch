@@ -1,14 +1,14 @@
 import { Graphics } from "pixi.js";
-import { compareVec, type Vec2 } from "@/models/vectors";
-import { NODE_COLOR, NODE_RADIUS, PREVIEW_SEGMENT_STROKE } from "@/constants/drawing";
+import { compareVec, type Vec2 } from "@/shared/models/vectors";
 import { BaseShapeTool } from "./baseShapeTool";
-import type { GeometryLayers } from "@/models/stage";
+import type { GeometryLayers } from "@/shared/models/stage";
 import type { ToolContext } from "../baseTool";
 import type { SnapResult, SnapRuleContext } from "@/pixi/snap/types";
 import { scaleFromTicks } from "@/pixi/camera/zoomQuantizer";
-import { useViewportStore } from "@/store/viewportStore";
-import type { Tool } from "@/models/tools";
+import type { Tool } from "@/shared/models/tools";
 import { AddSegmentCommand } from "@/pixi/input/commands/stateful";
+import { useViewportStore } from "@/shared/store/viewportStore";
+import { NODE_COLOR, NODE_RADIUS, PREVIEW_SEGMENT_STROKE } from "@/pixi/constants/drawing";
 
 export class LineTool extends BaseShapeTool {
 

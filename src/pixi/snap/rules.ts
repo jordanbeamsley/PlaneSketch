@@ -1,6 +1,6 @@
-import { compareVecWithEps, copyVec, crossP, dist2, dotP, type Vec2 } from "@/models/vectors";
+import { compareVecWithEps, copyVec, crossP, dist2, dotP, type Vec2 } from "@/shared/models/vectors";
 import type { CircleLite, SegmentLite, SnapCandidate, SnapRule } from "./types";
-import { FP_EPS } from "@/constants/Math";
+import { FP_EPS } from "../constants/Math";
 
 // Minimum distances before certain snaps kick in
 const AXIS_MINIMUM = 40;

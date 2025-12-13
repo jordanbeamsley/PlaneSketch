@@ -1,6 +1,6 @@
-import type { CircleId, NodeId, SegmentId } from "@/models/geometry";
-import { useCircleStore } from "@/store/circleStore";
-import { useSegmentStore } from "@/store/segmentStore";
+import type { CircleId, NodeId, SegmentId } from "@/shared/models/geometry";
+import { useCircleStore } from "@/shared/store/circleStore";
+import { useSegmentStore } from "@/shared/store/segmentStore";
 
 /** Maintain incident edge lists for each node so tools and renderers can query topology */
 export class GraphIndex {

@@ -1,6 +1,6 @@
-import Ribbon from "@/components/ribbon/ribbon";
-import { PixiStage } from "../pixi/PixiStage";
-import { TooltipProvider } from "@/components/ui/tooltip";
+import { PixiStage } from "@/pixi/PixiStage";
+import Ribbon from "../components/ribbon/ribbon";
+import { TooltipProvider } from "../components/ui/tooltip";
 
 function App() {
 

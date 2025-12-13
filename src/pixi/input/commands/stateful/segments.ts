@@ -1,7 +1,7 @@
-import { useNodeStore } from "@/store/nodeStore";
+import { useSegmentStore } from "@/shared/store/segmentStore";
 import type { CommandContext, StatefulCommand } from "../types";
-import { useSegmentStore } from "@/store/segmentStore";
-import type { Node, NodeId, SegmentId } from "@/models/geometry";
+import type { Node, NodeId, SegmentId } from "@/shared/models/geometry";
+import { useNodeStore } from "@/shared/store/nodeStore";
 
 export type cmdNode = { x: number, y: number, nid?: string }
 

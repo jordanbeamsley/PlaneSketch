@@ -1,6 +1,6 @@
 import { Point, type Container } from "pixi.js";
 import { scaleFromTicks, ticksFromScale } from "./zoomQuantizer";
-import { useViewportStore } from "@/store/viewportStore";
+import { useViewportStore } from "@/shared/store/viewportStore";
 
 export interface CameraLimits {
     minScale: number;
