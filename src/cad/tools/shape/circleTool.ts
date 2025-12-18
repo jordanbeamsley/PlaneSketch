@@ -1,0 +1,101 @@
+import { Graphics } from "pixi.js";
+import { BaseShapeTool } from "./baseShapeTool";
+import type { ToolContext } from "../baseTool";
+import type { SnapResult, SnapRuleContext } from "@/cad/snap/types";
+import { scaleFromTicks } from "@/cad/camera/zoomQuantizer";
+import { AddCentreRadiusCircleCommand } from "@/cad/input/commands/stateful/circles";
+import { NODE_COLOR, NODE_RADIUS, PREVIEW_SEGMENT_STROKE } from "@/cad/constants/drawing";
+import { compareVec, type Vec2 } from "@/cad/models/sketch/vectors";
+import type { GeometryLayers } from "@/cad/models/canvas/stage";
+import type { Tool } from "@/cad/models/tools/tools";
+
+export class CircleTool extends BaseShapeTool {
+
+    protected layers: GeometryLayers;
+
+    protected centreNodeGfx: Graphics;
+    protected arcGfx: Graphics;
+
+    constructor(context: ToolContext, layers: GeometryLayers) {
+        super(context);
+        this.layers = layers;
+        this.totalRequiredAnchors = 2;
+
+        // Create graphics to draw a preview circle once
+        // Set to invisible, update when actually drawing
+        this.centreNodeGfx = new Graphics().circle(0, 0, NODE_RADIUS).fill(NODE_COLOR);
+        this.centreNodeGfx.eventMode = "none";
+        this.centreNodeGfx.visible = false;
+        this.layers.preview.addChild(this.centreNodeGfx);
+
+        this.arcGfx = new Graphics();
+        this.arcGfx.eventMode = "none";
+        this.arcGfx.visible = false;
+        this.layers.preview.addChild(this.arcGfx);
+    }
+
+    getId(): Tool {
+        return "circle";
+    }
+
+    rescaleNodes(zoomTicks: number): void {
+        const s = scaleFromTicks(zoomTicks);
+        const nodeScale = 1 / s;
+
+        this.centreNodeGfx.scale.set(nodeScale);
+    }
+
+    onMoveDraw(p: Vec2): void {
+
+        const startP = this.anchors[0].p;
+        const endP = p;
+        const radius = Math.hypot(endP.x - startP.x, endP.y - startP.y);
+
+        this.centreNodeGfx.position.set(startP.x, startP.y);
+        this.centreNodeGfx.visible = true;
+
+        this.arcGfx.clear()
+            .circle(startP.x, startP.y, radius)
+            .stroke(PREVIEW_SEGMENT_STROKE);
+        this.arcGfx.visible = true;
+    }
+
+    isZeroSize(): boolean {
+        // Should never happen
+        if (this.anchors.length < this.totalRequiredAnchors) return true;
+
+        // If radius node is at center node, then is zero size
+        if (compareVec(this.anchors[0].p, this.anchors[1].p)) return true;
+
+        return false;
+
+    }
+
+    commitGeometry(): void {
+        // Commit nodes and segments to stores
+        const centreNode = this.anchors[0];
+        const radiusNode = this.anchors[1];
+        const radius = Math.hypot(radiusNode.p.x - centreNode.p.x, radiusNode.p.y - centreNode.p.y);
+
+        const cmd = new AddCentreRadiusCircleCommand(centreNode, radius);
+        this.getHistory().execute(cmd);
+    }
+
+    discardGeometry(): void {
+        this.anchors = [];
+        this.centreNodeGfx.visible = false;
+        this.arcGfx.visible = false;
+    }
+
+    postCreate(_p: Vec2, _snap: SnapResult): void {
+        this.discardGeometry();
+    }
+
+    resolveSnapContext(context: SnapRuleContext, p: Vec2): SnapRuleContext {
+        // Disable axis snapping for circles
+        const resolvedContext = { ...context, p: p };
+        resolvedContext.opts.enable = { ...resolvedContext.opts.enable, axisH: false, axisV: false }
+
+        return resolvedContext;
+    }
+}

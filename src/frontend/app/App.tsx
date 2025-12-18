@@ -1,4 +1,4 @@
-import { PixiStage } from "@/pixi/PixiStage";
+import { EditorHost } from "../components/editor/editorHost";
 import Ribbon from "../components/ribbon/ribbon";
 import { TooltipProvider } from "../components/ui/tooltip";
 
@@ -10,7 +10,7 @@ function App() {
                 <Ribbon />
             </TooltipProvider>
             <div id="canvas-container" className="flex-1">
-                <PixiStage />
+                <EditorHost />
             </div>
         </div>
     );
