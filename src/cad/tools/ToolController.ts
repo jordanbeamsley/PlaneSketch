@@ -16,6 +16,7 @@ export class ToolController {
     private selectLayer: Container;
 
     private current: BaseTool;
+    private sub: () => void;
 
     constructor(context: ToolContext, layers: GeometryLayers, select: Container) {
         this.layers = layers;
@@ -23,8 +24,7 @@ export class ToolController {
         this.selectLayer = select;
 
         this.current = new LineTool(this.context, this.layers); // default
-        useToolStore.subscribe(({ tool }) => this.setTool(tool));
-        this.setTool(useToolStore.getState().tool);
+        this.sub = useToolStore.subscribe(({ tool }) => this.setTool(tool));
     }
 
     private setTool(name: Tool) {
@@ -57,4 +57,9 @@ export class ToolController {
     onDown(e: PointerPayload) { this.current.onDown(e); }
     onMove(e: PointerPayload) { this.current.onMove(e); }
     onUp(e: PointerPayload) { this.current.onUp(e); }
+
+    destroy() {
+        this.sub();
+        this.current.destruct();
+    }
 }

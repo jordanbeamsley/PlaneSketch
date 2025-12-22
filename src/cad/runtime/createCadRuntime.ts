@@ -223,6 +223,7 @@ export async function createCadRuntime(args: {
         input.unmount();
         keyboardRouter.unmount();
         sceneGraphics.unbind();
+        tools.destroy();
 
         // Then destroy pixi
         app.destroy(true, { children: true, texture: true });
