@@ -2,17 +2,8 @@ import type { EditorSession } from "../editor/session/editorSession";
 import type { DocumentStore } from "../editor/stores/createDocumentStore";
 import type { CircleLite, NodeLite, SegmentLite } from "../models/sketch/primitives";
 import type { Vec2 } from "../models/sketch/vectors";
+import { EntityRefs, refKey } from "../models/sketch/entityRef";
 import type { SnapDataSource } from "./types";
-
-type EntityKind = "node" | "segment" | "circle";
-
-function docKey(kind: EntityKind, id: string) {
-    return `doc:${kind}:${id}`;
-}
-
-function blockKey(instId: string, defId: string, kind: EntityKind, id: string) {
-    return `block:${instId}:${defId}:${kind}:${id}`;
-}
 
 function transformPoint(p: Vec2, t: { tx: number, ty: number, rot?: number, sx?: number, sy?: number }) {
     const sx = t.sx ?? 1;
@@ -44,7 +35,7 @@ export function createSnapDataSource(args: {
 
             // Active session nodes (doc scope)
             for (const n of geom.nodes.values()) {
-                yield { id: docKey("node", n.id), p: n.p };
+                yield { id: refKey(EntityRefs.docNode(n.id)), p: n.p };
             }
 
             // Only main session can see block instances when snapping
@@ -56,7 +47,7 @@ export function createSnapDataSource(args: {
 
                 for (const n of def.sketch.nodes) {
                     yield {
-                        id: blockKey(inst.id, inst.defId, "node", n.id),
+                        id: refKey(EntityRefs.blockNode(inst.id, inst.defId, n.id)),
                         p: transformPoint(n.p, inst.transform)
                     }
                 }
@@ -73,7 +64,7 @@ export function createSnapDataSource(args: {
                 const b = geom.nodes.get(s.p2);
 
                 if (!a || !b) continue;
-                yield { id: docKey("segment", s.id), a: a.p, b: b.p };
+                yield { id: refKey(EntityRefs.docSegment(s.id)), a: a.p, b: b.p };
             }
 
             // Only main session can see block instances when snapping
@@ -90,7 +81,7 @@ export function createSnapDataSource(args: {
                     if (!a || !b) continue;
 
                     yield {
-                        id: blockKey(inst.id, inst.defId, "segment", s.id),
+                        id: refKey(EntityRefs.blockSegment(inst.id, inst.defId, s.id)),
                         a: transformPoint(a.p, inst.transform),
                         b: transformPoint(b.p, inst.transform)
                     }
@@ -107,7 +98,7 @@ export function createSnapDataSource(args: {
                 const centre = geom.nodes.get(c.centre);
 
                 if (!centre) continue;
-                yield { id: docKey("circle", c.id), centre: centre.p, rad: c.radius };
+                yield { id: refKey(EntityRefs.docCircle(c.id)), centre: centre.p, rad: c.radius };
             }
 
             // Only main session can see block instances when snapping
@@ -123,7 +114,7 @@ export function createSnapDataSource(args: {
                     if (!centre) continue;
 
                     yield {
-                        id: blockKey(inst.id, inst.defId, "circle", c.id),
+                        id: refKey(EntityRefs.blockCircle(inst.id, inst.defId, c.id)),
                         centre: transformPoint(centre.p, inst.transform),
                         rad: transformRadius(c.radius, inst.transform)
                     }

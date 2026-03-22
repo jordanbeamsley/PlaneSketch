@@ -35,6 +35,8 @@ export class AddSegmentCommand implements StatefulCommand {
         const segId = this.sid();
         this.createdSeg = segId;
         geometryStore.getState().addSegment({ id: segId, p1: this.createdNodeA, p2: this.createdNodeB });
+
+        console.log(`segment created: {NodeA: ${this.createdNodeA}, NodeB: ${this.createdNodeB}`);
     }
 
     undo(ctx: CommandContext) {

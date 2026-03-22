@@ -1,46 +1,18 @@
 import type { CircleId, NodeId, SegmentId } from "@/cad/models/sketch/ids";
+import { refKey, parseRefKey, type EntityRef } from "@/cad/models/sketch/entityRef";
 import { createStore } from "zustand";
 import { subscribeWithSelector } from "zustand/middleware";
 
-/**
- * Describes where an entity lives 
- *
- * doc -> geometry owned by the active editing session
- * block -> geometry inside a block definition, ref by an instance
- */
-export type EntityOwner =
-    | { scope: "doc" }
-    | { scope: "block"; instId: string; defId: string }
-
-/** Typed reference to a selectable entity */
-export type EntityRef =
-    | { kind: "node"; id: string; owner?: EntityOwner }
-    | { kind: "segment"; id: string; owner?: EntityOwner }
-    | { kind: "circle"; id: string; owner?: EntityOwner }
-    | { kind: "arc"; id: string; owner?: EntityOwner };
+export type { EntityRef } from "@/cad/models/sketch/entityRef";
+export type { EntityOwner } from "@/cad/models/sketch/entityRef";
 
 /** Internal selection key */
 type Key = string;
 
-/** 
- * Normalise an EntityRef into a unique key
- * 
- * Example:
- *  doc:node:123
- *  block:inst123:def123:segment:123
- */
-export function createKey(e: EntityRef): Key {
-    const owner = (e.owner?.scope === "block")
-        ? `block:${e.owner.instId}:${e.owner.defId}`
-        : "doc";
-
-    return `${owner}:${e.kind}:${e.id}`;
-}
-
 type SelectState = {
     /** All selected entities normalised by key */
     selected: Set<Key>;
-    /** Currently hovered entity, or null */
+    /** Currently hovered entity key, or null */
     hovered: Key | null;
 }
 
@@ -60,9 +32,10 @@ type SelectActions = {
 }
 
 /**
- * Factory for a sessions scoped selection store
+ * Factory for a session-scoped selection store.
  *
- * Each EditorSession gets its own instance
+ * Each EditorSession gets its own instance.
+ * All keys are canonical refKey() strings — see entityRef.ts.
  */
 export function createSelectionStore() {
     return createStore<SelectState & SelectActions>()(
@@ -73,28 +46,28 @@ export function createSelectionStore() {
             add: (e) =>
                 set((s) => {
                     const c = new Set(s.selected);
-                    c.add(createKey(e));
+                    c.add(refKey(e));
                     return { selected: c };
                 }),
 
             addMany: (es) =>
                 set((s) => {
                     const c = new Set(s.selected);
-                    for (const e of es) c.add(createKey(e));
+                    for (const e of es) c.add(refKey(e));
                     return { selected: c };
                 }),
 
             remove: (e) =>
                 set((s) => {
                     const c = new Set(s.selected);
-                    c.delete(createKey(e));
+                    c.delete(refKey(e));
                     return { selected: c };
                 }),
 
             toggle: (e) =>
                 set((s) => {
                     const c = new Set(s.selected);
-                    const k = createKey(e);
+                    const k = refKey(e);
                     c.has(k) ? c.delete(k) : c.add(k);
                     return { selected: c };
                 }),
@@ -103,14 +76,13 @@ export function createSelectionStore() {
 
             hasAny: () => get().selected.size > 0,
 
-            setHovered: (e) => set({ hovered: e ? createKey(e) : null }),
+            setHovered: (e) => set({ hovered: e ? refKey(e) : null }),
 
-            isSelected: (e) => get().selected.has(createKey(e)),
+            isSelected: (e) => get().selected.has(refKey(e)),
 
             /**
              * Extract selected entities by type.
-             *
-             * Only returns entitie owned by the active document
+             * Only returns entities owned by the active document (doc scope).
              */
             getByKind: () => {
                 const nodes: Set<NodeId> = new Set();
@@ -118,17 +90,12 @@ export function createSelectionStore() {
                 const circles: Set<CircleId> = new Set();
 
                 for (const k of get().selected) {
-                    const parts = k.split(":");
+                    const ref = parseRefKey(k);
+                    if (!ref || ref.owner.scope !== "doc") continue;
 
-                    // doc:<kind>:<id>
-                    if (parts[0] !== "doc") continue;
-
-                    const kind = parts[1];
-                    const id = parts[2];
-
-                    if (kind === "node") nodes.add(id);
-                    else if (kind === "segment") segments.add(id);
-                    else if (kind === "circle") circles.add(id);
+                    if (ref.kind === "node") nodes.add(ref.id);
+                    else if (ref.kind === "segment") segments.add(ref.id);
+                    else if (ref.kind === "circle") circles.add(ref.id);
                 }
 
                 return { nodes, segments, circles };

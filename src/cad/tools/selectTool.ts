@@ -6,7 +6,8 @@ import type { CommandContext } from "../input/commands/types";
 import type { Tool } from "../models/tools/tools";
 import type { Vec2 } from "../models/sketch/vectors";
 import type { CircleId, NodeId, SegmentId } from "../models/sketch/ids";
-import type { EntityRef } from "../editor/stores/createSelectionStore";
+import { parseRefKey, EntityRefs } from "../models/sketch/entityRef";
+import type { EntityRef } from "../models/sketch/entityRef";
 
 export class SelectTool extends BaseTool {
     private dragStartP: Point | null = null;
@@ -37,11 +38,13 @@ export class SelectTool extends BaseTool {
         // If we're already snapped to a node or segment, then select it
         const snapKind = this.currentSnap.kind;
         if (snapKind === "node" || snapKind === "segment" || snapKind === "circle") {
-            const entity: EntityRef = { kind: snapKind, id: this.currentSnap.primary.id! };
-            const entityKey = `${snapKind}:${this.currentSnap.primary.id}`;
+            // Snap candidate ids are canonical refKey strings (e.g. "doc:node:abc")
+            const snapKey = this.currentSnap.primary.id!;
+            const entity = parseRefKey(snapKey);
+            if (!entity) return;
 
             // If it's already in the select store then remove it
-            if (selectStore.selected.has(entityKey)) selectStore.remove(entity);
+            if (selectStore.selected.has(snapKey)) selectStore.remove(entity);
             else selectStore.add(entity);
             return;
         }
@@ -73,8 +76,10 @@ export class SelectTool extends BaseTool {
 
         if (snapKind === "none" && selectStore.hovered)
             selectStore.setHovered(null);
-        else if (snapKind === "node" || snapKind === "segment" || snapKind === "circle")
-            selectStore.setHovered({ kind: snapKind, id: this.currentSnap.primary.id! })
+        else if (snapKind === "node" || snapKind === "segment" || snapKind === "circle") {
+            const entity = parseRefKey(this.currentSnap.primary.id!);
+            if (entity) selectStore.setHovered(entity);
+        }
     }
 
     onUp(e: PointerPayload): void {
@@ -146,11 +151,11 @@ export class SelectTool extends BaseTool {
             }
         });
 
-        // convert nids, sids into entity refs
+        // convert nids, sids into doc-scoped entity refs
         const es: Array<EntityRef> = [];
-        nodesInHitbox.forEach(nid => es.push({ kind: "node", id: nid }));
-        segsInHitbox.forEach(sid => es.push({ kind: "segment", id: sid }));
-        circlesInHitbox.forEach(cid => es.push({ kind: "circle", id: cid }));
+        nodesInHitbox.forEach(nid => es.push(EntityRefs.docNode(nid)));
+        segsInHitbox.forEach(sid => es.push(EntityRefs.docSegment(sid)));
+        circlesInHitbox.forEach(cid => es.push(EntityRefs.docCircle(cid)));
 
         this.getSelect().getState().addMany(es);
     }

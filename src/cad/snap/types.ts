@@ -1,4 +1,5 @@
 import type { Viewport } from "../camera/viewportService";
+import type { CircleLite, NodeLite, SegmentLite } from "../models/sketch/primitives";
 import type { Vec2 } from "../models/sketch/vectors";
 
 export type SnapKind =

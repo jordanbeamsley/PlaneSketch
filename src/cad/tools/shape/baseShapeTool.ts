@@ -7,6 +7,7 @@ import type { Ticker } from "pixi.js";
 import { RESIDUAL_DWELL_MS, RESIDUAL_MAX_DRIFT_PX2 } from "@/cad/constants/tools";
 import { copyVec, dist2, type Vec2 } from "@/cad/models/sketch/vectors";
 import type { Node } from "@/cad/models/sketch/primitives";
+import { parseRefKey } from "@/cad/models/sketch/entityRef";
 
 interface residualDwellState {
     /** Last residual candidate from snap engine */
@@ -84,7 +85,9 @@ export abstract class BaseShapeTool extends BaseTool {
         // If we're snapped to a node, then use the existing nodes ID
         // When committing geometry to store, the existing node ID will be used for segments
         const snap = this.currentSnap;
-        const id = (snap.kind === "node" && snap.primary.id) ? snap.primary.id : this.nid();
+        const id = (snap.kind === "node" && snap.primary.id)
+            ? (parseRefKey(snap.primary.id)?.id ?? this.nid())
+            : this.nid();
 
         const p = (this.residualDwell.active) ? this.residualDwell.pending!.p : snap.p;
 

@@ -1,4 +1,5 @@
 import { useViewportStore } from "@/shared/store/viewportStore";
+import { parseRefKey } from "@/cad/models/sketch/entityRef";
 import { Graphics } from "pixi.js";
 import { scaleFromTicks } from "../camera/zoomQuantizer";
 import type { GraphIndex } from "../graph/graphIndex";
@@ -164,7 +165,7 @@ export class SceneGraphics {
 
     applySelectionTints(selected: Set<String>) {
         for (const [id, g] of this.nodeGfx) {
-            const k = `node:${id}`;
+            const k = `doc:node:${id}`;
             if (selected.has(k)) {
                 g.tint = NODE_SELECT_TINT;
                 // May be hidden if degree > 2, however always show when selected
@@ -175,61 +176,53 @@ export class SceneGraphics {
             }
         }
         for (const [id, g] of this.segGfx) {
-            const k = `segment:${id}`;
-            g.tint = selected.has(k) ? SEG_SELECT_TINT : SEG_NORMAL_TINT;
+            g.tint = selected.has(`doc:segment:${id}`) ? SEG_SELECT_TINT : SEG_NORMAL_TINT;
         }
         for (const [id, g] of this.circleGfx) {
-            const k = `circle:${id}`;
-            g.tint = selected.has(k) ? SEG_SELECT_TINT : SEG_NORMAL_TINT;
+            g.tint = selected.has(`doc:circle:${id}`) ? CIRCLE_SELECT_TINT : CIRCLE_NORMAL_TINT;
         }
     }
 
     applyHover(currEntity: string | null, prevEntity: string | null) {
         if (prevEntity) {
-            const [kind, id] = prevEntity.split(":");
+            const ref = parseRefKey(prevEntity);
+            // SceneGraphics only renders doc-scope entities
+            if (ref && ref.owner.scope === "doc") {
+                const selected = this.getSelect().getState().selected.has(prevEntity);
 
-            const selected = this.getSelect().getState().selected.has(prevEntity);
-
-            if (kind === "node") {
-                const g = this.nodeGfx.get(id);
-                if (g) {
-                    g.tint = (selected) ? NODE_SELECT_TINT : NODE_NORMAL_TINT;
-                    g.visible = selected || this.getGraph().getSegDegree(id) < 2;
+                if (ref.kind === "node") {
+                    const g = this.nodeGfx.get(ref.id);
+                    if (g) {
+                        g.tint = selected ? NODE_SELECT_TINT : NODE_NORMAL_TINT;
+                        g.visible = selected || this.getGraph().getSegDegree(ref.id) < 2;
+                    }
+                } else if (ref.kind === "segment") {
+                    const g = this.segGfx.get(ref.id);
+                    if (g) g.tint = selected ? SEG_SELECT_TINT : SEG_NORMAL_TINT;
+                } else if (ref.kind === "circle") {
+                    const g = this.circleGfx.get(ref.id);
+                    if (g) g.tint = selected ? CIRCLE_SELECT_TINT : CIRCLE_NORMAL_TINT;
                 }
-            }
-
-            else if (kind === "segment") {
-                const g = this.segGfx.get(id);
-                if (g) g.tint = (selected) ? SEG_SELECT_TINT : SEG_NORMAL_TINT;
-            }
-
-            else if (kind === "circle") {
-                const g = this.circleGfx.get(id);
-                if (g) g.tint = selected ? CIRCLE_SELECT_TINT : CIRCLE_NORMAL_TINT;
             }
         }
 
         if (currEntity) {
-            const [kind, id] = currEntity.split(":");
-
-            if (kind === "node") {
-                const g = this.nodeGfx.get(id);
-                if (g) {
-                    g.tint = NODE_HOVER_TINT;
-                    // Node might be invisible if degree > 2
-                    // Always show on hover
-                    g.visible = true;
+            const ref = parseRefKey(currEntity);
+            if (ref && ref.owner.scope === "doc") {
+                if (ref.kind === "node") {
+                    const g = this.nodeGfx.get(ref.id);
+                    if (g) {
+                        g.tint = NODE_HOVER_TINT;
+                        // Node might be invisible if degree > 2 — always show on hover
+                        g.visible = true;
+                    }
+                } else if (ref.kind === "segment") {
+                    const g = this.segGfx.get(ref.id);
+                    if (g) g.tint = SEG_HOVER_TINT;
+                } else if (ref.kind === "circle") {
+                    const g = this.circleGfx.get(ref.id);
+                    if (g) g.tint = CIRCLE_HOVER_TINT;
                 }
-            }
-
-            else if (kind === "segment") {
-                const g = this.segGfx.get(id);
-                if (g) g.tint = SEG_HOVER_TINT;
-            }
-
-            else if (kind === "circle") {
-                const g = this.circleGfx.get(id);
-                if (g) g.tint = CIRCLE_HOVER_TINT;
             }
         }
     }
