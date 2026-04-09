@@ -6,7 +6,6 @@ export interface NodeLite { id: string, p: Vec2 }
 export interface SegmentLite { id: string, a: Vec2, b: Vec2 }
 export interface CircleLite { id: string, centre: Vec2, rad: number }
 
-// Eventually expand to include construction toggle, layer style, etc.
 export type Node = {
     id: NodeId;
     p: Vec2;

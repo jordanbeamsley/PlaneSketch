@@ -1,5 +1,6 @@
 import { useState } from "react"
 import { RibbonHome } from "./tabs/ribbonHome";
+import { RibbonConstraints } from "./tabs/ribbonConstraints";
 
 export type RibbonTabId =
     | "home"
@@ -40,6 +41,9 @@ export default function Ribbon() {
             <div className="bg-zinc-800 border-b border-zinc-700">
                 {activeTab === "home" && (
                     <RibbonHome id="ribbon-panel-home" />
+                )}
+                {activeTab === "constraints" && (
+                    <RibbonConstraints id="ribbon-panel-constraints" />
                 )}
             </div>
         </div >

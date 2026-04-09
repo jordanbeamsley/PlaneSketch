@@ -37,6 +37,7 @@ export class ToolController {
             case "rectangle": this.current = new RectTool(this.context, this.layers); break;
             case "circle": this.current = new CircleTool(this.context, this.layers); break;
             case "select": this.current = new SelectTool(this.context, this.selectLayer); break;
+            case "vertical": this.current = new ConstraintTool()
             default: break;
         }
         this.current.activate();

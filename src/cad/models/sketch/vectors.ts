@@ -30,6 +30,10 @@ export function dist2(a: Vec2, b: Vec2) {
     return dx * dx + dy * dy
 }
 
+export function dist(a: Vec2, b: Vec2) {
+    return Math.sqrt(dist2(a, b));
+}
+
 export function crossP(a: Vec2, b: Vec2) {
     return (a.x * b.y) - (b.x * a.y);
 }

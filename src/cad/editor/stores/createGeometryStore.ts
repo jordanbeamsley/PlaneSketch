@@ -1,3 +1,4 @@
+import type { SketchConstraint } from "@/cad/models/sketch/constraints";
 import type { SketchDocument } from "@/cad/models/sketch/document";
 import type { ArcId, BlockInstId, CircleId, NodeId, SegmentId } from "@/cad/models/sketch/ids"
 import type { Arc, BlockInstance, Circle, Node, Segment } from "@/cad/models/sketch/primitives"
@@ -32,7 +33,7 @@ export type GeometryActions = {
     removeMany(nids: Set<NodeId>, sids: Set<SegmentId>, cids: Set<CircleId>): void;
 
     /** serialization */
-    toDocument(docId: string, name?: string, constraints?: unknown[]): SketchDocument;
+    toDocument(docId: string, name?: string, constraints?: SketchConstraint[]): SketchDocument;
 };
 
 export type GeometryStore = ReturnType<typeof createGeometryStore>;
