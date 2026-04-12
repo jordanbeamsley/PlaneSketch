@@ -1,12 +1,22 @@
 import { create } from "zustand";
-import type { Tool } from "../models/tools";
+import { subscribeWithSelector } from "zustand/middleware";
+import type { Tool } from "@/cad/models/tools/tools";
+import type { ConstraintKind } from "@/cad/models/sketch/constraints";
 
 interface ToolState {
-    tool: Tool;
-    setTool: (t: Tool) => void;
+  tool: Tool;
+  activeConstraintKind: ConstraintKind | null;
+  setTool: (t: Tool) => void;
+  /** Switch to the constraint tool and set the active constraint kind */
+  activateConstraint: (kind: ConstraintKind) => void;
 }
 
-export const useToolStore = create<ToolState>((set) => ({
+export const useToolStore = create<ToolState>()(
+
+  subscribeWithSelector((set) => ({
     tool: "line",
-    setTool: (tool) => set({ tool })
-}))
+    activeConstraintKind: null,
+    setTool: (tool) => set({ tool, activeConstraintKind: null }),
+    activateConstraint: (kind) => set({ tool: "constraint", activeConstraintKind: kind }),
+  }))
+);

@@ -2,13 +2,16 @@ import type { BaseTool, PointerPayload, ToolContext } from "./baseTool";
 import { LineTool } from "./shape/lineTool";
 import { RectTool } from "./shape/rectTool";
 import { CircleTool } from "./shape/circleTool";
-import { SelectTool } from "./selectTool";
+import { SelectTool } from "./select/selectTool";
+import { ConstraintTool } from "./constraint/constraintTool";
 import type { Container } from "pixi.js";
 import type { CommandContext } from "../input/commands/types";
 import type { CommandId } from "../input/commands/defaultCommands";
 import { useToolStore } from "@/shared/store/toolStore";
 import type { GeometryLayers } from "../models/canvas/stage";
 import type { Tool } from "../models/tools/tools";
+import type { ConstraintKind } from "../models/sketch/constraints";
+import { shallow } from "zustand/shallow";
 
 export class ToolController {
     private layers: GeometryLayers;
@@ -24,10 +27,14 @@ export class ToolController {
         this.selectLayer = select;
 
         this.current = new LineTool(this.context, this.layers); // default
-        this.sub = useToolStore.subscribe(({ tool }) => this.setTool(tool));
+        this.sub = useToolStore.subscribe(
+            (s) => ({ tool: s.tool, kind: s.activeConstraintKind }),
+            ({ tool, kind }) => this.setTool(tool, kind),
+            { equalityFn: shallow }
+        );
     }
 
-    private setTool(name: Tool) {
+    private setTool(name: Tool, kind: ConstraintKind | null = null) {
         this.current.destruct();
         this.layers.preview.removeChildren().forEach(g => g.destroy());
         this.context.snapOverlay.hideOverlay();
@@ -37,7 +44,9 @@ export class ToolController {
             case "rectangle": this.current = new RectTool(this.context, this.layers); break;
             case "circle": this.current = new CircleTool(this.context, this.layers); break;
             case "select": this.current = new SelectTool(this.context, this.selectLayer); break;
-            case "vertical": this.current = new ConstraintTool()
+            case "constraint":
+                if (kind) this.current = new ConstraintTool(this.context, this.selectLayer, kind);
+                break;
             default: break;
         }
         this.current.activate();

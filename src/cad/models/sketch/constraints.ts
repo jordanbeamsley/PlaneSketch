@@ -1,5 +1,5 @@
 import type { EntityKind } from "./entityRef";
-import type { NodeId, SegmentId } from "./ids";
+import type { CircleId, NodeId, SegmentId } from "./ids";
 
 export type ConstraintKind = "coincident" | "horizontal" | "vertical";
 
@@ -8,18 +8,22 @@ export type BaseConstraint = {
     kind: ConstraintKind;
 };
 
+
+
 export interface CoincidentConstraint extends BaseConstraint {
     kind: "coincident";
-    p1: NodeId;
-    p2: NodeId;
+    target:
+    | { kind: "nodes", p1: NodeId, p2: NodeId }
+    | { kind: "nodesOnSegement", p: NodeId, s: SegmentId }
+    | { kind: "nodesOnCircle", p: NodeId, c: CircleId }
 };
 
-export interface SegmentTarget {
+export interface OrthoSegmentTarget {
     kind: "segment";
     segId: SegmentId;
 }
 
-export interface NodesTarget {
+export interface OrthoNodesTarget {
     kind: "nodes";
     p1: NodeId;
     p2: NodeId;
@@ -27,12 +31,12 @@ export interface NodesTarget {
 
 export interface HorizontalConstraint extends BaseConstraint {
     kind: "horizontal";
-    target: SegmentTarget | NodesTarget;
+    target: OrthoSegmentTarget | OrthoNodesTarget;
 };
 
 export interface VerticalConstraint extends BaseConstraint {
     kind: "vertical";
-    target: SegmentTarget | NodesTarget;
+    target: OrthoSegmentTarget | OrthoNodesTarget;
 };
 
 
@@ -129,7 +133,7 @@ export function evaluateConstraintGeom(selection: Map<EntityKind, number>, const
 
     // A ConditionGroup is valid when ALL its conditions match (AND)
     const matches = (group: ConditionGroup) => {
-        group.every(({ geomKind, operator, count }) => {
+        return group.every(({ geomKind, operator, count }) => {
             const actual = selection.get(geomKind) ?? 0;
             if (operator === ">=") return actual >= count;
             if (operator === "<=") return actual <= count;

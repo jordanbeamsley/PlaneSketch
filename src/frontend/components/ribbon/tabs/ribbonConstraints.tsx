@@ -1,12 +1,14 @@
 import { MoveHorizontal, MoveVertical } from "lucide-react";
 import { RibbonGroup } from "../elements/ribbonGroup";
 import { RibbonToolButton } from "../elements/ribbonToolButton";
+import { useToolStore } from "@/shared/store/toolStore";
 
 interface TabPanelProps {
     id: string;
 }
 
 export function RibbonConstraints({ id }: TabPanelProps) {
+    const { tool, activeConstraintKind, activateConstraint } = useToolStore();
 
     return (
         <section
@@ -15,20 +17,26 @@ export function RibbonConstraints({ id }: TabPanelProps) {
             aria-labelledby="ribbon-tab-home"
             className="flex overflow-x-auto text-xs h-full"
         >
-            <RibbonGroup label="Draw">
+            <RibbonGroup label="Constraints">
                 <RibbonToolButton
                     icon={<MoveVertical size={18} />}
                     label="Vertical"
-                    onClick={() => { return }}
-                    active={false}
+                    onClick={() => activateConstraint("vertical")}
+                    active={
+                        tool === "constraint" &&
+                        activeConstraintKind === "vertical"
+                    }
                     tooltip="Line"
                     tooltipShortcut="l"
                 />
                 <RibbonToolButton
                     icon={<MoveHorizontal size={18} />}
                     label="Horizontal"
-                    onClick={() => { return }}
-                    active={false}
+                    onClick={() => activateConstraint("horizontal")}
+                    active={
+                        tool === "constraint" &&
+                        activeConstraintKind === "horizontal"
+                    }
                     tooltip="Rectangle"
                     tooltipShortcut="r"
                 />
