@@ -10,6 +10,7 @@ interface TabPanelProps {
 export function RibbonConstraints({ id }: TabPanelProps) {
     const { tool, activeConstraintKind, activateConstraint } = useToolStore();
 
+
     return (
         <section
             id={id}

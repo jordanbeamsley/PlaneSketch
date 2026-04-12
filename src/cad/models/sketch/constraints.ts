@@ -129,12 +129,12 @@ export const CONSTRAINT_REQS: Record<ConstraintKind, ConstraintRequirements> = {
  * For now, I only envision this applying to the current geometry selection,
  * however, its somewhat abstracted from the selection store, as there may be a scenario
  * where some different collection of geometry is evaluated */
-export function evaluateConstraintGeom(selection: Map<EntityKind, number>, constraint: ConstraintKind): "complete" | "incomplete" | "excluded" {
+export function evaluateConstraintGeom(selection: Record<EntityKind, number>, constraint: ConstraintKind): "complete" | "incomplete" | "excluded" {
 
     // A ConditionGroup is valid when ALL its conditions match (AND)
     const matches = (group: ConditionGroup) => {
         return group.every(({ geomKind, operator, count }) => {
-            const actual = selection.get(geomKind) ?? 0;
+            const actual = selection[geomKind] ?? 0;
             if (operator === ">=") return actual >= count;
             if (operator === "<=") return actual <= count;
             if (operator === "==") return actual === count;

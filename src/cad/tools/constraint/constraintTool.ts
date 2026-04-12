@@ -6,7 +6,7 @@ import type { Container } from "pixi.js";
 import type { Tool } from "@/cad/models/tools/tools";
 import type { CommandId } from "@/cad/input/commands/defaultCommands";
 import type { CommandContext } from "@/cad/input/commands/types";
-import type { EntityRef, EntityKind } from "@/cad/models/sketch/entityRef";
+import type { EntityRef } from "@/cad/models/sketch/entityRef";
 import { HorizontalHandler } from "./handlers/horizontalHandler";
 import { VerticalHandler } from "./handlers/verticalHandler";
 import { CoincidentHandler } from "./handlers/coincidentHandler";
@@ -49,18 +49,18 @@ export class ConstraintTool extends BaseTool {
     destruct(): void { this.pick.dispose(); }
 
     private canSelect(candidate: EntityRef): boolean {
-        const { nodes, segments, circles } = this.getSelect().getState().getByKind();
-        const counts = new Map<EntityKind, number>([
-            ["node",    nodes.size    + (candidate.kind === "node"    ? 1 : 0)],
-            ["segment", segments.size + (candidate.kind === "segment" ? 1 : 0)],
-            ["circle",  circles.size  + (candidate.kind === "circle"  ? 1 : 0)],
-            ["arc",                     (candidate.kind === "arc"     ? 1 : 0)],
-        ]);
+        const counts = this.getSelect().getState().getCountByKind();
+        counts[candidate.kind]++;
         return evaluateConstraintGeom(counts, this.kind) !== "excluded";
     }
 
     private tryApply(): void {
-        const selection = this.getSelect().getState().getByKind();
+        const selectionState = this.getSelect().getState();
+        const selection = selectionState.getByKind();
+        const counts = selectionState.getCountByKind();
+
+        if (evaluateConstraintGeom(counts, this.kind) !== "complete") return;
+
         const constraints = this.handler.tryBuild(selection);
         if (!constraints) return;
         // TODO: dispatch AddConstraintCommand(constraints)
