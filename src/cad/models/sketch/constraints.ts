@@ -20,7 +20,7 @@ export interface CoincidentConstraint extends BaseConstraint {
 
 export interface OrthoSegmentTarget {
     kind: "segment";
-    segId: SegmentId;
+    s: SegmentId;
 }
 
 export interface OrthoNodesTarget {

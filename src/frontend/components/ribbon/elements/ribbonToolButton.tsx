@@ -9,6 +9,7 @@ interface RibbonToolButtonProps
     label: string;
     shortLabel?: string; // optional 2–3 letter code
     active?: boolean;
+    disabled?: boolean;
 
     tooltip?: string;
     tooltipShortcut?: string;
@@ -23,6 +24,7 @@ export const RibbonToolButton = React.forwardRef<
         label,
         shortLabel,
         active = false,
+        disabled = false,
         className,
         tooltip,
         tooltipShortcut,
@@ -38,10 +40,12 @@ export const RibbonToolButton = React.forwardRef<
             type="button"
             className={clsx(
                 "flex min-w-16 h-16 flex-col items-center justify-center rounded-md px-1.5 py-1 bg-none",
-                "text-[11px] leading-tight text-slate-100",
+                "text-[11px] leading-tight",
                 "hover:bg-slate-700/80 active:bg-slate-700 cursor-pointer",
                 "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500",
                 active && "bg-sky-700/70",
+                disabled && "text-gray-700",
+                !disabled && "text-slate-100",
                 className
             )}
             {...rest}
