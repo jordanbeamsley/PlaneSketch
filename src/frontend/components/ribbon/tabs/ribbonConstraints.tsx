@@ -4,7 +4,6 @@ import { RibbonToolButton } from "../elements/ribbonToolButton";
 import { useToolStore } from "@/shared/store/toolStore";
 import { useSelectionCounts } from "@/frontend/context/sessionContext";
 import { evaluateConstraintGeom } from "@/cad/models/sketch/constraints";
-import { useEffect } from "react";
 
 interface TabPanelProps {
     id: string;
@@ -16,10 +15,6 @@ export function RibbonConstraints({ id }: TabPanelProps) {
 
     const verticalStatus = evaluateConstraintGeom(counts, "vertical");
     const horizontalStatus = evaluateConstraintGeom(counts, "horizontal");
-
-    useEffect(() => {
-        console.log("vertical:", verticalStatus, "-", "horizontal:", horizontalStatus)
-    })
 
     return (
         <section

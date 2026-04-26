@@ -1,8 +1,8 @@
-import type { GcsWrapper, SketchParam, SketchPrimitive, SolveStatus } from "@salusoft89/planegcs";
+import { SolveStatus, type GcsWrapper, type SketchParam, type SketchPrimitive } from "@salusoft89/planegcs";
 import { initGcsWrapper } from "./planeGcsWrapper";
 
 export interface SolverFacade {
-    solve(primitives: (SketchPrimitive | SketchParam)[]): { status: SolveStatus; solved: SketchPrimitive[] }
+    solve(primitives: (SketchPrimitive | SketchParam)[]): { status: SolveStatus; solvedPrimatives: SketchPrimitive[] }
 }
 
 export class PlaneGcsSolver implements SolverFacade {
@@ -23,6 +23,6 @@ export class PlaneGcsSolver implements SolverFacade {
         this.gcs.push_primitives_and_params(primitives);
         const ok = this.gcs.solve();
         this.gcs.apply_solution();
-        return { status: ok, solved: this.gcs.sketch_index.get_primitives() };
+        return { status: ok, solvedPrimatives: this.gcs.sketch_index.get_primitives() };
     }
 }

@@ -2,6 +2,7 @@ import type { SketchConstraint } from "@/cad/models/sketch/constraints";
 import type { SketchDocument } from "@/cad/models/sketch/document";
 import type { ArcId, BlockInstId, CircleId, NodeId, SegmentId } from "@/cad/models/sketch/ids"
 import type { Arc, BlockInstance, Circle, Node, Segment } from "@/cad/models/sketch/primitives"
+import type { Vec2 } from "@/cad/models/sketch/vectors";
 import { createStore } from "zustand";
 import { subscribeWithSelector } from "zustand/middleware";
 
@@ -31,6 +32,11 @@ export type GeometryActions = {
     removeBlockInstance(id: BlockInstId): void;
 
     removeMany(nids: Set<NodeId>, sids: Set<SegmentId>, cids: Set<CircleId>): void;
+
+    /** Will only update node positions if they exist */
+    updateNodePositions(nodes: Map<NodeId, Vec2>): void;
+
+    updateCircleRadii(circles: Map<CircleId, number>): void;
 
     /** serialization */
     toDocument(docId: string, name?: string, constraints?: SketchConstraint[]): SketchDocument;
@@ -149,6 +155,28 @@ export function createGeometryStore(initial?: Partial<GeometryState>) {
 
                     set({ nodes: nodes, segments: segments, circles: circles });
                 },
+
+                updateNodePositions: (updateNodes) => set((s) => {
+                    const nodes = new Map(s.nodes);
+                    updateNodes.forEach((p, key) => {
+                        const dirtyNode = nodes.get(key);
+                        if (!dirtyNode) return;
+                        dirtyNode.p = p;
+                        nodes.set(key, dirtyNode);
+                    })
+                    return { nodes };
+                }),
+
+                updateCircleRadii: (updateCircles) => set((s) => {
+                    const circles = new Map(s.circles);
+                    updateCircles.forEach((r, key) => {
+                        const dirtyCircle = circles.get(key);
+                        if (!dirtyCircle) return;
+                        dirtyCircle.radius = r;
+                        circles.set(key, dirtyCircle);
+                    })
+                    return { circles };
+                }),
 
                 toDocument: (docId, name, constraints = []) => {
                     const s = get();

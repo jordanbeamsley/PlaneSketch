@@ -18,9 +18,6 @@ export type ConstraintActions = {
 
     clear(): void;
 
-    /** Return all constraints that reference a given entity ID (node or segment) */
-    getByEntityId(entityId: string): SketchConstraint[];
-
     /** Serialise back to a flat array for document storage */
     toArray(): SketchConstraint[];
 };
@@ -67,30 +64,9 @@ export function createConstraintStore(initial: SketchConstraint[] = []) {
 
             clear: () => set({ constraints: new Map() }),
 
-            getByEntityId: (entityId) => {
-                const out: SketchConstraint[] = [];
-                for (const c of get().constraints.values()) {
-                    if (referencesEntity(c, entityId)) out.push(c);
-                }
-                return out;
-            },
-
             toArray: () => Array.from(get().constraints.values()),
         }))
     );
 }
 
 export type ConstraintStore = ReturnType<typeof createConstraintStore>;
-
-/** Returns true if the constraint references the given entity ID */
-function referencesEntity(c: SketchConstraint, id: string): boolean {
-    switch (c.kind) {
-        case "coincident":
-        case "horizontalNodes":
-        case "verticalNodes":
-            return c.p1 === id || c.p2 === id;
-        case "horizontalSeg":
-        case "verticalSeg":
-            return c.segId === id;
-    }
-}

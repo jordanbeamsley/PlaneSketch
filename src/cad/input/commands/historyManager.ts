@@ -13,11 +13,13 @@ export class HistoryManager {
         this.ctx = ctx;
     }
 
-    execute(cmd: StatefulCommand) {
+    execute(cmd: StatefulCommand): boolean {
+        if (cmd.canExecute && !cmd.canExecute(this.ctx)) return false;
         cmd.do(this.ctx);
         this.undoStack.push(cmd);
         // New action invalidates redo stack
         this.redoStack.length = 0;
+        return true;
     }
 
     canUndo() { return this.undoStack.length > 0; }

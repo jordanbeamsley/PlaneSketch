@@ -17,6 +17,8 @@ import { createDefaultCommands } from "../input/commands/defaultCommands";
 import { createDefaultKeyboardRouter } from "../input/keyboard";
 import type { KeyboardRouter } from "../input/keyboard/KeyboardRouter";
 import { PointerRouter } from "../input/pointer/pointerRouter";
+import { PlaneGcsSolver } from "@/gcs/gcsFacade";
+import { ConstraintEngine } from "../constraints/constraintsEngine";
 
 export type CadRuntime = {
     app: Application;
@@ -127,6 +129,14 @@ export async function createCadRuntime(args: {
     const snapOverlay = new SnapOverlay(hudLayer, viewport);
     snapOverlay.initSprites(app.renderer);
 
+    // ============== GCS Solver + Constraint Engine ==============
+    const solver = await PlaneGcsSolver.create();
+    const constraintEngine = new ConstraintEngine(
+        getSession().geometry,
+        getSession().constraints,
+        solver
+    );
+
     // ============== Commands / History ==============
     const commandCtx: CommandContext = {
         input: {
@@ -135,6 +145,9 @@ export async function createCadRuntime(args: {
         selection: {
             getSelection: () => getSession().selection,
             hasAny: () => getSession().selection.getState().hasAny(),
+        },
+        constraint: {
+            getConstraints: () => getSession().constraints,
         },
         tools: {
             getActiveToolId: () => tools.getActive(),
@@ -219,10 +232,11 @@ export async function createCadRuntime(args: {
 
     // ============== Memory Cleanup ==============
     const destroy = () => {
-        // Unmount listeners first 
+        // Unmount listeners first
         input.unmount();
         keyboardRouter.unmount();
         sceneGraphics.unbind();
+        constraintEngine.dispose();
         tools.destroy();
 
         // Then destroy pixi

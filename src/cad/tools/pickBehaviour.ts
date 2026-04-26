@@ -126,6 +126,10 @@ export class PickBehaviour {
         this.dragStartP = null;
     }
 
+    clear(): void {
+        this.ctx.getSelect().getState().clear();
+    }
+
     rectHitTest(p1: Point, p2: Point): void {
         const geometry = this.ctx.getGeometry().getState();
 

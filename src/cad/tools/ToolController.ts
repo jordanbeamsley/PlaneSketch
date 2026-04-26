@@ -7,11 +7,11 @@ import { ConstraintTool } from "./constraint/constraintTool";
 import type { Container } from "pixi.js";
 import type { CommandContext } from "../input/commands/types";
 import type { CommandId } from "../input/commands/defaultCommands";
-import { useToolStore } from "@/shared/store/toolStore";
 import type { GeometryLayers } from "../models/canvas/stage";
 import type { Tool } from "../models/tools/tools";
 import type { ConstraintKind } from "../models/sketch/constraints";
 import { shallow } from "zustand/shallow";
+import { useToolStore } from "@/shared/store/toolStore";
 
 export class ToolController {
     private layers: GeometryLayers;
@@ -56,11 +56,6 @@ export class ToolController {
     isInOperation() { return this.current.getOperationState }
 
     executeCommand(cmd: CommandId, ctx: CommandContext): boolean {
-        const [category, command, specific] = cmd.split(".");
-        if (category === "tool" && command === "change") {
-            useToolStore.getState().setTool(specific as Tool);
-            return true;
-        }
         return this.current.executeCommand(cmd, ctx);
     }
 

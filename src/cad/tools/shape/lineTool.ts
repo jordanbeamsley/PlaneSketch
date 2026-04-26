@@ -3,12 +3,12 @@ import { BaseShapeTool } from "./baseShapeTool";
 import type { ToolContext } from "../baseTool";
 import type { SnapResult, SnapRuleContext } from "@/cad/snap/types";
 import { scaleFromTicks } from "@/cad/camera/zoomQuantizer";
-import { AddSegmentCommand } from "@/cad/input/commands/stateful";
 import { useViewportStore } from "@/shared/store/viewportStore";
 import { NODE_COLOR, NODE_RADIUS, PREVIEW_SEGMENT_STROKE } from "@/cad/constants/drawing";
 import { compareVec, type Vec2 } from "@/cad/models/sketch/vectors";
 import type { Tool } from "@/cad/models/tools/tools";
 import type { GeometryLayers } from "@/cad/models/canvas/stage";
+import { AddSegmentCommand } from "@/cad/input/commands/stateful/segments";
 
 export class LineTool extends BaseShapeTool {
 

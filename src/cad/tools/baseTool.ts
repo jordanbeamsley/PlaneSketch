@@ -76,6 +76,7 @@ export abstract class BaseTool {
     abstract onDown(e: PointerPayload): void;
     abstract onMove(e: PointerPayload): void;
     abstract onUp(e: PointerPayload): void;
-    abstract executeCommand(cmd: CommandId, ctx: CommandContext): boolean;
+    /** Override to intercept commands before they reach the global registry. Return true if handled. */
+    executeCommand(_cmd: CommandId, _ctx: CommandContext): boolean { return false; }
     abstract destruct(): void;
 }

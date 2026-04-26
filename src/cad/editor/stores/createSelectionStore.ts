@@ -1,4 +1,4 @@
-import type { CircleId, NodeId, SegmentId } from "@/cad/models/sketch/ids";
+import type { ArcId, CircleId, NodeId, SegmentId } from "@/cad/models/sketch/ids";
 import { refKey, parseRefKey, type EntityRef, type EntityKind } from "@/cad/models/sketch/entityRef";
 import { createStore } from "zustand";
 import { subscribeWithSelector } from "zustand/middleware";
@@ -8,6 +8,8 @@ export type { EntityOwner } from "@/cad/models/sketch/entityRef";
 
 /** Internal selection key */
 type Key = string;
+
+export type idsByKind = Record<EntityKind, Set<string>>
 
 type SelectState = {
     /** All selected entities normalised by key */
@@ -28,7 +30,7 @@ type SelectActions = {
 
     isSelected: (e: EntityRef) => boolean;
 
-    getByKind: () => { nodes: Set<NodeId>; segments: Set<SegmentId>; circles: Set<CircleId> };
+    getByKind: () => idsByKind;
     getCountByKind: () => Record<EntityKind, number>;
 }
 
@@ -89,6 +91,7 @@ export function createSelectionStore() {
                 const nodes: Set<NodeId> = new Set();
                 const segments: Set<SegmentId> = new Set();
                 const circles: Set<CircleId> = new Set();
+                const arcs: Set<ArcId> = new Set();
 
                 for (const k of get().selected) {
                     const ref = parseRefKey(k);
@@ -99,7 +102,7 @@ export function createSelectionStore() {
                     else if (ref.kind === "circle") circles.add(ref.id);
                 }
 
-                return { nodes, segments, circles };
+                return { node: nodes, segment: segments, circle: circles, arc: arcs };
             },
 
             getCountByKind() {

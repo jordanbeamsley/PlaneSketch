@@ -75,6 +75,6 @@ export function buildSketchPrimatives(geometry: GeometryState, constraints: Sket
  *
  * Only return the changed valules to keep the applyGCSsolution diff minimal
  */
-export function extractSolution(solved: SketchPrimitive[], geom: GeometryState): { nodePositions: Map<NodeId, Vec2>, circleRadii: Map<CircleId, number> } {
-
+export function extractSolution(solvedPrimatives: SketchPrimitive[], geom: GeometryState): { nodePositions: Map<NodeId, Vec2>, circleRadii: Map<CircleId, number> } {
+    console.log(solvedPrimatives)
 }

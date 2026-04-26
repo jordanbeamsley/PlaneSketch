@@ -1,7 +1,6 @@
-import { init_planegcs_module, GcsWrapper } from '@salusoft89/planegcs';
+import { make_gcs_wrapper } from '@salusoft89/planegcs';
+import wasmUrl from '@salusoft89/planegcs/dist/planegcs_dist/planegcs.wasm?url';
+
 export async function initGcsWrapper() {
-    const mod = await init_planegcs_module();
-    const gcs_system_wasm = new mod.GcsSystem();
-    const gcs_wrapper = new GcsWrapper(gcs_system_wasm);
-    return gcs_wrapper;
+    return make_gcs_wrapper(wasmUrl);
 }

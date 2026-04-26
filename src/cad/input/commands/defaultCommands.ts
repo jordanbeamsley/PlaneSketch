@@ -1,6 +1,7 @@
 import type { HistoryManager } from "./historyManager";
 import { DeleteCommand } from "./stateful/edit";
 import type { Command } from "./types";
+import { useToolStore } from "@/shared/store/toolStore";
 
 export type CommandId =
     | "selection.delete"
@@ -43,14 +44,17 @@ export function createDefaultCommands(history: HistoryManager): Command[] {
         {
             id: "tool.change.line",
             description: "Activate line tool",
+            execute: () => useToolStore.getState().setTool("line"),
         },
         {
             id: "tool.change.rectangle",
             description: "Activate rectangle tool",
+            execute: () => useToolStore.getState().setTool("rectangle"),
         },
         {
             id: "tool.change.circle",
             description: "Activate circle tool",
+            execute: () => useToolStore.getState().setTool("circle"),
         }
 
     ]
