@@ -12,9 +12,9 @@ export class DeleteCommand implements StatefulCommand {
 
         const selected = ctx.selection.getSelection().getState().getByKind();
 
-        const nids = selected.nodes;
-        const sids = selected.segments;
-        const cids = selected.circles;
+        const nids = selected["node"];
+        const sids = selected["segment"];
+        const cids = selected["circle"];
 
         for (const nid of nids) {
             const node = geometry.nodes.get(nid);

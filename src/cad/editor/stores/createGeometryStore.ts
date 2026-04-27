@@ -159,22 +159,20 @@ export function createGeometryStore(initial?: Partial<GeometryState>) {
                 updateNodePositions: (updateNodes) => set((s) => {
                     const nodes = new Map(s.nodes);
                     updateNodes.forEach((p, key) => {
-                        const dirtyNode = nodes.get(key);
-                        if (!dirtyNode) return;
-                        dirtyNode.p = p;
-                        nodes.set(key, dirtyNode);
-                    })
+                        const existing = nodes.get(key);
+                        if (!existing) return;
+                        nodes.set(key, { ...existing, p });
+                    });
                     return { nodes };
                 }),
 
                 updateCircleRadii: (updateCircles) => set((s) => {
                     const circles = new Map(s.circles);
                     updateCircles.forEach((r, key) => {
-                        const dirtyCircle = circles.get(key);
-                        if (!dirtyCircle) return;
-                        dirtyCircle.radius = r;
-                        circles.set(key, dirtyCircle);
-                    })
+                        const existing = circles.get(key);
+                        if (!existing) return;
+                        circles.set(key, { ...existing, radius: r });
+                    });
                     return { circles };
                 }),
 

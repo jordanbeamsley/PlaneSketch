@@ -70,11 +70,27 @@ export function buildSketchPrimatives(geometry: GeometryState, constraints: Sket
     return sketchPrims;
 }
 
-/** 
- * Decompose the solution offered by PlaneGCS back into native types 
+/**
+ * Decompose the solution offered by PlaneGCS back into native types.
  *
- * Only return the changed valules to keep the applyGCSsolution diff minimal
+ * Only nodes and circles carry mutable values after a solve (position and radius respectively).
+ * Segments and constraints are structural - they don't change.
  */
 export function extractSolution(solvedPrimatives: SketchPrimitive[], geom: GeometryState): { nodePositions: Map<NodeId, Vec2>, circleRadii: Map<CircleId, number> } {
-    console.log(solvedPrimatives)
+    const nodePositions = new Map<NodeId, Vec2>();
+    const circleRadii = new Map<CircleId, number>();
+
+    for (const prim of solvedPrimatives) {
+        if (prim.type === "point") {
+            const existing = geom.nodes.get(prim.id);
+            if (existing && (existing.p.x !== prim.x || existing.p.y !== prim.y))
+                nodePositions.set(prim.id, { x: prim.x, y: prim.y });
+        } else if (prim.type === "circle") {
+            const existing = geom.circles.get(prim.id);
+            if (existing && existing.radius !== prim.radius)
+                circleRadii.set(prim.id, prim.radius);
+        }
+    }
+
+    return { nodePositions, circleRadii };
 }

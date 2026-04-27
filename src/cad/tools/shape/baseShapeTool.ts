@@ -79,6 +79,9 @@ export abstract class BaseShapeTool extends BaseTool {
                 this.rescaleNodes(state);
             }
         )
+
+        // Clear selection when changing tools
+        this.getSelect().getState().clear();
     }
 
     onDown(_e: PointerPayload) {

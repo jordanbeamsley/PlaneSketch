@@ -148,6 +148,7 @@ export async function createCadRuntime(args: {
         },
         constraint: {
             getConstraints: () => getSession().constraints,
+            getConstraintEngine: () => constraintEngine,
         },
         tools: {
             getActiveToolId: () => tools.getActive(),

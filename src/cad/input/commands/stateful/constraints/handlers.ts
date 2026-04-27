@@ -20,7 +20,7 @@ export class CoincidentHandler implements ConstraintHandler {
 
 export class HorizontalHandler implements ConstraintHandler {
     build({ node, segment }: idsByKind): HorizontalConstraint[] | null {
-        if (segment.size > 1) {
+        if (segment.size >= 1) {
             const [...segs] = segment;
             return segs.map((segId) => ({
                 id: crypto.randomUUID(),

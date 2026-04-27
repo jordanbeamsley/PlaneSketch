@@ -7,7 +7,7 @@ import type { ConstraintHandler } from "./types";
 import { CoincidentHandler, HorizontalHandler, VerticalHandler } from "./handlers";
 import type { CommandContext, StatefulCommand } from "../../types";
 import type { NodeId } from "@/cad/models/sketch/ids";
-import type { Node } from "@/cad/models/sketch/primitives";
+import type { Vec2 } from "@/cad/models/sketch/vectors";
 
 // handlers return array of all constraints to be applied in the GCS
 const HANDLERS: Record<ConstraintKind, ConstraintHandler> = {
@@ -25,7 +25,7 @@ export class AddConstraintsCommand implements StatefulCommand {
     private built: SketchConstraint[] = [];
 
     /** Snapshot of the sketch nodes before constraints were applied */
-    private snapshotBefore = new Map<NodeId, Node>();
+    private snapshotBefore = new Map<NodeId, Vec2>();
 
     cid = () => crypto.randomUUID();
 
@@ -40,7 +40,9 @@ export class AddConstraintsCommand implements StatefulCommand {
 
     do(ctx: CommandContext) {
         // Snapshot nodes before any solving
-        this.snapshotBefore = ctx.geometry.getGeometry().getState().nodes
+        ctx.geometry.getGeometry().getState().nodes.forEach((node, key) => {
+            this.snapshotBefore.set(key, node.p);
+        })
 
         const selection = ctx.selection.getSelection().getState().getByKind();
         this.built = HANDLERS[this.kind].build(selection) ?? [];
@@ -48,10 +50,12 @@ export class AddConstraintsCommand implements StatefulCommand {
     }
 
     undo(ctx: CommandContext) {
-        // Restore geometry first so the engine re-solves from the right starting position
-        const geomState = ctx.geometry.getGeometry().getState();
-        geomState.updateNodePositions(this.snapshotBefore);
+        const engine = ctx.constraint.getConstraintEngine();
+        engine.pause();
 
         this.built.forEach(c => ctx.constraint.getConstraints().getState().remove(c.id));
+        ctx.geometry.getGeometry().getState().updateNodePositions(this.snapshotBefore);
+
+        engine.resume(); // triggers a single deferred solve with remaining constraints from restored positions
     }
 }

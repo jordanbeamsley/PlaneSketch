@@ -91,7 +91,8 @@ export const CONSTRAINT_REQS: Record<ConstraintKind, ConstraintRequirements> = {
     vertical: {
         exclude: [
             [{ geomKind: "circle", operator: ">=", count: 1 }],
-            [{ geomKind: "arc", operator: ">=", count: 1 }]
+            [{ geomKind: "arc", operator: ">=", count: 1 }],
+            [{ geomKind: "segment", operator: ">=", count: 1 }, { geomKind: "node", operator: ">=", count: 1 }]
         ],
         required: [
             [{ geomKind: "segment", operator: ">=", count: 1 }],

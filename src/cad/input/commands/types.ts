@@ -4,6 +4,7 @@ import type { GraphIndex } from "@/cad/graph/graphIndex";
 import type { GeometryStore } from "@/cad/editor/stores/createGeometryStore";
 import type { SelectionStore } from "@/cad/editor/stores/createSelectionStore";
 import type { ConstraintStore } from "@/cad/editor/stores/createConstraintStore";
+import type { ConstraintEngine } from "@/cad/constraints/constraintsEngine";
 
 export type CommandContext = {
   input: {
@@ -15,7 +16,8 @@ export type CommandContext = {
     hasAny: () => boolean;
   },
   constraint: {
-    getConstraints: () => ConstraintStore
+    getConstraints: () => ConstraintStore;
+    getConstraintEngine: () => ConstraintEngine;
   }
   tools: {
     getActiveToolId: () => Tool;
