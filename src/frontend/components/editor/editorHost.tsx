@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useStore } from "zustand";
 import { toast, Toaster } from "sonner";
 import { CadCanvasView } from "../cad/cadCanvasView";
@@ -9,14 +9,16 @@ import { SessionProvider } from "@/frontend/context/sessionContext";
 import Ribbon from "../ribbon/ribbon";
 import { TooltipProvider } from "../ui/tooltip";
 import { notifications } from "@/shared/notifications";
-import ActivityBar from "../sidebar/activityBar";
+import ActivityBar, { type ActivityMode } from "../sidebar/activityBar";
 import {
     ResizableHandle,
     ResizablePanel,
     ResizablePanelGroup,
-} from "@/components/ui/resizable";
+} from "../ui/resizable";
 
 export function EditorHost() {
+    const [activeMode, setActiveMode] = useState<ActivityMode>("constraints");
+
     const documentStore = useMemo(() => createDocumentStore(), []);
     const sessionManager = useMemo(
         () => new SessionManager(documentStore),
@@ -52,21 +54,26 @@ export function EditorHost() {
                     <Ribbon />
                     <div className="flex flex-row h-full">
                         <ActivityBar
-                            activeMode={"constraints"}
-                            onModeChange={() => {}}
+                            activeMode={activeMode}
+                            onModeChange={(m) => {
+                                setActiveMode(m);
+                            }}
                         />
                         <ResizablePanelGroup
                             id="HELLO"
                             orientation="horizontal"
                         >
-                            <ResizablePanel>
+                            <ResizablePanel defaultSize={20}>
                                 <div
                                     id="sidebar-panel"
                                     className="h-full bg-zinc-800"
                                 ></div>
                             </ResizablePanel>
-                            <ResizableHandle withHandle />
-                            <ResizablePanel>
+                            <ResizableHandle
+                                withHandle
+                                className="bg-zinc-700"
+                            />
+                            <ResizablePanel defaultSize={80}>
                                 <div
                                     id="canvas-container"
                                     className="w-full h-full"
