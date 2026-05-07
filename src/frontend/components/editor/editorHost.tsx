@@ -9,12 +9,24 @@ import { SessionProvider } from "@/frontend/context/sessionContext";
 import Ribbon from "../ribbon/ribbon";
 import { TooltipProvider } from "../ui/tooltip";
 import { notifications } from "@/shared/notifications";
+import ActivityBar from "../sidebar/activityBar";
+import {
+    ResizableHandle,
+    ResizablePanel,
+    ResizablePanelGroup,
+} from "@/components/ui/resizable";
 
 export function EditorHost() {
     const documentStore = useMemo(() => createDocumentStore(), []);
-    const sessionManager = useMemo(() => new SessionManager(documentStore), [documentStore]);
+    const sessionManager = useMemo(
+        () => new SessionManager(documentStore),
+        [documentStore],
+    );
 
-    const activeSession = useStore(sessionManager.sessionStore, s => s.active);
+    const activeSession = useStore(
+        sessionManager.sessionStore,
+        (s) => s.active,
+    );
 
     useEffect(() => {
         const emptyDoc = createEmptyDocument();
@@ -29,19 +41,46 @@ export function EditorHost() {
     }, []);
 
     return (
-        <SessionProvider value={activeSession ? { selectStore: activeSession.selection } : null}>
-            <Toaster />
-            <div className="w-screen h-screen overflow-hidden flex flex-col">
-                <TooltipProvider>
+        <SessionProvider
+            value={
+                activeSession ? { selectStore: activeSession.selection } : null
+            }
+        >
+            <TooltipProvider>
+                <Toaster />
+                <div className="w-screen h-screen overflow-hidden flex flex-col">
                     <Ribbon />
-                </TooltipProvider>
-                <div id="canvas-container" className="flex-1">
-                    <CadCanvasView
-                        documentStore={documentStore}
-                        sessionManager={sessionManager}
-                    />
+                    <div className="flex flex-row h-full">
+                        <ActivityBar
+                            activeMode={"constraints"}
+                            onModeChange={() => {}}
+                        />
+                        <ResizablePanelGroup
+                            id="HELLO"
+                            orientation="horizontal"
+                        >
+                            <ResizablePanel>
+                                <div
+                                    id="sidebar-panel"
+                                    className="h-full bg-zinc-800"
+                                ></div>
+                            </ResizablePanel>
+                            <ResizableHandle withHandle />
+                            <ResizablePanel>
+                                <div
+                                    id="canvas-container"
+                                    className="w-full h-full"
+                                >
+                                    <CadCanvasView
+                                        documentStore={documentStore}
+                                        sessionManager={sessionManager}
+                                    />
+                                </div>
+                            </ResizablePanel>
+                        </ResizablePanelGroup>
+                    </div>
                 </div>
-            </div>
+            </TooltipProvider>
         </SessionProvider>
     );
 }

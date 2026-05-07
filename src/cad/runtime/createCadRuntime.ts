@@ -1,4 +1,4 @@
-import { Application, Container, FederatedPointerEvent } from "pixi.js"
+import { Application, Container, FederatedPointerEvent, Point } from "pixi.js"
 import { SessionManager } from "../editor/session/sessionManager";
 import type { DocumentStore } from "../editor/stores/createDocumentStore";
 import type { GeometryLayers } from "../models/canvas/stage";
@@ -105,8 +105,26 @@ export async function createCadRuntime(args: {
         viewport.setScale(camera.scale);
     };
 
+    let prevW = app.screen.width;
+    let prevH = app.screen.height;
+
     redrawGridAndViewport();
-    app.renderer.on("resize", () => redrawGridAndViewport());
+    app.renderer.on("resize", () => {
+        const newW = app.screen.width;
+        const newH = app.screen.height;
+
+        // Keep the world-space point that was at the old screen center pinned to the new center
+        const worldCenter = world.toLocal(new Point(prevW / 2, prevH / 2));
+        world.position.set(
+            newW / 2 - worldCenter.x * camera.scale,
+            newH / 2 - worldCenter.y * camera.scale,
+        );
+
+        prevW = newW;
+        prevH = newH;
+
+        redrawGridAndViewport();
+    });
 
     // ============== Session bound services ==============
     const getSession = () => sessionManager.active;
@@ -231,8 +249,16 @@ export async function createCadRuntime(args: {
     input.mount();
 
 
+    // ============== Resize Handling ==============
+    // Pixi's built-in resizeTo only listens to window resize events.
+    // This observer catches container-level resizes (e.g. resizable panel drags).
+    const resizeObserver = new ResizeObserver(() => app.resize());
+    resizeObserver.observe(host);
+
     // ============== Memory Cleanup ==============
     const destroy = () => {
+        resizeObserver.disconnect();
+
         // Unmount listeners first
         input.unmount();
         keyboardRouter.unmount();

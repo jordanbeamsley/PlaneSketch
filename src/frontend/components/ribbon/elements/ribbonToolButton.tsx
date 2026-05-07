@@ -1,51 +1,38 @@
-import * as React from "react";
-import type { ReactNode } from "react";
+import type { ReactNode, ButtonHTMLAttributes } from "react";
 import clsx from "clsx";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/frontend/components/ui/tooltip";
+import { WithTooltip } from "@/frontend/components/base/withTooltip";
 
-interface RibbonToolButtonProps
-    extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+interface RibbonToolButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
     icon?: ReactNode;
     label: string;
-    shortLabel?: string; // optional 2–3 letter code
+    shortLabel?: string;
     active?: boolean;
-    disabled?: boolean;
-
     tooltip?: string;
     tooltipShortcut?: string;
 }
 
-export const RibbonToolButton = React.forwardRef<
-    HTMLButtonElement,
-    RibbonToolButtonProps
->(function RibbonToolButton(
-    {
-        icon,
-        label,
-        shortLabel,
-        active = false,
-        disabled = false,
-        className,
-        tooltip,
-        tooltipShortcut,
-        ...rest },
-    ref
-) {
-    const tooltipLabel = tooltip ?? label;
-    const showTooltip = Boolean(tooltip || tooltipShortcut);
-
+export function RibbonToolButton({
+    icon,
+    label,
+    shortLabel,
+    active = false,
+    disabled = false,
+    className,
+    tooltip,
+    tooltipShortcut,
+    ...rest
+}: RibbonToolButtonProps) {
     const button = (
         <button
-            ref={ref}
             type="button"
+            disabled={disabled}
             className={clsx(
                 "flex min-w-16 h-16 flex-col items-center justify-center rounded-md px-1.5 py-1 bg-none",
                 "text-[11px] leading-tight",
                 "hover:bg-slate-700/80 active:bg-slate-700 cursor-pointer",
                 "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500",
                 active && "bg-sky-700/70",
-                disabled && "text-gray-700",
-                !disabled && "text-slate-100",
+                disabled ? "text-gray-700" : "text-slate-100",
                 className
             )}
             {...rest}
@@ -58,17 +45,11 @@ export const RibbonToolButton = React.forwardRef<
         </button>
     );
 
-    if (!showTooltip) return button;
+    if (!tooltip && !tooltipShortcut) return button;
 
     return (
-        <Tooltip>
-            <TooltipTrigger asChild>{button}</TooltipTrigger>
-            <TooltipContent side="bottom" className="flex flex-col gap-0.5">
-                <span>{tooltipLabel}</span>
-                <code className="mt-0.5 rounded bg-slate-800 mx-auto px-1 py-[1px] font-mono text-[10px] text-slate-300">
-                    {tooltipShortcut}
-                </code>
-            </TooltipContent>
-        </Tooltip>
+        <WithTooltip label={tooltip ?? label} shortcut={tooltipShortcut} side="bottom">
+            {button}
+        </WithTooltip>
     );
-});
+}

@@ -11,7 +11,8 @@ export default defineConfig({
       '@': path.resolve(__dirname, './src'),
     }
   },
+  assetsInclude: ['**/*.wasm'],
   optimizeDeps: {
-    exclude: ['planegcs.js']
+    exclude: ['@salusoft89/planegcs']
   }
 })
