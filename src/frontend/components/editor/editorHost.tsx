@@ -1,6 +1,7 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useStore } from "zustand";
 import { toast, Toaster } from "sonner";
+import { type PanelImperativeHandle } from "react-resizable-panels";
 import { CadCanvasView } from "../cad/cadCanvasView";
 import { SessionManager } from "@/cad/editor/session/sessionManager";
 import { createDocumentStore } from "@/cad/editor/stores/createDocumentStore";
@@ -10,6 +11,7 @@ import Ribbon from "../ribbon/ribbon";
 import { TooltipProvider } from "../ui/tooltip";
 import { notifications } from "@/shared/notifications";
 import ActivityBar, { type ActivityMode } from "../sidebar/activityBar";
+import Sidebar from "../sidebar/sidebar";
 import {
     ResizableHandle,
     ResizablePanel,
@@ -18,6 +20,8 @@ import {
 
 export function EditorHost() {
     const [activeMode, setActiveMode] = useState<ActivityMode>("constraints");
+    const [sidebarOpen, setSidebarOpen] = useState(true);
+    const sidebarPanelRef = useRef<PanelImperativeHandle | null>(null);
 
     const documentStore = useMemo(() => createDocumentStore(), []);
     const sessionManager = useMemo(
@@ -42,10 +46,25 @@ export function EditorHost() {
         });
     }, []);
 
+    const handleModeChange = (mode: ActivityMode) => {
+        if (mode === activeMode && sidebarOpen) {
+            sidebarPanelRef.current?.collapse();
+        } else {
+            setActiveMode(mode);
+            sidebarPanelRef.current?.expand();
+        }
+    };
+
     return (
         <SessionProvider
             value={
-                activeSession ? { selectStore: activeSession.selection } : null
+                activeSession
+                    ? {
+                          selectStore: activeSession.selection,
+                          constraintStore: activeSession.constraints,
+                          geometryStore: activeSession.geometry,
+                      }
+                    : null
             }
         >
             <TooltipProvider>
@@ -55,19 +74,27 @@ export function EditorHost() {
                     <div className="flex flex-row h-full">
                         <ActivityBar
                             activeMode={activeMode}
-                            onModeChange={(m) => {
-                                setActiveMode(m);
-                            }}
+                            sidebarOpen={sidebarOpen}
+                            onModeChange={handleModeChange}
                         />
                         <ResizablePanelGroup
-                            id="HELLO"
                             orientation="horizontal"
+                            className="flex-1"
                         >
-                            <ResizablePanel defaultSize={20}>
-                                <div
-                                    id="sidebar-panel"
-                                    className="h-full bg-zinc-800"
-                                ></div>
+                            <ResizablePanel
+                                panelRef={sidebarPanelRef}
+                                defaultSize={20}
+                                collapsible
+                                collapsedSize={0}
+                            >
+                                {activeSession && (
+                                    <Sidebar
+                                        activeMode={activeMode}
+                                        onClose={() =>
+                                            sidebarPanelRef.current?.collapse()
+                                        }
+                                    />
+                                )}
                             </ResizablePanel>
                             <ResizableHandle
                                 withHandle

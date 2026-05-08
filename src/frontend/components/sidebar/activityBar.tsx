@@ -74,9 +74,11 @@ export function ActivityBarButton({
 
 export default function ActivityBar({
     activeMode,
+    sidebarOpen = true,
     onModeChange,
 }: {
     activeMode: ActivityMode;
+    sidebarOpen?: boolean;
     onModeChange: (m: ActivityMode) => void;
 }) {
     return (
@@ -90,7 +92,7 @@ export default function ActivityBar({
                     <ActivityBarButton
                         key={activity.id}
                         icon={activity.icon}
-                        active={activeMode === activity.id}
+                        active={activeMode === activity.id && sidebarOpen}
                         tooltip={activity.label}
                         onClick={() => onModeChange(activity.id)}
                     />
