@@ -1,4 +1,4 @@
-import { ChevronRightIcon, Dot, X } from "lucide-react";
+import { ChevronRightIcon, CircleDot, Dot, Minus, X } from "lucide-react";
 import type { ActivityMode } from "./activityBar";
 import { Toggle } from "@/components/ui/toggle";
 import {
@@ -106,14 +106,14 @@ function EntitiesSidebar() {
                 <CollapsibleTrigger asChild>
                     <button className="flex flex-row group text-zinc-300 text-sm items-center mb-2">
                         <ChevronRightIcon className="transition-transform group-data-[state=open]:rotate-90 mr-2 text-zinc-500" />
-                        <Dot />
+                        <CircleDot className="p-1.5 mr-2" />
                         <span>Nodes</span>
                     </button>
                 </CollapsibleTrigger>
                 <CollapsibleContent className="pl-4">
                     {nodes.map(({ id, p }) => (
-                        <div className="px-3 py-1.5 text-xs text-zinc-400 font-mono">
-                            <span className="text-zinc-300 uppercase mr-3">
+                        <div className="px-3 py-1.5 text-xs text-zinc-400 font-mono text-nowrap">
+                            <span className="text-zinc-300 uppercase mr-4">
                                 P_{short(id)}
                             </span>
                             ({fmt(p.x)}, {fmt(p.y)})
@@ -125,14 +125,14 @@ function EntitiesSidebar() {
                 <CollapsibleTrigger asChild>
                     <button className="flex flex-row group text-zinc-300 text-sm items-center mb-2">
                         <ChevronRightIcon className="transition-transform group-data-[state=open]:rotate-90 mr-2 text-zinc-500" />
-                        <Dot />
+                        <Minus className="p-1.5 mr-2" />
                         <span>Segments</span>
                     </button>
                 </CollapsibleTrigger>
                 <CollapsibleContent className="pl-4">
                     {segments.map(({ id, p1, p2 }) => (
-                        <div className="px-3 py-1 text-xs text-zinc-400 font-mono">
-                            <span className="text-zinc-300 uppercase mr-3">
+                        <div className="px-3 py-1.5 text-xs text-zinc-400 font-mono text-nowrap">
+                            <span className="text-zinc-300 uppercase mr-4">
                                 S_{short(id)}
                             </span>
                             {short(p1)} → {short(p2)}
@@ -152,7 +152,7 @@ export default function Sidebar({
     onClose: () => void;
 }) {
     return (
-        <div className="flex flex-col h-full bg-zinc-800">
+        <div className="flex flex-col h-full bg-zinc-800 overflow-hidden">
             <PanelHeader title={PANEL_TITLES[activeMode]} onClose={onClose} />
             {activeMode === "constraints" && <ConstraintsSidebar />}
             {activeMode === "entities" && <EntitiesSidebar />}

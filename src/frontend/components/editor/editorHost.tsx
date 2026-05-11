@@ -71,7 +71,7 @@ export function EditorHost() {
                 <Toaster />
                 <div className="w-screen h-screen overflow-hidden flex flex-col">
                     <Ribbon />
-                    <div className="flex flex-row h-full">
+                    <div className="flex flex-row flex-1 min-h-0">
                         <ActivityBar
                             activeMode={activeMode}
                             sidebarOpen={sidebarOpen}

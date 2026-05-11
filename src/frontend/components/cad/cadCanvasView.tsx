@@ -38,5 +38,5 @@ export function CadCanvasView(props: {
         };
     }, [props.sessionManager, props.documentStore]);
 
-    return <div ref={hostRef} className="w-full h-full select-none" />;
+    return <div ref={hostRef} className="w-full h-full select-none overflow-hidden" />;
 }
