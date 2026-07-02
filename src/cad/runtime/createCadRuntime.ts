@@ -216,6 +216,14 @@ export async function createCadRuntime(args: {
     const keyboardRouter: KeyboardRouter = keyboard.router;
     keyboardRouter.mount();
 
+    // ============== Coordinate Indicator ==============
+    const coordLabel = document.createElement("div");
+    coordLabel.style.cssText =
+        "position:absolute;bottom:8px;right:8px;font:11px/1 monospace;" +
+        "color:rgba(255,255,255,0.45);pointer-events:none;user-select:none;";
+    host.style.position = "relative";
+    host.appendChild(coordLabel);
+
     // ============== Input Router ==============
     const input = new PointerRouter(app, world);
 
@@ -226,8 +234,9 @@ export async function createCadRuntime(args: {
         if (!keyboardRouter.isSpacePressed()) tools.onDown({ world, modifiers });
     });
 
-    input.on("pointerMove", ({ world, modifiers }) => {
-        if (!keyboardRouter.isSpacePressed()) tools.onMove({ world, modifiers });
+    input.on("pointerMove", ({ world: wp, modifiers }) => {
+        coordLabel.textContent = `${wp.x.toFixed(2)},  ${wp.y.toFixed(2)}`;
+        if (!keyboardRouter.isSpacePressed()) tools.onMove({ world: wp, modifiers });
     });
 
     input.on("pointerUp", ({ world, modifiers }) => {
@@ -258,6 +267,7 @@ export async function createCadRuntime(args: {
     // ============== Memory Cleanup ==============
     const destroy = () => {
         resizeObserver.disconnect();
+        coordLabel.remove();
 
         // Unmount listeners first
         input.unmount();

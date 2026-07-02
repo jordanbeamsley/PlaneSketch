@@ -1,19 +1,8 @@
-import {
-    ChevronRightIcon,
-    CircleDot,
-    CircleSmall,
-    Minus,
-    X,
-} from "lucide-react";
-import type { ReactNode } from "react";
+import { X } from "lucide-react";
 import type { ActivityMode } from "./activityBar";
 import { Toggle } from "@/components/ui/toggle";
-import { useConstraints, useEntities } from "@/frontend/context/sessionContext";
-import {
-    Collapsible,
-    CollapsibleContent,
-    CollapsibleTrigger,
-} from "@/components/ui/collapsible";
+import { useConstraints } from "@/frontend/context/sessionContext";
+import EntitiesSidebar from "./sidebars/entitiesSidebar";
 
 const PANEL_TITLES: Record<ActivityMode, string> = {
     constraints: "Constraints",
@@ -55,81 +44,6 @@ function ConstraintsSidebar() {
                     {c.id}
                 </div>
             ))}
-        </div>
-    );
-}
-
-const short = (id: string) => id.slice(0, 5);
-const fmt = (n: number) => n.toFixed(1);
-
-function EntityCategory({
-    name,
-    icon,
-    children,
-}: {
-    name: string;
-    icon: ReactNode;
-    children: ReactNode;
-}) {
-    return (
-        <Collapsible defaultOpen className="mb-4">
-            <CollapsibleTrigger asChild>
-                <button className="flex flex-row group text-zinc-300 text-sm items-center mb-2 px-2 hover:cursor-pointer">
-                    <ChevronRightIcon className="transition-transform group-data-[state=open]:rotate-90 mr-2 text-zinc-500" />
-                    {icon}
-                    <span>{name}</span>
-                </button>
-            </CollapsibleTrigger>
-            <CollapsibleContent>{children}</CollapsibleContent>
-        </Collapsible>
-    );
-}
-
-function EntitiesSidebar() {
-    const { nodes, segments, circles } = useEntities();
-
-    return (
-        <div className="flex flex-col flex-1 min-h-0 overflow-y-auto py-3">
-            <EntityCategory
-                name="Nodes"
-                icon={<CircleSmall className="mr-2" size={16} />}
-            >
-                {nodes.map(({ id, p }) => (
-                    <button
-                        key={id}
-                        className="py-1.5 pl-11 flex w-full text-xs text-zinc-500 font-mono text-nowrap hover:bg-zinc-700/70 hover:cursor-pointer"
-                    >
-                        <span className="text-zinc-400/90 uppercase mr-4">
-                            P_{short(id)}
-                        </span>
-                        ({fmt(p.x)}, {fmt(p.y)})
-                    </button>
-                ))}
-            </EntityCategory>
-            <EntityCategory
-                name="Segments"
-                icon={<Minus className="mr-2" size={16} />}
-            >
-                {segments.map(({ id, p1, p2 }) => (
-                    <div
-                        key={id}
-                        className="py-1.5 pl-11 text-xs text-zinc-500 font-mono text-nowrap"
-                    >
-                        <span className="text-zinc-400/90 uppercase mr-4">
-                            S_{short(id)}
-                        </span>
-                        {short(p1)} → {short(p2)}
-                    </div>
-                ))}
-            </EntityCategory>
-            <EntityCategory
-                name="Circles"
-                icon={<CircleDot className="mr-2" size={16} />}
-            >
-                {circles.map(({ id }) => (
-                    <div key={id}></div>
-                ))}
-            </EntityCategory>
         </div>
     );
 }
