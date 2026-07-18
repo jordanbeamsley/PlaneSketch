@@ -29,6 +29,7 @@ export class ToolController {
         this.selectLayer = select;
 
         this.current = new LineTool(this.context, this.layers); // default
+        this.syncSnapContext();
         this.sub = useToolStore.subscribe(
             (s) => ({ tool: s.tool, kind: s.activeConstraintKind }),
             ({ tool, kind }) => this.setTool(tool, kind),
@@ -52,6 +53,12 @@ export class ToolController {
             default: break;
         }
         this.current.activate();
+        this.syncSnapContext();
+    }
+
+    /** Hand SnapService the active tools context resolver (if it has one), bound to that tool instance */
+    private syncSnapContext() {
+        this.context.setSnapContextResolver(this.current.getSnapContext?.bind(this.current));
     }
 
     getActive() { return this.current.getId(); }
@@ -68,5 +75,6 @@ export class ToolController {
     destroy() {
         this.sub();
         this.current.destruct();
+        this.context.setSnapContextResolver(undefined);
     }
 }

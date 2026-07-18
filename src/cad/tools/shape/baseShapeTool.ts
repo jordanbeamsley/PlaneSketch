@@ -1,11 +1,10 @@
 import { BaseTool, type PointerPayload, type ToolContext } from "../baseTool";
-import type { SnapResult, SnapRuleContext } from "@/cad/snap/types";
+import type { SnapRuleContext } from "@/cad/snap/types";
 import { useViewportStore } from "@/shared/store/viewportStore";
 import type { CommandId } from "@/cad/input/commands/defaultCommands";
 import type { CommandContext } from "@/cad/input/commands/types";
 import { copyVec, type Vec2 } from "@/cad/models/sketch/vectors";
 import type { Node } from "@/cad/models/sketch/primitives";
-import { refKey } from "@/cad/models/sketch/entityRef";
 import type { SnapOutcome } from "@/cad/snap/snapService";
 import type { Modifiers } from "@/cad/input/pointer/types";
 
@@ -21,10 +20,6 @@ export abstract class BaseShapeTool extends BaseTool {
 
     // Store preview anchors in an array
     protected anchors: Node[];
-
-    // Store the current snap position from the OnMove handler
-    // Pass this into the onDown handler so that final geometry uses the snapped position
-    protected currentSnap: SnapResult;
 
     protected lastPointerScreen: Vec2 = { x: 0, y: 0 };
 
@@ -42,16 +37,12 @@ export abstract class BaseShapeTool extends BaseTool {
     abstract commitGeometry(): void;
     abstract discardGeometry(): void;
     abstract postCreate(p: Vec2, snap: SnapOutcome): void;
-    abstract resolveSnapContext(context: SnapRuleContext, p: Vec2): SnapRuleContext;
+    abstract getSnapContext(base: SnapRuleContext, p: Vec2): SnapRuleContext;
 
     constructor(context: ToolContext) {
         super(context);
         this.totalRequiredAnchors = 0;
         this.anchors = [];
-        this.currentSnap = { kind: "none", p: { x: 0, y: 0 } };
-
-        //this.ticker.add(this.onTick, this);
-        //this.ticker.start();
     }
 
     activate(): void {
@@ -68,7 +59,7 @@ export abstract class BaseShapeTool extends BaseTool {
 
     onDown(s: SnapOutcome, _m: Modifiers) {
 
-        const id = s.primary?.ref ? refKey(s.primary.ref) : this.nid(); 
+        const id = s.primary?.ref ? s.primary.ref.id : this.nid();
 
         // Push preview anchors to array, then check if we're at total required anchors to completely define geometry
         // If not, then return
@@ -92,7 +83,7 @@ export abstract class BaseShapeTool extends BaseTool {
         // Finally, call tools handler for committing geometry to store
         // Then call any post create steps (e.g in line tool, immediately start drawing new line)
         this.commitGeometry();
-        this.postCreate(s.p, this.currentSnap);
+        this.postCreate(s.p, s);
     }
 
     public onMove(e: PointerPayload): void {

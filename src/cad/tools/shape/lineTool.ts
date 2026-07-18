@@ -109,15 +109,15 @@ export class LineTool extends BaseShapeTool {
         this.isInOperation = true;
     }
 
-    resolveSnapContext(context: SnapRuleContext, p: Vec2): SnapRuleContext {
+    getSnapContext(base: SnapRuleContext, p: Vec2): SnapRuleContext {
         // If we're already drawing a line (i.e anchors > 0),
         // then we have an anchor for axis snaps
         const hasAnchor = this.anchors.length > 0;
         const anchor = hasAnchor ? this.anchors[this.anchors.length - 1].p : undefined;
 
         const resolvedContext = anchor
-            ? { ...context, p, axis: { anchor } }
-            : { ...context, p }
+            ? { ...base, p, axis: { anchor } }
+            : { ...base, p }
 
         return resolvedContext;
     }

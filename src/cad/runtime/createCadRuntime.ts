@@ -192,6 +192,7 @@ export async function createCadRuntime(args: {
         viewport,
         hideOverlay: () => snapService.hideOverlay(),
         getSnap: () => snapService.lastOutcome,
+        setSnapContextResolver: (fn) => snapService.setContextResolver(fn),
         getHistory: () => getSession().history,
         getSelect: () => getSession().selection,
         getGeometry: () => getSession().geometry,

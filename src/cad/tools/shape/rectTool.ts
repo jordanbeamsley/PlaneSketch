@@ -129,9 +129,9 @@ export class RectTool extends BaseShapeTool {
         this.discardGeometry();
     }
 
-    resolveSnapContext(context: SnapRuleContext, p: Vec2): SnapRuleContext {
+    getSnapContext(base: SnapRuleContext, p: Vec2): SnapRuleContext {
         // Disable axis snapping for rects
-        const resolvedContext = { ...context, p: p };
+        const resolvedContext = { ...base, p: p };
         resolvedContext.opts.enable = { ...resolvedContext.opts.enable, axisH: false, axisV: false }
 
         return resolvedContext;

@@ -49,6 +49,10 @@ export class SnapService {
     private ticker: Ticker;
     private lastSnapResult: SnapResult;
     private onDwellActivate: (s: SnapOutcome) => void;
+    private contextResolver: (
+        base: SnapRuleContext,
+        p: Vec2,
+    ) => SnapRuleContext = (base, p) => ({ ...base, p });
 
     constructor(
         ds: SnapDataSource,
@@ -88,13 +92,22 @@ export class SnapService {
         this.snapOverlay = new SnapOverlay(hud, vp);
         this.ticker = ticker;
         this.onDwellActivate = onDwellActivate;
-        this.lastSnapResult = {kind: "none", p: {x: 0, y: 0}};
+        this.lastSnapResult = { kind: "none", p: { x: 0, y: 0 } };
 
         this.ticker.add(this.onTick, this);
     }
 
     unmount() {
         this.ticker.remove(this.onTick, this);
+    }
+
+    /** Let the active tool customise the rule context
+     * Called fresh on every snap, so the resolver can read live tool state
+     * (e.g line tools anchor for horizontal snapping) */
+    setContextResolver(
+        fn?: (base: SnapRuleContext, p: Vec2) => SnapRuleContext,
+    ) {
+        this.contextResolver = fn ?? ((base, p) => ({ ...base, p }));
     }
 
     private toTarget(c?: Omit<SnapCandidate, "dist2">): SnapTarget | undefined {
@@ -142,10 +155,11 @@ export class SnapService {
     }
 
     snap(world: Point, screen: Point): SnapOutcome {
-        const snapResult = this.snapEngine.snap({
-            ...this.snapContext,
-            p: world,
+        const ctx = this.contextResolver(this.snapContext, {
+            x: world.x,
+            y: world.y,
         });
+        const snapResult = this.snapEngine.snap(ctx);
         this.lastSnapResult = snapResult;
 
         // No primary snap, or a primary snap with no residual candidate
