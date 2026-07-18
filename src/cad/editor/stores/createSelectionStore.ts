@@ -1,5 +1,15 @@
-import type { ArcId, CircleId, NodeId, SegmentId } from "@/cad/models/sketch/ids";
-import { refKey, parseRefKey, type EntityRef, type EntityKind } from "@/cad/models/sketch/entityRef";
+import type {
+    ArcId,
+    CircleId,
+    NodeId,
+    SegmentId,
+} from "@/cad/models/sketch/ids";
+import {
+    refKey,
+    parseRefKey,
+    type EntityRef,
+    type EntityKind,
+} from "@/cad/models/sketch/entityRef";
 import { createStore } from "zustand";
 import { subscribeWithSelector } from "zustand/middleware";
 
@@ -9,14 +19,14 @@ export type { EntityOwner } from "@/cad/models/sketch/entityRef";
 /** Internal selection key */
 type Key = string;
 
-export type idsByKind = Record<EntityKind, Set<string>>
+export type idsByKind = Record<EntityKind, Set<string>>;
 
 type SelectState = {
     /** All selected entities normalised by key */
     selected: Set<Key>;
     /** Currently hovered entity key, or null */
     hovered: Key | null;
-}
+};
 
 type SelectActions = {
     add: (e: EntityRef) => void;
@@ -30,15 +40,26 @@ type SelectActions = {
 
     isSelected: (e: EntityRef) => boolean;
 
+    /** Current selection, parsed back to EntityRef. Storage stays Set<string> for O(1) dedup/lookup */
+    getSelected: () => EntityRef[];
+    /** Current hover, parsed back to EntityRef */
+    getHovered: () => EntityRef | null;
+
     getByKind: () => idsByKind;
     getCountByKind: () => Record<EntityKind, number>;
-}
+};
 
 /**
  * Factory for a session-scoped selection store.
  *
  * Each EditorSession gets its own instance.
- * All keys are canonical refKey() strings — see entityRef.ts.
+ *
+ * Internally, selection is stored as a set of refKey() strings for lookup / dedup
+ * Public facing API getter / setters work in EntityRef objects.
+ *
+ * NOTE:
+ * subscribeWithSelector needs a concrete primative to diff against
+ * Services that use subscribeWithSelector need to sub to the string state, but can call getter after firing
  */
 export function createSelectionStore() {
     return createStore<SelectState & SelectActions>()(
@@ -83,6 +104,20 @@ export function createSelectionStore() {
 
             isSelected: (e) => get().selected.has(refKey(e)),
 
+            getSelected: () => {
+                const refs: EntityRef[] = [];
+                for (const k of get().selected) {
+                    const ref = parseRefKey(k);
+                    if (ref) refs.push(ref);
+                }
+                return refs;
+            },
+
+            getHovered: () => {
+                const h = get().hovered;
+                return h ? parseRefKey(h) : null;
+            },
+
             /**
              * Extract selected entities by type.
              * Only returns entities owned by the active document (doc scope).
@@ -93,16 +128,20 @@ export function createSelectionStore() {
                 const circles: Set<CircleId> = new Set();
                 const arcs: Set<ArcId> = new Set();
 
-                for (const k of get().selected) {
-                    const ref = parseRefKey(k);
-                    if (!ref || ref.owner.scope !== "doc") continue;
+                for (const ref of get().getSelected()) {
+                    if (ref.owner.scope !== "doc") continue;
 
                     if (ref.kind === "node") nodes.add(ref.id);
                     else if (ref.kind === "segment") segments.add(ref.id);
                     else if (ref.kind === "circle") circles.add(ref.id);
                 }
 
-                return { node: nodes, segment: segments, circle: circles, arc: arcs };
+                return {
+                    node: nodes,
+                    segment: segments,
+                    circle: circles,
+                    arc: arcs,
+                };
             },
 
             getCountByKind() {
@@ -111,9 +150,8 @@ export function createSelectionStore() {
                 let circleCount = 0;
                 let arcCount = 0;
 
-                for (const k of get().selected) {
-                    const ref = parseRefKey(k);
-                    if (!ref || ref.owner.scope !== "doc") continue;
+                for (const ref of get().getSelected()) {
+                    if (ref.owner.scope !== "doc") continue;
 
                     if (ref.kind === "node") nodeCount++;
                     else if (ref.kind === "segment") segmentCount++;
@@ -125,10 +163,10 @@ export function createSelectionStore() {
                     node: nodeCount,
                     segment: segmentCount,
                     circle: circleCount,
-                    arc: arcCount
-                }
+                    arc: arcCount,
+                };
             },
-        }))
+        })),
     );
 }
 

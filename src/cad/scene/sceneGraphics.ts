@@ -1,5 +1,5 @@
 import { useViewportStore } from "@/shared/store/viewportStore";
-import { parseRefKey } from "@/cad/models/sketch/entityRef";
+import type { EntityRef } from "@/cad/models/sketch/entityRef";
 import { Graphics } from "pixi.js";
 import { scaleFromTicks } from "../camera/zoomQuantizer";
 import type { GraphIndex } from "../graph/graphIndex";
@@ -29,6 +29,8 @@ export class SceneGraphics {
     private nodeGfx = new Map<string, Graphics>();
     private segGfx = new Map<string, Graphics>();
     private circleGfx = new Map<string, Graphics>();
+
+    private lastHoveredRef: EntityRef | null = null;
 
     private getGeometry: () => GeometryStore;
     private getGraph: () => GraphIndex;
@@ -68,8 +70,10 @@ export class SceneGraphics {
         this.subs.push(
             selectStore.subscribe(
                 (state) => state.selected,
-                (state) => {
-                    this.applySelectionTints(state);
+                // Raw state.selected (Set<string>) is only used to trigger the diff
+                // fetch the typed value fresh
+                () => {
+                    this.applySelectionTints(selectStore.getState().getSelected());
                 }
             )
         )
@@ -77,8 +81,10 @@ export class SceneGraphics {
         this.subs.push(
             selectStore.subscribe(
                 (state) => state.hovered,
-                (state, prevState) => {
-                    this.applyHover(state, prevState);
+                () => {
+                    const curr = selectStore.getState().getHovered();
+                    this.applyHover(curr, this.lastHoveredRef);
+                    this.lastHoveredRef = curr;
                 }
             )
         )
@@ -118,6 +124,7 @@ export class SceneGraphics {
     unbind() {
         this.subs.forEach(u => u());
         this.subs = [];
+        this.lastHoveredRef = null;
 
         // Destroy all graphics
         for (const g of this.nodeGfx.values()) g.destroy();
@@ -163,10 +170,20 @@ export class SceneGraphics {
         }
     }
 
-    applySelectionTints(selected: Set<String>) {
+    applySelectionTints(selected: EntityRef[]) {
+        const selectedNodes = new Set<string>();
+        const selectedSegs = new Set<string>();
+        const selectedCircles = new Set<string>();
+
+        for (const ref of selected) {
+            if (ref.owner.scope !== "doc") continue;
+            if (ref.kind === "node") selectedNodes.add(ref.id);
+            else if (ref.kind === "segment") selectedSegs.add(ref.id);
+            else if (ref.kind === "circle") selectedCircles.add(ref.id);
+        }
+
         for (const [id, g] of this.nodeGfx) {
-            const k = `doc:node:${id}`;
-            if (selected.has(k)) {
+            if (selectedNodes.has(id)) {
                 g.tint = NODE_SELECT_TINT;
                 // May be hidden if degree > 2, however always show when selected
                 g.visible = true;
@@ -176,53 +193,47 @@ export class SceneGraphics {
             }
         }
         for (const [id, g] of this.segGfx) {
-            g.tint = selected.has(`doc:segment:${id}`) ? SEG_SELECT_TINT : SEG_NORMAL_TINT;
+            g.tint = selectedSegs.has(id) ? SEG_SELECT_TINT : SEG_NORMAL_TINT;
         }
         for (const [id, g] of this.circleGfx) {
-            g.tint = selected.has(`doc:circle:${id}`) ? CIRCLE_SELECT_TINT : CIRCLE_NORMAL_TINT;
+            g.tint = selectedCircles.has(id) ? CIRCLE_SELECT_TINT : CIRCLE_NORMAL_TINT;
         }
     }
 
-    applyHover(currEntity: string | null, prevEntity: string | null) {
-        if (prevEntity) {
-            const ref = parseRefKey(prevEntity);
-            // SceneGraphics only renders doc-scope entities
-            if (ref && ref.owner.scope === "doc") {
-                const selected = this.getSelect().getState().selected.has(prevEntity);
+    applyHover(currEntity: EntityRef | null, prevEntity: EntityRef | null) {
+        // SceneGraphics only renders doc-scope entities
+        if (prevEntity && prevEntity.owner.scope === "doc") {
+            const selected = this.getSelect().getState().isSelected(prevEntity);
 
-                if (ref.kind === "node") {
-                    const g = this.nodeGfx.get(ref.id);
-                    if (g) {
-                        g.tint = selected ? NODE_SELECT_TINT : NODE_NORMAL_TINT;
-                        g.visible = selected || this.getGraph().getSegDegree(ref.id) < 2;
-                    }
-                } else if (ref.kind === "segment") {
-                    const g = this.segGfx.get(ref.id);
-                    if (g) g.tint = selected ? SEG_SELECT_TINT : SEG_NORMAL_TINT;
-                } else if (ref.kind === "circle") {
-                    const g = this.circleGfx.get(ref.id);
-                    if (g) g.tint = selected ? CIRCLE_SELECT_TINT : CIRCLE_NORMAL_TINT;
+            if (prevEntity.kind === "node") {
+                const g = this.nodeGfx.get(prevEntity.id);
+                if (g) {
+                    g.tint = selected ? NODE_SELECT_TINT : NODE_NORMAL_TINT;
+                    g.visible = selected || this.getGraph().getSegDegree(prevEntity.id) < 2;
                 }
+            } else if (prevEntity.kind === "segment") {
+                const g = this.segGfx.get(prevEntity.id);
+                if (g) g.tint = selected ? SEG_SELECT_TINT : SEG_NORMAL_TINT;
+            } else if (prevEntity.kind === "circle") {
+                const g = this.circleGfx.get(prevEntity.id);
+                if (g) g.tint = selected ? CIRCLE_SELECT_TINT : CIRCLE_NORMAL_TINT;
             }
         }
 
-        if (currEntity) {
-            const ref = parseRefKey(currEntity);
-            if (ref && ref.owner.scope === "doc") {
-                if (ref.kind === "node") {
-                    const g = this.nodeGfx.get(ref.id);
-                    if (g) {
-                        g.tint = NODE_HOVER_TINT;
-                        // Node might be invisible if degree > 2 — always show on hover
-                        g.visible = true;
-                    }
-                } else if (ref.kind === "segment") {
-                    const g = this.segGfx.get(ref.id);
-                    if (g) g.tint = SEG_HOVER_TINT;
-                } else if (ref.kind === "circle") {
-                    const g = this.circleGfx.get(ref.id);
-                    if (g) g.tint = CIRCLE_HOVER_TINT;
+        if (currEntity && currEntity.owner.scope === "doc") {
+            if (currEntity.kind === "node") {
+                const g = this.nodeGfx.get(currEntity.id);
+                if (g) {
+                    g.tint = NODE_HOVER_TINT;
+                    // Node might be invisible if degree > 2 
+                    g.visible = true;
                 }
+            } else if (currEntity.kind === "segment") {
+                const g = this.segGfx.get(currEntity.id);
+                if (g) g.tint = SEG_HOVER_TINT;
+            } else if (currEntity.kind === "circle") {
+                const g = this.circleGfx.get(currEntity.id);
+                if (g) g.tint = CIRCLE_HOVER_TINT;
             }
         }
     }
@@ -242,7 +253,6 @@ export class SceneGraphics {
             // Reset node position
             // Eventually implement partial updates
             g.position.set(n.p.x, n.p.y);
-
         }
 
         if (withDelete) {

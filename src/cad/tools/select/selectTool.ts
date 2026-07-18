@@ -2,6 +2,8 @@ import type { Container } from "pixi.js";
 import { BaseTool, type PointerPayload, type ToolContext } from "../baseTool";
 import type { Tool } from "@/cad/models/tools/tools";
 import { PickBehaviour } from "../pickBehaviour";
+import type { SnapOutcome } from "@/cad/snap/snapService";
+import type { Modifiers } from "@/cad/input/pointer/types";
 
 export class SelectTool extends BaseTool {
     private pick: PickBehaviour;
@@ -15,7 +17,7 @@ export class SelectTool extends BaseTool {
 
     activate(): void { }
 
-    onDown(e: PointerPayload): void { this.pick.onDown(e) }
+    onDown(s: SnapOutcome, m: Modifiers): void { this.pick.onDown(s, m) }
     onMove(e: PointerPayload): void { this.pick.onMove(e) }
     onUp(e: PointerPayload): void { this.pick.onUp(e) }
 

@@ -1,4 +1,4 @@
-import { Application, Container, FederatedPointerEvent, Point } from "pixi.js"
+import { Application, Container, FederatedPointerEvent, Point } from "pixi.js";
 import { SessionManager } from "../editor/session/sessionManager";
 import type { DocumentStore } from "../editor/stores/createDocumentStore";
 import type { GeometryLayers } from "../models/canvas/stage";
@@ -7,9 +7,7 @@ import { MAX_SCALE, MIN_SCALE } from "../constants/canvas";
 import { ViewportService } from "../camera/viewportService";
 import { SceneGrid } from "../scene/sceneGrid";
 import { SceneGraphics } from "../scene/sceneGraphics";
-import { createDefaultSnapEngine } from "../snap";
 import { createSnapDataSource } from "../snap/createSnapDataSource";
-import { SnapOverlay } from "../snap/overlay";
 import type { CommandContext } from "../input/commands/types";
 import type { ToolContext } from "../tools/baseTool";
 import { ToolController } from "../tools/ToolController";
@@ -19,18 +17,19 @@ import type { KeyboardRouter } from "../input/keyboard/KeyboardRouter";
 import { PointerRouter } from "../input/pointer/pointerRouter";
 import { PlaneGcsSolver } from "@/gcs/gcsFacade";
 import { ConstraintEngine } from "../constraints/constraintsEngine";
+import { SnapService } from "../snap/snapService";
 
 export type CadRuntime = {
     app: Application;
     canvas: HTMLCanvasElement;
     destroy(): void;
     focus(): void;
-}
+};
 
 export async function createCadRuntime(args: {
-    host: HTMLElement,
-    sessionManager: SessionManager,
-    documentStore: DocumentStore
+    host: HTMLElement;
+    sessionManager: SessionManager;
+    documentStore: DocumentStore;
 }): Promise<CadRuntime> {
     const { host, sessionManager, documentStore } = args;
 
@@ -38,7 +37,7 @@ export async function createCadRuntime(args: {
     await app.init({
         resizeTo: host,
         background: "#202124",
-        antialias: true
+        antialias: true,
     });
 
     host.appendChild(app.canvas);
@@ -57,13 +56,13 @@ export async function createCadRuntime(args: {
     edgeLayer.zIndex = 10;
     nodeLayer.zIndex = 20;
     previewLayer.zIndex = 30;
-    selectLayer.zIndex = 40
+    selectLayer.zIndex = 40;
     hudLayer.zIndex = 50;
 
     const geometryLayers: GeometryLayers = {
         edges: edgeLayer,
         nodes: nodeLayer,
-        preview: previewLayer
+        preview: previewLayer,
     };
 
     // All geometry exists in world space
@@ -82,14 +81,17 @@ export async function createCadRuntime(args: {
     const camera = new CameraController({
         world: world,
         getViewportSize: () => ({ w: app.screen.width, h: app.screen.height }),
-        limits: { minScale: MIN_SCALE, maxScale: MAX_SCALE }
+        limits: { minScale: MIN_SCALE, maxScale: MAX_SCALE },
     });
 
     // Default origin at centre of screen
     camera.panByScreen(app.screen.width / 2, app.screen.height / 2);
 
     const viewport = new ViewportService();
-    viewport.setTransform((p) => world.toGlobal(p), (p) => world.toLocal(p));
+    viewport.setTransform(
+        (p) => world.toGlobal(p),
+        (p) => world.toLocal(p),
+    );
 
     const sceneGrid = new SceneGrid(() => camera.ticks);
     app.stage.addChild(sceneGrid);
@@ -100,7 +102,7 @@ export async function createCadRuntime(args: {
         viewport.setGrid({
             step: sceneGrid.getStepPx(),
             offsetX: offset.x,
-            offsetY: offset.y
+            offsetY: offset.y,
         });
         viewport.setScale(camera.scale);
     };
@@ -133,26 +135,15 @@ export async function createCadRuntime(args: {
         layers: geometryLayers,
         getGeometry: () => getSession().geometry,
         getGraph: () => getSession().graphIndex,
-        getSelect: () => getSession().selection
+        getSelect: () => getSession().selection,
     });
-
-    // ============== Snapping ==============
-    const snapEngine = createDefaultSnapEngine();
-
-    const snapDataSource = createSnapDataSource({
-        getSession,
-        docs: documentStore
-    });
-
-    const snapOverlay = new SnapOverlay(hudLayer, viewport);
-    snapOverlay.initSprites(app.renderer);
 
     // ============== GCS Solver + Constraint Engine ==============
     const solver = await PlaneGcsSolver.create();
     const constraintEngine = new ConstraintEngine(
         getSession().geometry,
         getSession().constraints,
-        solver
+        solver,
     );
 
     // ============== Commands / History ==============
@@ -174,7 +165,7 @@ export async function createCadRuntime(args: {
             isInOperation: () => tools.isInOperation(),
         },
         geometry: {
-            getGeometry: () => getSession().geometry
+            getGeometry: () => getSession().geometry,
         },
         graph: {
             getGraph: () => getSession().graphIndex,
@@ -183,19 +174,28 @@ export async function createCadRuntime(args: {
 
     getSession().setHistory(commandCtx);
     const defaultCommands = createDefaultCommands(getSession().history);
+    
+    // ============== Snapping ==============
+
+    const snapDataSource = createSnapDataSource({
+        getSession,
+        docs: documentStore,
+    });
+
+
+    const snapService = new SnapService(snapDataSource, viewport, hudLayer, app.ticker);
+    snapService.initOverlay(app.renderer);
 
 
     // ============== Tools ==============
     const toolContext: ToolContext = {
-        snapEngine,
-        snapOverlay,
-        dataSource: snapDataSource,
         viewport,
-        ticker: app.ticker,
+        hideOverlay: () => snapService.hideOverlay(),
+        getSnap: () => snapService.lastOutcome,
         getHistory: () => getSession().history,
         getSelect: () => getSession().selection,
         getGeometry: () => getSession().geometry,
-        getGraph: () => getSession().graphIndex
+        getGraph: () => getSession().graphIndex,
     };
 
     const tools = new ToolController(toolContext, geometryLayers, selectLayer);
@@ -224,19 +224,26 @@ export async function createCadRuntime(args: {
     host.style.position = "relative";
     host.appendChild(coordLabel);
 
-    // ============== Input Router ==============
+        // ============== Input Router ==============
     const input = new PointerRouter(app, world);
 
     input.shouldPan = (e: FederatedPointerEvent) =>
         e.buttons === 4 || keyboardRouter.isSpacePressed();
 
-    input.on("pointerDown", ({ world, modifiers }) => {
-        if (!keyboardRouter.isSpacePressed()) tools.onDown({ world, modifiers });
+    input.on("pointerDown", ({modifiers}) => {
+        const snapOutcome = snapService.lastOutcome;
+
+        if (!keyboardRouter.isSpacePressed())
+            tools.onDown(snapOutcome, modifiers);
     });
 
-    input.on("pointerMove", ({ world: wp, modifiers }) => {
-        coordLabel.textContent = `${wp.x.toFixed(2)},  ${wp.y.toFixed(2)}`;
-        if (!keyboardRouter.isSpacePressed()) tools.onMove({ world: wp, modifiers });
+    input.on("pointerMove", ({ screen: sp, world: wp, modifiers }) => {
+        const snapOutcome = snapService.snap(wp, sp);
+
+        coordLabel.textContent = `${snapOutcome.p.x.toFixed(2)},  ${snapOutcome.p.y.toFixed(2)}`;
+
+        if (!keyboardRouter.isSpacePressed())
+            tools.onMove({ world: new Point(snapOutcome.p.x, snapOutcome.p.y), modifiers });
     });
 
     input.on("pointerUp", ({ world, modifiers }) => {
@@ -246,17 +253,16 @@ export async function createCadRuntime(args: {
     input.on("panByScreen", ({ dx, dy }) => {
         camera.panByScreen(dx, dy);
         redrawGridAndViewport();
-        snapOverlay.hideOverlay();
+        snapService.hideOverlay();
     });
 
     input.on("zoomAt", ({ deltaTicks, screen }) => {
         camera.applyDeltaTicks(deltaTicks, screen);
         redrawGridAndViewport();
-        snapOverlay.hideOverlay();
+        snapService.hideOverlay();
     });
 
     input.mount();
-
 
     // ============== Resize Handling ==============
     // Pixi's built-in resizeTo only listens to window resize events.
@@ -275,6 +281,7 @@ export async function createCadRuntime(args: {
         sceneGraphics.unbind();
         constraintEngine.dispose();
         tools.destroy();
+        snapService.unmount();
 
         // Then destroy pixi
         app.destroy(true, { children: true, texture: true });

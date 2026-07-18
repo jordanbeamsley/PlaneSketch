@@ -12,6 +12,8 @@ import type { Tool } from "../models/tools/tools";
 import type { ConstraintKind } from "../models/sketch/constraints";
 import { shallow } from "zustand/shallow";
 import { useToolStore } from "@/shared/store/toolStore";
+import type { SnapOutcome } from "../snap/snapService";
+import type { Modifiers } from "../input/pointer/types";
 
 export class ToolController {
     private layers: GeometryLayers;
@@ -37,7 +39,7 @@ export class ToolController {
     private setTool(name: Tool, kind: ConstraintKind | null = null) {
         this.current.destruct();
         this.layers.preview.removeChildren().forEach(g => g.destroy());
-        this.context.snapOverlay.hideOverlay();
+        this.context.hideOverlay();
 
         switch (name) {
             case "line": this.current = new LineTool(this.context, this.layers); break;
@@ -59,7 +61,7 @@ export class ToolController {
         return this.current.executeCommand(cmd, ctx);
     }
 
-    onDown(e: PointerPayload) { this.current.onDown(e); }
+    onDown(s: SnapOutcome, m: Modifiers) { this.current.onDown(s, m); }
     onMove(e: PointerPayload) { this.current.onMove(e); }
     onUp(e: PointerPayload) { this.current.onUp(e); }
 

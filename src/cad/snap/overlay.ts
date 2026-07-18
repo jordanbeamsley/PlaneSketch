@@ -90,6 +90,7 @@ export class SnapOverlay {
         // Hide previous snap sprite
         this.hideOverlay();
 
+
         if (result.kind === "none") return;
 
         const sprite = this.sprites.get(result.primary.kind);

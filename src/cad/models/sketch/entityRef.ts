@@ -21,7 +21,7 @@ export type EntityRef = {
     owner: EntityOwner;
 };
 
-/** Produce the canonical key for an EntityRef */
+/** Produce serialised key for an EntityRef */
 export function refKey(e: EntityRef): string {
     if (e.owner.scope === "block") {
         return `block:${e.owner.instId}:${e.owner.defId}:${e.kind}:${e.id}`;
@@ -29,7 +29,7 @@ export function refKey(e: EntityRef): string {
     return `doc:${e.kind}:${e.id}`;
 }
 
-/** Parse a canonical key string back to an EntityRef */
+/** Parse a serialised key string back to an EntityRef */
 export function parseRefKey(key: string): EntityRef | null {
     const parts = key.split(":");
 

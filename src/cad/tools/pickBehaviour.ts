@@ -1,9 +1,9 @@
 import { Graphics, Point, type Container } from "pixi.js";
 import type { PointerPayload, ToolContext } from "./baseTool";
-import type { SnapResult, SnapRuleContext } from "../snap/types";
-import { SNAP_RADIUS } from "../constants/drawing";
-import { EntityRefs, parseRefKey, type EntityRef } from "../models/sketch/entityRef";
+import { EntityRefs, type EntityRef } from "../models/sketch/entityRef";
 import type { CircleId, NodeId, SegmentId } from "../models/sketch/ids";
+import type { SnapOutcome } from "../snap/snapService";
+import type { Modifiers } from "../input/pointer/types";
 
 export type PickBehaviourOpts = {
     /**
@@ -23,19 +23,16 @@ export type PickBehaviourOpts = {
 
 /**
  * Encapsulates the geometry picking behaviour
- * i.e snap-hover, click-select/deselect, marquee selection
+ * i.e snap-hover, click-select / deselect, marquee selection
  *
- * Tools such as the general select tool or the constraint tool compose this
+ * Tools such as the general select tool or the constraint tool compose this.
+ * Snapping itself lives in SnapService 
  */
 export class PickBehaviour {
     private ctx: ToolContext;
     private opts: PickBehaviourOpts;
     private marqueeGfx: Graphics;
     private dragStartP: Point | null = null;
-    private currentSnap: SnapResult;
-
-    /** Snap context fixed for pick/ select mode: axis and grid snapping disabled */
-    private snapCtx: SnapRuleContext;
 
     constructor(ctx: ToolContext, selectLayer: Container, opts: PickBehaviourOpts) {
         this.ctx = ctx;
@@ -43,48 +40,27 @@ export class PickBehaviour {
         this.marqueeGfx = new Graphics();
         selectLayer.addChild(this.marqueeGfx);
 
-        this.currentSnap = { kind: "none", p: { x: 0, y: 0 } }
-
-        // Axis and grid snapping are construction only, not useful during picking
-        // segmentMin: 0 lets cursors snap to segments right up to their endpoints.
-        // Nodes should still have higher priority, so they won't be masked
-        this.snapCtx = {
-            p: { x: 0, y: 0 },
-            ds: ctx.dataSource,
-            viewport: ctx.viewport,
-            opts: {
-                radius: SNAP_RADIUS,
-                enable: { axisH: false, axisV: false, grid: false },
-                hysterisisMult: 1.5,
-                segmentMin: 0
-            }
-        };
     }
 
-    onDown(e: PointerPayload): void {
+    onDown(s: SnapOutcome, m: Modifiers): void {
         const selectStore = this.ctx.getSelect().getState();
 
-        if (this.opts.clearOnEmptyClick && !e.modifiers.shift) selectStore.clear();
+        if (this.opts.clearOnEmptyClick && !m.shift) selectStore.clear();
 
-        const snapKind = this.currentSnap.kind;
-        if (snapKind === "node" || snapKind === "segment" || snapKind === "circle") {
-            const snapKey = this.currentSnap.primary.id!;
-            const entity = parseRefKey(snapKey);
-            if (!entity) return;
-
+        const entity = s.primary?.ref;
+        if (entity) {
             // If it's already in the select store then remove it, otherwise add if permitted
-            if (selectStore.selected.has(snapKey)) selectStore.remove(entity);
+            if (selectStore.isSelected(entity)) selectStore.remove(entity);
             else if (!this.opts.canSelect || this.opts.canSelect(entity)) selectStore.add(entity);
             return;
-
         }
 
-        // If we're not snapped to anything, then start drawing select marquee
-        this.dragStartP = e.world.clone();
+        // If we're not snapped to an entity, then start drawing select marquee
+        this.dragStartP = new Point(s.p.x, s.p.y);
     }
 
     onMove(e: PointerPayload): void {
-        // We're dragging a marquee, draw it and ignore snap/ hover effects
+        // We're dragging a marquee, draw it and ignore hover effects
         if (this.dragStartP) {
             const x = Math.min(e.world.x, this.dragStartP.x);
             const y = Math.min(e.world.y, this.dragStartP.y);
@@ -99,21 +75,19 @@ export class PickBehaviour {
             return;
         }
 
-        this.currentSnap = this.ctx.snapEngine.snap({ ...this.snapCtx, p: e.world });
-
-        const snapKind = this.currentSnap.kind;
         const selectStore = this.ctx.getSelect().getState();
+        const entity = this.ctx.getSnap().primary?.ref;
 
-        if (snapKind === "none") {
+        if (!entity) {
             if (selectStore.hovered) selectStore.setHovered(null);
-        } else if (snapKind === "node" || snapKind === "segment" || snapKind === "circle") {
-            const snapKey = this.currentSnap.primary.id!;
-            const entity = parseRefKey(snapKey);
-            const alreadySelected = entity && selectStore.selected.has(snapKey);
-            const permitted = entity && (alreadySelected || !this.opts.canSelect || this.opts.canSelect(entity));
-            if (permitted) selectStore.setHovered(entity);
-            else if (selectStore.hovered) selectStore.setHovered(null);
+            return;
         }
+
+        const alreadySelected = selectStore.isSelected(entity);
+        const permitted = alreadySelected || !this.opts.canSelect || this.opts.canSelect(entity);
+
+        if (permitted) selectStore.setHovered(entity);
+        else if (selectStore.hovered) selectStore.setHovered(null);
     }
 
     onUp(e: PointerPayload): void {
@@ -154,7 +128,7 @@ export class PickBehaviour {
             if (n.p.x > x1 && n.p.y > y1 && n.p.x < x2 && n.p.y < y2) nodesInHitbox.add(n.id);
         });
 
-        // For each node found, check if it has incident entities 
+        // For each node found, check if it has incident entities
         nodesInHitbox.forEach(nid => {
             const { incSids, incCids } = this.ctx.getGraph().getAllIncidents(nid);
 

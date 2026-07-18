@@ -17,6 +17,16 @@ export type SnapKind =
 /** Maps what secondary snaps can co-exist with primary */
 export type ResidualPolicy = Record<SnapKind, ReadonlySet<SnapKind>>;
 
+export interface residualDwellState {
+    /** Last residual candidate from snap engine */
+    pending?: Omit<SnapCandidate, "dist2">;
+    /** Screen space anchor where dwell started */
+    anchorScreen?: Vec2;
+    /** Start time from when residual was first returned */
+    startedAtMs: number;
+    active: boolean;
+}
+
 export interface SnapDataSource {
     // Introduce spacial indexing in the future
     getNodes(): Iterable<NodeLite>;

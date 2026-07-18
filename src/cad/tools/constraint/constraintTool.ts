@@ -5,6 +5,8 @@ import type { Container } from "pixi.js";
 import type { Tool } from "@/cad/models/tools/tools";
 import type { EntityRef } from "@/cad/models/sketch/entityRef";
 import { AddConstraintsCommand } from "@/cad/input/commands/stateful/constraints/constraints";
+import type { SnapOutcome } from "@/cad/snap/snapService";
+import type { Modifiers } from "@/cad/input/pointer/types";
 
 export class ConstraintTool extends BaseTool {
     private pick: PickBehaviour;
@@ -23,7 +25,7 @@ export class ConstraintTool extends BaseTool {
 
     activate(): void { this.tryApply(); }
 
-    onDown(e: PointerPayload): void { this.pick.onDown(e); }
+    onDown(s: SnapOutcome, m: Modifiers): void { this.pick.onDown(s, m); }
     onMove(e: PointerPayload): void { this.pick.onMove(e); }
     onUp(e: PointerPayload): void { this.pick.onUp(e); this.tryApply(); }
 
