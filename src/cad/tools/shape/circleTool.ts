@@ -45,7 +45,7 @@ export class CircleTool extends BaseShapeTool {
         this.centreNodeGfx.scale.set(nodeScale);
     }
 
-    onMoveDraw(p: Vec2): void {
+    draw(p: Vec2): void {
 
         const startP = this.anchors[0].p;
         const endP = p;

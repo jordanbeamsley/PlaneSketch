@@ -55,7 +55,7 @@ export class LineTool extends BaseShapeTool {
         this.endNodeGfx.scale.set(nodeScale);
     }
 
-    onMoveDraw(p: Vec2): void {
+    draw(p: Vec2): void {
 
         const startP = this.anchors[0];
         const endP = p;

@@ -32,7 +32,7 @@ export abstract class BaseShapeTool extends BaseTool {
     private unsubZoom: () => void = () => { };
 
     abstract rescaleNodes(zoomTicks: number): void;
-    abstract onMoveDraw(p: Vec2): void;
+    abstract draw(p: Vec2): void;
     abstract isZeroSize(): boolean;
     abstract commitGeometry(): void;
     abstract discardGeometry(): void;
@@ -90,7 +90,7 @@ export abstract class BaseShapeTool extends BaseTool {
         // First check if we are actually drawing
         // If we are, then delegate to tools onMove to render preview
         if (this.anchors.length > 0) {
-            this.onMoveDraw(e.world);
+            this.draw(e.world);
         }
     }
 

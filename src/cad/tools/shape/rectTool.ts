@@ -5,9 +5,10 @@ import type { SnapResult, SnapRuleContext } from "@/cad/snap/types";
 import { scaleFromTicks } from "@/cad/camera/zoomQuantizer";
 import { NODE_COLOR, NODE_RADIUS, PREVIEW_SEGMENT_STROKE } from "@/cad/constants/drawing";
 import { compareVec, type Vec2 } from "@/cad/models/sketch/vectors";
-import type { Node, Segment } from "@/cad/models/sketch/primitives";
 import type { Tool } from "@/cad/models/tools/tools";
 import type { GeometryLayers } from "@/cad/models/canvas/stage";
+import { useViewportStore } from "@/shared/store/viewportStore";
+import { AddRectangleCommand } from "@/cad/input/commands/stateful/rectangles";
 
 export class RectTool extends BaseShapeTool {
 
@@ -47,6 +48,8 @@ export class RectTool extends BaseShapeTool {
         this.rectGfx.eventMode = "none";
         this.rectGfx.visible = false;
         this.layers.preview.addChild(this.rectGfx);
+
+        this.rescaleNodes(useViewportStore.getState().zoomTicks);
     }
 
     getId(): Tool {
@@ -62,7 +65,7 @@ export class RectTool extends BaseShapeTool {
         }
     }
 
-    onMoveDraw(p: Vec2): void {
+    draw(p: Vec2): void {
 
         const startP = this.anchors[0];
         const endP = p;
@@ -74,7 +77,7 @@ export class RectTool extends BaseShapeTool {
             g.visible = true;
         });
 
-        // We can use a single graphic here
+        // We can use a single graphic for the preview
         // the scene renderer will change to segments after commit
         this.rectGfx.clear()
             .moveTo(nodePositions[0].x, nodePositions[0].y)
@@ -98,22 +101,8 @@ export class RectTool extends BaseShapeTool {
 
     commitGeometry(): void {
         // Commit nodes and segments to stores
-        const positions = this.getPositionsFromAnchors(this.anchors[0].p, this.anchors[1].p);
-        const nodes: Node[] = [
-            this.anchors[0],
-            { id: this.nid(), p: { x: positions[1].x, y: positions[1].y } },
-            this.anchors[1],
-            { id: this.nid(), p: { x: positions[3].x, y: positions[3].y } }
-        ];
-        const segments: Segment[] = [
-            { id: this.sid(), p1: nodes[0].id, p2: nodes[1].id },
-            { id: this.sid(), p1: nodes[1].id, p2: nodes[2].id },
-            { id: this.sid(), p1: nodes[2].id, p2: nodes[3].id },
-            { id: this.sid(), p1: nodes[3].id, p2: nodes[0].id }
-        ]
-
-        useNodeStore.getState().addMany(nodes);
-        useSegmentStore.getState().addMany(segments);
+        const cmd = new AddRectangleCommand(this.anchors[0], this.anchors[1]);
+        this.getHistory().execute(cmd);
     }
 
     discardGeometry(): void {

@@ -33,7 +33,7 @@ export class SelectTool extends BaseTool {
         this.pick.onUp(e);
     }
 
-    // Picking entities to select doesn't need grid/axis snapping — only entity snaps matter
+    // Picking entities to select doesn't need grid/axis snapping, only entity snaps matter
     getSnapContext(base: SnapRuleContext, p: Vec2): SnapRuleContext {
         return {
             ...base,
