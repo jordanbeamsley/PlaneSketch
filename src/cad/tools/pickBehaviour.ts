@@ -29,6 +29,9 @@ export type PickBehaviourOpts = {
  * Snapping itself lives in SnapService 
  */
 export class PickBehaviour {
+    /** Label for scoping in the select tool */
+    readonly behaviour = "pick";
+
     private ctx: ToolContext;
     private opts: PickBehaviourOpts;
     private marqueeGfx: Graphics;

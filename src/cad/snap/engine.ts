@@ -1,5 +1,21 @@
 import { allowedResiduals } from "./constants";
-import type { SnapCandidate, SnapKind, SnapResult, SnapRule, SnapRuleContext } from "./types";
+import type { SnapCandidate, SnapDataSource, SnapKind, SnapResult, SnapRule, SnapRuleContext } from "./types";
+
+/** Wrap a data source, hiding excluded ids from every rule uniformly.
+ * Filtering here means individual rules never need to know exclusion exists. */
+function excludeFromDataSource(ds: SnapDataSource, exclude: ReadonlySet<string>): SnapDataSource {
+    return {
+        *getNodes() {
+            for (const n of ds.getNodes()) if (!exclude.has(n.id)) yield n;
+        },
+        *getSegments() {
+            for (const s of ds.getSegments()) if (!exclude.has(s.id)) yield s;
+        },
+        *getCircles() {
+            for (const c of ds.getCircles()) if (!exclude.has(c.id)) yield c;
+        },
+    };
+}
 
 export class SnapEngine {
     private rules: SnapRule[];
@@ -15,7 +31,13 @@ export class SnapEngine {
     }
 
     snap(ctx: SnapRuleContext): SnapResult {
-        const candidates = this.rules.flatMap(r => r.evaluate(ctx));
+        // Excluded ids are hidden from candidacy
+        // Rules only work with included entities
+        const effectiveCtx = (ctx.exclude && ctx.exclude.size > 0)
+            ? { ...ctx, ds: excludeFromDataSource(ctx.ds, ctx.exclude) }
+            : ctx;
+
+        const candidates = this.rules.flatMap(r => r.evaluate(effectiveCtx));
         const scores: number[] = [];
 
         // No snaps found, return the current pointer location

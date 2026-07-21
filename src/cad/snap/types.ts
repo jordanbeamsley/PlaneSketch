@@ -75,6 +75,8 @@ export interface SnapRuleContext {
     opts: SnapOptions;  // rule switches / tuning
     axis?: AxisAnchor;
     entityKey?: string;
+    /** refKey ids to exclude from candidacy (e.g. nodes currently being dragged) */
+    exclude?: ReadonlySet<string>;
 }
 
 // What snap rules return, engine picks the best option

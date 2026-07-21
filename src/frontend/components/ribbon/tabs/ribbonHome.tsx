@@ -1,7 +1,13 @@
-import { Circle, Minus, Square, SquareMousePointer } from "lucide-react";
+import { Circle, Minus, Move, Square, SquareMousePointer } from "lucide-react";
 import { RibbonGroup } from "../elements/ribbonGroup";
 import { RibbonToolButton } from "../elements/ribbonToolButton";
-import { DropdownMenuGroup, DropdownMenuPortal, DropdownMenuShortcut, DropdownMenuSub, DropdownMenuSubContent } from "@/frontend/components/ui/dropdown-menu";
+import {
+    DropdownMenuGroup,
+    DropdownMenuPortal,
+    DropdownMenuShortcut,
+    DropdownMenuSub,
+    DropdownMenuSubContent,
+} from "@/frontend/components/ui/dropdown-menu";
 import { RibbonDropdownItem } from "../elements/ribbonDropdownItem";
 import { RibbonDropdownSubTrigger } from "../elements/ribbonDropdownSubTrigger";
 import { RibbonDropdownSeperator } from "../elements/ribbonDropdownSeperator";
@@ -18,15 +24,26 @@ export function RibbonHome({ id }: TabPanelProps) {
         <DropdownMenuGroup>
             <RibbonDropdownItem>
                 Line
-                <DropdownMenuShortcut className="font-mono">l</DropdownMenuShortcut>
+                <DropdownMenuShortcut className="font-mono">
+                    l
+                </DropdownMenuShortcut>
             </RibbonDropdownItem>
             <DropdownMenuSub>
                 <RibbonDropdownSubTrigger>Rectangle</RibbonDropdownSubTrigger>
                 <DropdownMenuPortal>
                     <DropdownMenuSubContent className="rounded-none bg-zinc-800 text-white border-zinc-700 w-56 ml-2">
-                        <RibbonDropdownItem>2-Point Rectangle <DropdownMenuShortcut className="font-mono">r</DropdownMenuShortcut> </RibbonDropdownItem>
-                        <RibbonDropdownItem>3-Point Rectangle</RibbonDropdownItem>
-                        <RibbonDropdownItem>Centre Rectangle</RibbonDropdownItem>
+                        <RibbonDropdownItem>
+                            2-Point Rectangle{" "}
+                            <DropdownMenuShortcut className="font-mono">
+                                r
+                            </DropdownMenuShortcut>{" "}
+                        </RibbonDropdownItem>
+                        <RibbonDropdownItem>
+                            3-Point Rectangle
+                        </RibbonDropdownItem>
+                        <RibbonDropdownItem>
+                            Centre Rectangle
+                        </RibbonDropdownItem>
                     </DropdownMenuSubContent>
                 </DropdownMenuPortal>
             </DropdownMenuSub>
@@ -34,7 +51,12 @@ export function RibbonHome({ id }: TabPanelProps) {
                 <RibbonDropdownSubTrigger>Circle</RibbonDropdownSubTrigger>
                 <DropdownMenuPortal>
                     <DropdownMenuSubContent className="rounded-none bg-zinc-800 text-white border-zinc-700 w-56 ml-2">
-                        <RibbonDropdownItem>Centre Diameter Circle <DropdownMenuShortcut className="font-mono">c</DropdownMenuShortcut> </RibbonDropdownItem>
+                        <RibbonDropdownItem>
+                            Centre Diameter Circle{" "}
+                            <DropdownMenuShortcut className="font-mono">
+                                c
+                            </DropdownMenuShortcut>{" "}
+                        </RibbonDropdownItem>
                         <RibbonDropdownItem>2-Point Circle</RibbonDropdownItem>
                     </DropdownMenuSubContent>
                 </DropdownMenuPortal>
@@ -44,7 +66,9 @@ export function RibbonHome({ id }: TabPanelProps) {
                 <DropdownMenuPortal>
                     <DropdownMenuSubContent className="rounded-none bg-zinc-800 text-white border-zinc-700 w-56 ml-2">
                         <RibbonDropdownItem>3-Point Arc</RibbonDropdownItem>
-                        <RibbonDropdownItem>Centre Point Arc</RibbonDropdownItem>
+                        <RibbonDropdownItem>
+                            Centre Point Arc
+                        </RibbonDropdownItem>
                     </DropdownMenuSubContent>
                 </DropdownMenuPortal>
             </DropdownMenuSub>
@@ -75,7 +99,8 @@ export function RibbonHome({ id }: TabPanelProps) {
             <RibbonGroup label="Draw" dropdownNode={drawDropdown}>
                 <RibbonToolButton
                     icon={<Minus size={18} />}
-                    label="Line" onClick={() => setTool("line")}
+                    label="Line"
+                    onClick={() => setTool("line")}
                     active={tool === "line"}
                     tooltip="Line"
                     tooltipShortcut="l"
@@ -95,6 +120,16 @@ export function RibbonHome({ id }: TabPanelProps) {
                     active={tool === "circle"}
                     tooltip="Circle"
                     tooltipShortcut="c"
+                />
+            </RibbonGroup>
+            <RibbonGroup label="Modify">
+                <RibbonToolButton 
+                    icon={<Move size={18} />}
+                    label="Move"
+                    onClick={() => setTool("move")}
+                    active={tool === "move"}
+                    tooltip="Move"
+                    tooltipShortcut="m"
                 />
             </RibbonGroup>
             {/*
