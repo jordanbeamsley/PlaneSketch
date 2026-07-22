@@ -1,11 +1,10 @@
 import { BaseTool, type PointerPayload, type ToolContext } from "../baseTool";
-import type { SnapRuleContext } from "@/cad/snap/types";
 import { useViewportStore } from "@/shared/store/viewportStore";
 import type { CommandId } from "@/cad/input/commands/defaultCommands";
 import type { CommandContext } from "@/cad/input/commands/types";
 import { copyVec, type Vec2 } from "@/cad/models/sketch/vectors";
 import type { Node } from "@/cad/models/sketch/primitives";
-import type { SnapOutcome } from "@/cad/snap/snapService";
+import type { SnapContextBase, SnapContextOverride, SnapOutcome } from "@/cad/snap/snapService";
 import type { Modifiers } from "@/cad/input/pointer/types";
 
 
@@ -37,7 +36,7 @@ export abstract class BaseShapeTool extends BaseTool {
     abstract commitGeometry(): void;
     abstract discardGeometry(): void;
     abstract postCreate(p: Vec2, snap: SnapOutcome): void;
-    abstract getSnapContext(base: SnapRuleContext, p: Vec2): SnapRuleContext;
+    abstract getSnapContext(base: SnapContextBase, p: Vec2): SnapContextOverride;
 
     constructor(context: ToolContext) {
         super(context);

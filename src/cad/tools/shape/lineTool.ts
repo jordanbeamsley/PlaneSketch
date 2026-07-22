@@ -1,7 +1,8 @@
 import { Graphics } from "pixi.js";
 import { BaseShapeTool } from "./baseShapeTool";
 import type { ToolContext } from "../baseTool";
-import type { SnapResult, SnapRuleContext } from "@/cad/snap/types";
+import type { SnapResult } from "@/cad/snap/types";
+import type { SnapContextBase, SnapContextOverride } from "@/cad/snap/snapService";
 import { scaleFromTicks } from "@/cad/camera/zoomQuantizer";
 import { useViewportStore } from "@/shared/store/viewportStore";
 import { NODE_COLOR, NODE_RADIUS, PREVIEW_SEGMENT_STROKE } from "@/cad/constants/drawing";
@@ -109,7 +110,7 @@ export class LineTool extends BaseShapeTool {
         this.isInOperation = true;
     }
 
-    getSnapContext(base: SnapRuleContext, p: Vec2): SnapRuleContext {
+    getSnapContext(base: SnapContextBase, p: Vec2): SnapContextOverride {
         // If we're already drawing a line (i.e anchors > 0),
         // then we have an anchor for axis snaps
         const hasAnchor = this.anchors.length > 0;

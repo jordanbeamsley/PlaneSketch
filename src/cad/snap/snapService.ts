@@ -10,7 +10,7 @@ import { SnapEngine } from "./engine";
 import type { Viewport } from "../camera/viewportService";
 import type { Container, Point, Renderer, Ticker } from "pixi.js";
 import { SnapOverlay } from "./overlay";
-import { parseRefKey, type EntityRef } from "../models/sketch/entityRef";
+import { parseRefKey, refKey, type EntityRef } from "../models/sketch/entityRef";
 import { copyVec, dist2, type Vec2 } from "../models/sketch/vectors";
 import { SNAP_RADIUS } from "../constants/drawing";
 import {
@@ -38,11 +38,17 @@ export interface SnapOutcome {
     residual?: SnapTarget;
 }
 
-/**
- * Snap service that uses pixi types and data and handles rending of hud objects, etc.
+export type SnapContextBase = Omit<SnapRuleContext, "exclude">;
+/** What a tools getSnapContext returns 
+ * Identical to SnapRuleContext except exclude is expressed as EntityRefs
+ * SnapService resolves them into refKey strings, so tools never need to parse them themselves */
+export type SnapContextOverride = SnapContextBase & { exclude?: EntityRef[] };
+
+/** Snap service that wraps the pure logic snapEngine
+ * Converts application and pixi types into engine uses pixi types and data and handles rending of hud objects, etc.
  * SnapEngine is the pure logic/ testable underlay */
 export class SnapService {
-    private snapContext: SnapRuleContext;
+    private snapContext: SnapContextBase;
     private snapEngine: SnapEngine;
     private residualDwell: residualDwellState;
     private snapOverlay: SnapOverlay;
@@ -50,9 +56,9 @@ export class SnapService {
     private lastSnapResult: SnapResult;
     private onDwellActivate: (s: SnapOutcome) => void;
     private contextResolver: (
-        base: SnapRuleContext,
+        base: SnapContextBase,
         p: Vec2,
-    ) => SnapRuleContext = (base, p) => ({ ...base, p });
+    ) => SnapContextOverride = (base, p) => ({ ...base, p });
 
     constructor(
         ds: SnapDataSource,
@@ -105,7 +111,7 @@ export class SnapService {
      * Called fresh on every snap, so the resolver can read live tool state
      * (e.g line tools anchor for horizontal snapping) */
     setContextResolver(
-        fn?: (base: SnapRuleContext, p: Vec2) => SnapRuleContext,
+        fn?: (base: SnapContextBase, p: Vec2) => SnapContextOverride,
     ) {
         this.contextResolver = fn ?? ((base, p) => ({ ...base, p }));
     }
@@ -155,10 +161,16 @@ export class SnapService {
     }
 
     snap(world: Point, screen: Point): SnapOutcome {
-        const ctx = this.contextResolver(this.snapContext, {
+        const override = this.contextResolver(this.snapContext, {
             x: world.x,
             y: world.y,
         });
+        // The only place EntityRef -> refKey conversion happens for exclusion;
+        // SnapEngine/rules only ever see the resulting opaque strings
+        const ctx: SnapRuleContext = {
+            ...override,
+            exclude: new Set((override.exclude ?? []).map(refKey)),
+        };
         const snapResult = this.snapEngine.snap(ctx);
         this.lastSnapResult = snapResult;
 

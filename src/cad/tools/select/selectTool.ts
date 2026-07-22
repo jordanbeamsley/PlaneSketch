@@ -2,11 +2,11 @@ import type { Container } from "pixi.js";
 import { BaseTool, type PointerPayload, type ToolContext } from "../baseTool";
 import type { Tool } from "@/cad/models/tools/tools";
 import { PickBehaviour } from "../pickBehaviour";
-import type { SnapOutcome } from "@/cad/snap/snapService";
+import type { SnapContextBase, SnapContextOverride, SnapOutcome } from "@/cad/snap/snapService";
 import type { Modifiers } from "@/cad/input/pointer/types";
-import type { SnapKind, SnapRuleContext } from "@/cad/snap/types";
+import type { SnapKind } from "@/cad/snap/types";
 import type { Vec2 } from "@/cad/models/sketch/vectors";
-import { refKey } from "@/cad/models/sketch/entityRef";
+import type { EntityRef } from "@/cad/models/sketch/entityRef";
 import { MoveBehaviour } from "../moveBehaviour";
 
 export class SelectTool extends BaseTool {
@@ -51,12 +51,12 @@ export class SelectTool extends BaseTool {
     }
 
     // While dragging, exclude the entities being moved so they can't snap to their own live position
-    getSnapContext(base: SnapRuleContext, p: Vec2): SnapRuleContext {
-        let exclude: ReadonlySet<string> | undefined;
+    getSnapContext(base: SnapContextBase, p: Vec2): SnapContextOverride {
+        let exclude: EntityRef[] | undefined;
         let enable: Partial<Record<SnapKind, boolean>>;
 
         if (this.active?.behaviour === "move") {
-            exclude = new Set(this.move.excluded.map(refKey));
+            exclude = this.move.excluded;
             enable = { ...base.opts.enable };
         } else {
             exclude = undefined;
