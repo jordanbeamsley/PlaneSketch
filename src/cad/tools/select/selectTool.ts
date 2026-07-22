@@ -2,7 +2,11 @@ import type { Container } from "pixi.js";
 import { BaseTool, type PointerPayload, type ToolContext } from "../baseTool";
 import type { Tool } from "@/cad/models/tools/tools";
 import { PickBehaviour } from "../pickBehaviour";
-import type { SnapContextBase, SnapContextOverride, SnapOutcome } from "@/cad/snap/snapService";
+import type {
+    SnapContextBase,
+    SnapContextOverride,
+    SnapOutcome,
+} from "@/cad/snap/snapService";
 import type { Modifiers } from "@/cad/input/pointer/types";
 import type { SnapKind } from "@/cad/snap/types";
 import type { Vec2 } from "@/cad/models/sketch/vectors";
@@ -15,6 +19,8 @@ export class SelectTool extends BaseTool {
     private context: ToolContext;
 
     private active: PickBehaviour | MoveBehaviour | null = null;
+
+    private isDraggingNode: Boolean = false;
 
     constructor(context: ToolContext, selectLayer: Container) {
         super(context);
@@ -39,6 +45,8 @@ export class SelectTool extends BaseTool {
         const onSelected =
             entity && this.context.getSelect().getState().isSelected(entity);
 
+        this.isDraggingNode = entity?.kind === "node";
+
         this.active = onSelected ? this.move : this.pick;
         this.active.onDown(s, m);
     }
@@ -53,12 +61,18 @@ export class SelectTool extends BaseTool {
     // While dragging, exclude the entities being moved so they can't snap to their own live position
     getSnapContext(base: SnapContextBase, p: Vec2): SnapContextOverride {
         let exclude: EntityRef[] | undefined;
-        let enable: Partial<Record<SnapKind, boolean>>;
+        let enable: Partial<Record<SnapKind, boolean>> = {
+            ...base.opts.enable,
+        };
 
         if (this.active?.behaviour === "move") {
             exclude = this.move.excluded;
-            enable = { ...base.opts.enable };
-        } else {
+            enable = this.isDraggingNode
+                ? { ...base.opts.enable }
+                : { ...base.opts.enable, grid: false };
+        }
+
+        if (this.active?.behaviour === "pick") {
             exclude = undefined;
             enable = {
                 ...base.opts.enable,
